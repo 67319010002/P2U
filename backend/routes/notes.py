@@ -4,7 +4,7 @@ from models import Note, User
 from mongoengine import Document, ReferenceField, ListField
 from bson import ObjectId
 
-notes = Blueprint('notes', '__name__')
+notes = Blueprint('notes', __name__)
 
 # --- Favorite Model ---
 class Favorite(Document):
