@@ -1,6 +1,7 @@
 from mongoengine import (
     Document, StringField, EmailField, BooleanField, DateTimeField,
-    ListField, EmbeddedDocument, EmbeddedDocumentField, ReferenceField, CASCADE
+    ListField, EmbeddedDocument, EmbeddedDocumentField, ReferenceField,FloatField 
+    ,CASCADE
 )
 from datetime import datetime
 
@@ -53,7 +54,7 @@ class CartItem(Document):
 class Order(Document):
     user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
     items = ListField(ReferenceField('CartItem', reverse_delete_rule=CASCADE))
-    total_price = StringField(required=True)
+    total_price = FloatField(required=True)
     status = StringField(default='pending')
     created_at = DateTimeField(default=datetime.utcnow)
     meta = {'collection': 'orders'}
