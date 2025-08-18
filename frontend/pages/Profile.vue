@@ -109,6 +109,7 @@
       </div>
       
     </div>
+      <div class="md:w-1/4 space-y-5">
     
     <button
       @click="handleLogout"
@@ -120,7 +121,7 @@
     <div v-if="!user" class="text-center text-gray-400 mt-10">
       Loading...
     </div>
-
+    </div>
     <p v-if="errorMsg" class="text-red-400 text-center mt-4">{{ errorMsg }}</p>
     <p v-if="successMsg" class="text-green-400 text-center mt-4">{{ successMsg }}</p>
 
