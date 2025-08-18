@@ -111,13 +111,12 @@ const cart = ref([]); // 🛒 state ของตะกร้า
 const fetchProducts = async () => {
   try {
     const res = await axios.get("http://localhost:5000/api/products");
-    // แปลงข้อมูลให้ตรงกับ property ที่ใช้ใน template
     allProducts.value = res.data.map(p => ({
       id: p.id || p._id,
       name: p.name,
       description: p.description,
-      price: p.price,
-      image_url: p.image_url || defaultImage,
+      price: parseFloat(p.price),
+      image_url: p.image_url ? `http://localhost:5000${p.image_url}` : defaultImage,
       seller: p.seller || { username: "Unknown", shop_name: "" } // fallback ถ้าไม่มี seller
     }));
   } catch (err) {
@@ -140,6 +139,7 @@ const addToCart = (product) => {
   cart.value.push(product);
   closeProduct();
 };
+
 onMounted(() => {
   fetchProducts();
 });

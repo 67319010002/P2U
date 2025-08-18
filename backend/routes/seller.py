@@ -1,11 +1,8 @@
-# seller.py
-
 import os
 import uuid
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from bson import ObjectId
-from werkzeug.utils import secure_filename
 from models import Product, User
 
 # Create a new Blueprint for seller routes
@@ -27,25 +24,20 @@ def save_image(image_file):
         unique_filename = f"{uuid.uuid4().hex}.{ext}"
         file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
         image_file.save(file_path)
-        return f'/{UPLOAD_FOLDER}/{unique_filename}'
+        # ✅ เก็บเป็น relative path สำหรับ client
+        return f"/uploads/products/{unique_filename}"
     return None
-
 
 # 🔸 Get all products for the current seller
 @seller.route('/seller/products', methods=['GET'])
 @jwt_required()
 def get_seller_products():
-    """
-    Retrieves all products listed by the current authenticated seller.
-    """
     user_id = get_jwt_identity()
     user = User.objects(id=ObjectId(user_id)).first()
-
     if not user or not user.is_seller:
         return jsonify({"msg": "Unauthorized. This action requires seller privileges."}), 403
 
     products = Product.objects(seller=user).order_by('-created_at')
-
     return jsonify([
         {
             "id": str(product.id),
@@ -57,18 +49,12 @@ def get_seller_products():
         } for product in products
     ]), 200
 
-
 # 🔸 Add a new product
 @seller.route('/seller/products', methods=['POST'])
 @jwt_required()
 def add_product():
-    """
-    Adds a new product for the current seller.
-    Requires product details and handles image upload.
-    """
     user_id = get_jwt_identity()
     user = User.objects(id=ObjectId(user_id)).first()
-
     if not user or not user.is_seller:
         return jsonify({"msg": "Unauthorized. This action requires seller privileges."}), 403
 
@@ -76,7 +62,6 @@ def add_product():
     name = data.get('name')
     price = data.get('price')
     description = data.get('description')
-
     if not name or not price:
         return jsonify({"msg": "Product name and price are required."}), 400
 
@@ -93,7 +78,7 @@ def add_product():
             description=description,
             price=float(price),
             image_url=image_url,
-            seller=user   # ✅ ใช้ seller
+            seller=user
         )
         product.save()
         return jsonify({
@@ -110,18 +95,12 @@ def add_product():
     except Exception as e:
         return jsonify({"msg": f"An error occurred: {str(e)}"}), 500
 
-
-# 🔸 Get a single product by ID (only seller’s own product)
+# 🔸 Get a single product by ID
 @seller.route('/seller/products/<product_id>', methods=['GET'])
 @jwt_required()
 def get_product(product_id):
-    """
-    Retrieves a single product by its ID.
-    Only allows access if the current user is the product's seller.
-    """
     user_id = get_jwt_identity()
     user = User.objects(id=ObjectId(user_id)).first()
-
     try:
         product = Product.objects.get(id=ObjectId(product_id), seller=user)
     except Product.DoesNotExist:
@@ -138,18 +117,12 @@ def get_product(product_id):
         "created_at": product.created_at.strftime("%Y-%m-%d %H:%M:%S")
     })
 
-
 # 🔸 Update a product by ID
 @seller.route('/seller/products/<product_id>', methods=['PUT'])
 @jwt_required()
 def update_product(product_id):
-    """
-    Updates an existing product.
-    Only the seller can update their own products.
-    """
     user_id = get_jwt_identity()
     user = User.objects(id=ObjectId(user_id)).first()
-
     try:
         product = Product.objects.get(id=ObjectId(product_id), seller=user)
     except Product.DoesNotExist:
@@ -169,41 +142,32 @@ def update_product(product_id):
     product.update(**update_fields)
     return jsonify({"msg": "Product updated successfully!"}), 200
 
-
 # 🔸 Delete a product by ID
 @seller.route('/seller/products/<product_id>', methods=['DELETE'])
 @jwt_required()
 def delete_product(product_id):
-    """
-    Deletes a product by its ID.
-    Only the seller can delete their own products.
-    """
     user_id = get_jwt_identity()
     user = User.objects(id=ObjectId(user_id)).first()
-
     try:
         product = Product.objects.get(id=ObjectId(product_id), seller=user)
-        # Optional: Delete the image file from the server
-        if product.image_url and os.path.exists(product.image_url.lstrip('/')):
-            os.remove(product.image_url.lstrip('/'))
+        # ✅ ลบไฟล์จริงจากโฟลเดอร์
+        if product.image_url:
+            file_path = product.image_url.lstrip('/')
+            if os.path.exists(file_path):
+                os.remove(file_path)
         product.delete()
         return jsonify({"msg": "Product deleted successfully!"}), 200
     except Product.DoesNotExist:
         return jsonify({"msg": "Product not found or unauthorized access."}), 404
-    except Exception:
-        return jsonify({"msg": "Invalid product ID."}), 400
-
+    except Exception as e:
+        return jsonify({"msg": f"Invalid product ID: {str(e)}"}), 400
 
 # 🔸 Update product image
 @seller.route('/seller/products/<product_id>/image', methods=['PUT'])
 @jwt_required()
 def update_product_image(product_id):
-    """
-    Updates the image of an existing product.
-    """
     user_id = get_jwt_identity()
     user = User.objects(id=ObjectId(user_id)).first()
-
     try:
         product = Product.objects.get(id=ObjectId(product_id), seller=user)
     except Product.DoesNotExist:
@@ -218,9 +182,11 @@ def update_product_image(product_id):
     if file.filename == '':
         return jsonify({"msg": "No selected file."}), 400
 
-    # Delete old image if it exists
-    if product.image_url and os.path.exists(product.image_url.lstrip('/')):
-        os.remove(product.image_url.lstrip('/'))
+    # ✅ ลบไฟล์เก่า
+    if product.image_url:
+        file_path = product.image_url.lstrip('/')
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
     new_image_url = save_image(file)
     if new_image_url:
