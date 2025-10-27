@@ -108,19 +108,35 @@
         <h2 class="text-2xl font-bold mb-2">{{ selectedProduct.name }}</h2>
         <p class="text-gray-300 mb-2">{{ selectedProduct.description }}</p>
         <p class="text-lg font-bold text-indigo-400 mb-3">฿{{ selectedProduct.price }}</p>
+
+         <div class="flex items-center mb-3">
+      <span class="text-yellow-400 text-lg mr-2">★★★★★</span>
+      <span class="text-gray-400 text-sm">5.0 ({{ selectedProduct.reviewsCount || 0 }} reviews)</span>
+        </div>
+
         <p class="text-sm text-gray-400">
           Seller: {{ selectedProduct.seller.username }} | Shop: {{ selectedProduct.seller.shop_name || 'N/A' }}
         </p>
 
         <button
-          class="mt-4 bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg font-semibold"
+          class="mt-4 bg-green-600 hover:bg-green-700 px-10 py-2 rounded-lg font-semibold"
+          @click="addToCart(selectedProduct)"
+        >
+          💰 Buy
+        </button>
+
+        <button
+          class="mt-4 ml-2 bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg font-semibold"
           @click="addToCart(selectedProduct)"
         >
           🛒 Add to Cart
         </button>
+  
+<div class="mt-5 text-2xl">ข้อมูลจำเพาะของสินค้า</div>
       </div>
     </div>
-  </div>
+    
+</div>
 </template>
 
 <script setup>
