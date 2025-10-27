@@ -187,17 +187,23 @@ const defaultImage = "/default-item.jpg";
 const allProducts = ref([]);
 const selectedProduct = ref(null);
 
-// 🛒 Cart state + localStorage
-const cart = ref(JSON.parse(localStorage.getItem("cart") || "[]"));
+// ✅ Cart - ป้องกัน SSR
+const cart = ref([]);
 
-// Sync cart กับ localStorage
-watch(
-  cart,
-  (newVal) => {
-    localStorage.setItem("cart", JSON.stringify(newVal));
-  },
-  { deep: true }
-);
+if (process.client) {
+  cart.value = JSON.parse(localStorage.getItem("cart") || "[]");
+}
+
+// ✅ Sync cart กับ localStorage (client only)
+if (process.client) {
+  watch(
+    cart,
+    (newVal) => {
+      localStorage.setItem("cart", JSON.stringify(newVal));
+    },
+    { deep: true }
+  );
+}
 
 // -----------------------------
 // Fetch products จาก API
@@ -205,7 +211,7 @@ watch(
 const fetchProducts = async () => {
   try {
     const res = await axios.get("http://localhost:5000/api/products");
-    allProducts.value = res.data.map((p) => ({
+    allProducts.value = (res.data || []).map((p) => ({
       id: p.id || p._id,
       name: p.name,
       description: p.description,
@@ -215,6 +221,7 @@ const fetchProducts = async () => {
     }));
   } catch (err) {
     console.error("Failed to fetch products:", err);
+    allProducts.value = [];
   }
 };
 
@@ -230,7 +237,7 @@ const closeProduct = () => {
 };
 
 // -----------------------------
-// Cart functionss
+// Cart functions
 // -----------------------------
 const addToCart = (product) => {
   const existing = cart.value.find((item) => item.id === product.id);
@@ -266,21 +273,25 @@ const banners = ref([
 const currentBanner = ref(0);
 
 const nextBanner = () => {
-  currentBanner.value = (currentBanner.value + 1) % banners.value.length;
+  if (banners.value.length) {
+    currentBanner.value = (currentBanner.value + 1) % banners.value.length;
+  }
 };
 
 const prevBanner = () => {
-  currentBanner.value =
-    (currentBanner.value - 1 + banners.value.length) % banners.value.length;
+  if (banners.value.length) {
+    currentBanner.value =
+      (currentBanner.value - 1 + banners.value.length) % banners.value.length;
+  }
 };
-
-// Auto slide
-setInterval(nextBanner, 5000);
 
 // -----------------------------
 // Lifecycle
 // -----------------------------
 onMounted(() => {
   fetchProducts();
+
+  // ✅ Start Auto Slide only if client
+  setInterval(nextBanner, 5000);
 });
 </script>
