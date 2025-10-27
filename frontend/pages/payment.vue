@@ -26,8 +26,13 @@
     <div class="w-full max-w-3xl bg-gray-800 rounded-lg p-6 mb-6">
       <p class="text-gray-400">วิธีชำระเงิน:</p>
       <div class="flex items-center justify-between mb-2">
-        <p class="text-green-400 font-semibold">MasterCard ลงท้ายด้วย **86</p>
-        <button class="text-blue-400 text-sm hover:underline  hover:text-white">(เปลี่ยน)</button>
+        <p class="text-green-400 font-semibold">MasterCard</p>
+        <NuxtLink
+          to="/paymentMethod"
+          class="text-blue-400 text-sm hover:underline hover:text-white"
+        >
+          (เปลี่ยน)
+        </NuxtLink>
       </div>
       <p class="text-gray-400 mt-4 mb-2">บัญชีผู้ใช้:</p>
       <p class="text-white font-semibold">maitonru</p>
@@ -40,11 +45,13 @@
         </label>
       </div>
 
-      <button
-        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg"
-      >
-        สั่งซื้อ
-      </button>
+      <NuxtLink to="/payment_success">
+        <button
+          class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg"
+        >
+          สั่งซื้อ
+        </button>
+      </NuxtLink>
     </div>
 
     <!-- Footer Note -->
@@ -55,5 +62,10 @@
 </template>
 
 <script setup>
-// logic สำหรับเปลี่ยนวิธีชำระเงินสามารถใส่ที่นี่
+import { useRouter } from "vue-router";
+const router = useRouter();
+
+const goToPaymentMethod = () => {
+  router.push("/payment-method");
+};
 </script>
