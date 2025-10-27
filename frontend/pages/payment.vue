@@ -30,7 +30,7 @@
         <button class="text-blue-400 text-sm hover:underline  hover:text-white">(เปลี่ยน)</button>
       </div>
       <p class="text-gray-400 mt-4 mb-2">บัญชีผู้ใช้:</p>
-      <p class="text-white font-semibold">pawalung</p>
+      <p class="text-white font-semibold">maitonru</p>
 
       <div class="flex items-center mt-4 mb-4">
         <input type="checkbox" id="terms" class="mr-2" />
