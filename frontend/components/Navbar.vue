@@ -1,10 +1,10 @@
 <template>
-  <nav class="bg-gradient-to-r from-black to-pink-950 text-white px-6 py-4 flex items-center shadow-md relative">
-
-
+  <nav
+    class="bg-gradient-to-r from-black to-pink-950 text-white px-6 py-4 flex items-center shadow-md relative"
+  >
     <!-- ชื่อแอป -->
-    <NuxtLink 
-      to="/dashboard" 
+    <NuxtLink
+      to="/dashboard"
       class="font-bold text-2xl flex-shrink-0 transition transform hover:scale-110"
     >
       <span class="text-white transition-colors duration-300">P2U</span>
@@ -12,7 +12,6 @@
     </NuxtLink>
 
     <div class="ml-auto flex items-center gap-4 relative">
-  
       <!-- รูปโปรไฟล์ -->
       <NuxtLink
         v-if="user"
@@ -27,7 +26,7 @@
         />
       </NuxtLink>
 
-            <!-- เมนูฟันเฟือง (เฉพาะตอนล็อกอิน) -->
+      <!-- เมนูฟันเฟือง (เฉพาะตอนล็อกอิน) -->
       <div v-if="user" class="relative">
         <button
           @click="toggleSettings"
@@ -46,10 +45,17 @@
           >
             Logout
           </button>
+
+          <NuxtLink
+            to="/about"
+          >
+          <button
+          class="rounded-xl w-full text-left px-4 py-2 hover:bg-gray-100 transition">
+          About</button>
+            
+          </NuxtLink>
         </div>
-
       </div>
-
 
       <!-- ปุ่ม Login ถ้าไม่ได้ล็อกอิน -->
       <NuxtLink
@@ -64,67 +70,65 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'  // เพิ่ม useRoute ด้วย
+import { ref, onMounted, onBeforeUnmount, computed } from "vue";
+import { useRouter, useRoute } from "vue-router"; // เพิ่ม useRoute ด้วย
 
-const route = useRoute()  // เพิ่มบรรทัดนี้เพื่อดึง path ปัจจุบัน
+const route = useRoute(); // เพิ่มบรรทัดนี้เพื่อดึง path ปัจจุบัน
 
-
-const router = useRouter()
-const user = ref(null)
-const showSettings = ref(false)
+const router = useRouter();
+const user = ref(null);
+const showSettings = ref(false);
 
 // ซ่อนถ้าหน้าเป็น login หรือ register
 const hideNavbar = computed(() => {
-  const hiddenPages = ['/login', '/register']
-  return hiddenPages.includes(route.path)
-})
-
+  const hiddenPages = ["/login", "/register"];
+  return hiddenPages.includes(route.path);
+});
 
 function loadUser() {
-  const storedUser = localStorage.getItem('user')
+  const storedUser = localStorage.getItem("user");
   if (storedUser) {
     try {
-      user.value = JSON.parse(storedUser)
+      user.value = JSON.parse(storedUser);
     } catch {
-      user.value = null
+      user.value = null;
     }
   } else {
-    user.value = null
+    user.value = null;
   }
 }
 
-const baseUrl = 'http://localhost:5000'
+const baseUrl = "http://localhost:5000";
 const profileImageUrl = computed(() => {
   if (!user.value || !user.value.profile_image_url) {
-    return '/guest-profile.png'
+    return "/guest-profile.png";
   }
-  if (user.value.profile_image_url.startsWith('http')) {
-    return user.value.profile_image_url
+  if (user.value.profile_image_url.startsWith("http")) {
+    return user.value.profile_image_url;
   }
-  return baseUrl + user.value.profile_image_url
-})
+  return baseUrl + user.value.profile_image_url;
+});
 
 const toggleSettings = () => {
-  showSettings.value = !showSettings.value
-}
+  showSettings.value = !showSettings.value;
+};
 
 // กด Logout
 const handleLogout = () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('username')
-  localStorage.removeItem('user')
-  user.value = null
-  showSettings.value = false
-  router.push('/login')
-  window.dispatchEvent(new Event('user-updated'))
-}
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("user");
+  user.value = null;
+  showSettings.value = false;
+  router.push("/login");
+  window.dispatchEvent(new Event("user-updated"));
+};
 
 onMounted(() => {
-  loadUser()
-  window.addEventListener('user-updated', loadUser)
-})
+  loadUser();
+  window.addEventListener("user-updated", loadUser);
+});
 onBeforeUnmount(() => {
-  window.removeEventListener('user-updated', loadUser)
-})
+  window.removeEventListener("user-updated", loadUser);
+});
 </script>

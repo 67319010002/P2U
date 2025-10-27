@@ -1,0 +1,23 @@
+<template>
+  <div
+    class="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-6"
+  >
+    <div class="bg-gray-600 m-10 p-10 w-full   ">
+     <div class="item-center">
+    <p class="">ผู้ก่อตั้ง</p>
+                
+
+
+
+     </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+// ถ้าอยากใส่ logic เพิ่มก็ใส่ตรงนี้
+</script>
+
+<style scoped>
+/* ตัวอย่าง CSS เพิ่มเติม */
+</style>
