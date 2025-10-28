@@ -1,31 +1,41 @@
 <template>
-  <div class="p-6 max-w-8xl mx-auto bg-black rounded-xl shadow-lg text-white mt-1 ml-1 mb-1 mr-1">
-    
-    <!-- Language Switch -->
-    <div class="flex gap-2 justify-end mb-4">
-      <button @click="currentLanguage = 'th'" class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">TH</button>
-      <button @click="currentLanguage = 'en'" class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">EN</button>
+
+  <div
+    class="p-6 max-w-8xl mx-auto bg-black rounded-xl shadow-lg text-white mt-1 mb-1 mr-1 transition-all duration-300"
+    :class="expandSidebar ? 'ml-64' : 'ml-20'"
+  >
+    <div class="md:w-1/4 space-y-5">
+      <div class="flex items-center justify-center mb-6 relative">
+        <h1 class="text-3xl font-extrabold text-center">
+          My <span class="text-pink-600">Profile</span>
+        </h1>
+      </div>
+
     </div>
 
-    <!-- Header -->
-    <div class="flex items-center justify-center mb-6 relative">
-      <h1 class="text-3xl font-extrabold text-center">My <span class="text-pink-600">Profile</span></h1>
+    <div>
+      <sidebar />
     </div>
 
     <div v-if="user" class="flex flex-col md:flex-row md:space-x-8 space-y-8 md:space-y-0">
-
-      <!-- Left Sidebar -->
+      <!-- Left Sidebar: Profile + Addresses -->
       <div class="md:w-1/4 space-y-5">
         <!-- Profile Info -->
         <div class="flex items-center space-x-6">
-          <div class="relative w-28 h-28 flex-shrink-0">
-            <img :src="user.profile_image_url || defaultProfile" alt="Profile"
-              class="w-full h-full rounded-full border-4 border-pink-500 object-cover shadow-md" />
-            <button @click="triggerFileInput"
-              class="absolute bottom-0 right-0 bg-pink-600 hover:bg-pink-700 p-1.5 rounded-full shadow-md transition"
-              aria-label="Change profile picture" title="Change profile picture">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
+          <div class="relative w-28 h-28 flex-shrink-0 z-50">
+            <img
+              :src="user.profile_image_url || defaultProfile"
+              alt="Profile"
+              class="w-full h-full rounded-full border-4 border-pink-500 object-cover shadow-md"
+            />
+            <button
+              @click="triggerFileInput"
+              class="absolute bottom-0 right-0 z-50 bg-pink-600 hover:bg-pink-700 p-1.5 rounded-full shadow-md transition"
+              aria-label="Change profile picture"
+              title="Change profile picture"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M11 5h6m2 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h10zM16 3l-1-1m0 0L9 8m7-6v6H9" />
               </svg>
@@ -55,12 +65,14 @@
         </div>
 
         <!-- Addresses -->
+
         <div class="w-full mt-8">
           <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">{{ t('addresses') }}</h2>
           <div v-if="user.addresses && user.addresses.length" class="space-y-4">
             <div v-for="(addr, index) in user.addresses" :key="index"
               class="bg-gray-800 rounded-lg p-4 shadow-inner relative">
               <div class="flex items-center justify-between">
+
                 <h3 class="text-lg font-semibold mb-3 border-b border-gray-700 pb-2">{{ isEditing ? t('editAddress') :
                   t('addNewAddress') }}</h3>
                 <span v-if="addr.is_default"
@@ -72,6 +84,7 @@
                 {{ addr.province }}, {{ addr.postal_code }}</p>
               <div class="mt-2 flex gap-2">
                 <button @click="editAddress(index)"
+
                   class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition">{{ t('editAddress') }}</button>
                 <button @click="deleteAddress(index)"
                   class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition">Delete</button>
@@ -100,6 +113,7 @@
                 <label for="is_default" class="text-sm">Set as default address</label>
               </div>
               <button type="submit"
+
                 class="mt-4 w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 rounded-lg transition">{{
                   isEditing ? t('updateAddress') : t('addAddress') }}</button>
               <button v-if="isEditing" @click="cancelEdit" type="button"
@@ -109,13 +123,15 @@
         </div>
       </div>
 
-      <!-- Right Content: Track Order + Cart -->
+      <!-- Right Content -->
       <div class="md:w-3/4 space-y-6">
+
         <!-- Track Order -->
         <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">{{ t('trackOrder') }}</h2>
         <div class="bg-gray-800 rounded-lg p-4 shadow-inner min-h-48 flex items-center justify-center text-gray-400">
           <p>Tracking information will appear here.</p>
         </div>
+
 
         <!-- Cart Items -->
         <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">🛒 {{ t('myCart') }}</h2>
@@ -135,7 +151,6 @@
         </div>
         <div v-else class="text-gray-400 text-sm text-center">Your cart is empty</div>
       </div>
-
     </div>
 
     <!-- Logout -->
@@ -144,10 +159,7 @@
         class="mt-8 w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 rounded-lg transition">
         Logout
       </button>
-
-      <div v-if="!user" class="text-center text-gray-400 mt-10">
-        Loading...
-      </div>
+      <div v-if="!user" class="text-center text-gray-400 mt-10">Loading...</div>
     </div>
 
     <p v-if="errorMsg" class="text-red-400 text-center mt-4">{{ errorMsg }}</p>
@@ -161,6 +173,7 @@
           class="w-32 h-32 mx-auto object-cover rounded-full border border-gray-300 mb-4" />
         <div class="flex justify-center gap-4">
           <button @click="uploadConfirmed"
+
             class="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded font-semibold">
             Upload
           </button>
@@ -179,6 +192,17 @@
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import sidebar from '~/components/sidebar.vue'
+
+// Sidebar hover detection
+const expandSidebar = ref(false)
+onMounted(() => {
+  const sidebarEl = document.querySelector('.fixed.left-0')
+  if (sidebarEl) {
+    sidebarEl.addEventListener('mouseenter', () => expandSidebar.value = true)
+    sidebarEl.addEventListener('mouseleave', () => expandSidebar.value = false)
+  }
+})
 
 const router = useRouter()
 const baseURL = 'http://localhost:5000'
@@ -191,6 +215,7 @@ const fileInput = ref(null)
 const previewImageUrl = ref(null)
 let selectedFile = null
 
+
 // Address
 const newAddress = ref({ name:'', phone:'', address_line:'', district:'', province:'', postal_code:'', is_default:false })
 const isEditing = ref(false)
@@ -198,6 +223,7 @@ const editingIndex = ref(null)
 
 // Cart
 const cartItems = ref(JSON.parse(localStorage.getItem('cart') || '[]'))
+
 const formatImageUrl = (url) => url ? (url.startsWith('http') ? url : baseURL + url) : '/no-image.png'
 watch(cartItems, val => localStorage.setItem('cart', JSON.stringify(val)), { deep:true })
 
@@ -211,6 +237,7 @@ onMounted(async ()=>{
     user.value = res.data
   }catch(e){ console.error(e); router.push('/login') }
 })
+
 
 // Address functions
 const addOrUpdateAddress = async ()=>{
@@ -274,8 +301,10 @@ const addToCart=(p)=>{
   if(ex) ex.quantity+=1
   else { let img=p.image||'/no-image.png'; if(!img.startsWith('http')) img=baseURL+img; cartItems.value.push({...p,image:img,quantity:1}) }
 }
+const cancelUpload = () => { previewImageUrl.value = null; selectedFile = null }
 
 // Logout
+
 const handleLogout=()=>{
   localStorage.removeItem('token')
   localStorage.removeItem('username')
@@ -284,6 +313,7 @@ const handleLogout=()=>{
   router.push('/login')
   window.dispatchEvent(new Event('user-updated'))
 }
+
 
 // Language
 const currentLanguage = ref('th')
