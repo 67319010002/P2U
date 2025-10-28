@@ -20,7 +20,7 @@
       <div class="md:w-1/4 space-y-5">
         <!-- Profile Info -->
         <div class="flex items-center space-x-6">
-          <div class="relative w-28 h-28 flex-shrink-0">
+          <div class="relative w-28 h-28 flex-shrink-0 z-50">
             <img
               :src="user.profile_image_url || defaultProfile"
               alt="Profile"
@@ -28,7 +28,7 @@
             />
             <button
               @click="triggerFileInput"
-              class="absolute bottom-0 right-0 bg-pink-600 hover:bg-pink-700 p-1.5 rounded-full shadow-md transition"
+              class="absolute bottom-0 right-0 z-50 bg-pink-600 hover:bg-pink-700 p-1.5 rounded-full shadow-md transition"
               aria-label="Change profile picture"
               title="Change profile picture"
             >
@@ -181,7 +181,7 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 import sidebar from '~/components/sidebar.vue'
 
-// ✅ Detect sidebar hover state
+// Sidebar hover detection
 const expandSidebar = ref(false)
 onMounted(() => {
   const sidebarEl = document.querySelector('.fixed.left-0')
@@ -191,7 +191,6 @@ onMounted(() => {
   }
 })
 
-// -------------- your existing logic (unchanged) --------------
 const router = useRouter()
 const baseURL = 'http://localhost:5000'
 const defaultProfile = '/default-profile.png'
@@ -203,17 +202,17 @@ const fileInput = ref(null)
 const previewImageUrl = ref(null)
 let selectedFile = null
 
-const newAddress = ref({
-  name: '', phone: '', address_line: '', district: '', province: '', postal_code: '', is_default: false,
-})
+// Addresses
+const newAddress = ref({ name: '', phone: '', address_line: '', district: '', province: '', postal_code: '', is_default: false })
 const isEditing = ref(false)
 const editingIndex = ref(null)
 
+// Cart
 const cartItems = ref(JSON.parse(localStorage.getItem('cart') || '[]'))
-const formatImageUrl = (url) => !url ? '/no-image.png' : (url.startsWith('http') ? url : baseURL + url)
+const formatImageUrl = url => !url ? '/no-image.png' : (url.startsWith('http') ? url : baseURL + url)
+watch(cartItems, newVal => localStorage.setItem('cart', JSON.stringify(newVal)), { deep: true })
 
-watch(cartItems, (newVal) => localStorage.setItem('cart', JSON.stringify(newVal)), { deep: true })
-
+// Fetch profile
 onMounted(async () => {
   try {
     const token = localStorage.getItem('token')
@@ -229,6 +228,50 @@ onMounted(async () => {
   }
 })
 
-// addresses + image + logout functions unchanged
-// (same as your original)
+// Profile Image
+const triggerFileInput = () => fileInput.value && fileInput.value.click()
+const onFileChange = e => {
+  const file = e.target.files[0]
+  if (!file) return
+  selectedFile = file
+  previewImageUrl.value = URL.createObjectURL(file)
+}
+const uploadConfirmed = async () => {
+  errorMsg.value = ''; successMsg.value = ''
+  if (!selectedFile) return
+  const formData = new FormData()
+  formData.append('profile_image', selectedFile)
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) throw new Error('No token found')
+    const res = await axios.put(baseURL + '/api/profile/image', formData, { headers: { Authorization:`Bearer ${token}`, 'Content-Type':'multipart/form-data' } })
+    let imageUrl = res.data.profile_image_url
+    if (imageUrl && !imageUrl.startsWith('http')) imageUrl = baseURL + imageUrl
+    user.value.profile_image_url = imageUrl
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+    storedUser.profile_image_url = imageUrl
+    localStorage.setItem('user', JSON.stringify(storedUser))
+    successMsg.value = 'Profile image updated successfully.'
+    window.dispatchEvent(new Event('user-updated'))
+  } catch(err){
+    console.error(err)
+    errorMsg.value = err.response?.data?.msg || 'Failed to update profile image.'
+  } finally {
+    previewImageUrl.value = null
+    selectedFile = null
+  }
+}
+const cancelUpload = () => { previewImageUrl.value = null; selectedFile = null }
+
+// Logout
+const handleLogout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('username')
+  localStorage.removeItem('user')
+  localStorage.removeItem('cart')
+  router.push('/login')
+  window.dispatchEvent(new Event('user-updated'))
+}
+
+// Address functions (add/update/delete/edit) same as your original code
 </script>
