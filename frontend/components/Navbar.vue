@@ -23,26 +23,7 @@
         <img :src="profileImageUrl" alt="Profile" class="w-full h-full object-cover" />
       </NuxtLink>
 
-       <!-- ปุ่มเปลี่ยนภาษา -->
-      <div class="relative">
-        <button @click="languageMenuVisible = !languageMenuVisible"
-                class="text-white hover:scale-110 text-xl"
-                title="Change Language">
-          🌐
-        </button>
 
-        <div v-show="languageMenuVisible" class="absolute right-0 mt-2 w-32 bg-white text-black rounded shadow-lg z-50">
-          <!-- ใช้ v-if แสดงปุ่มที่ยังไม่ได้เลือก -->
-          <button v-if="currentLanguage !== 'th'" @click="currentLanguage = 'th'; languageMenuVisible = false"
-                  class="w-full text-left px-4 py-2 hover:bg-gray-100 transition">
-            ภาษาไทย
-          </button>
-          <button v-if="currentLanguage !== 'en'" @click="currentLanguage = 'en'; languageMenuVisible = false"
-                  class="w-full text-left px-4 py-2 hover:bg-gray-100 transition">
-            English
-          </button>
-        </div>
-      </div>
 
       <!-- เมนูฟันเฟือง (เฉพาะตอนล็อกอิน) -->
       <div v-if="user" class="relative">
@@ -137,14 +118,7 @@ const handleLogout = () => {
   window.dispatchEvent(new Event("user-updated"));
 };
 
-// 🌐 Language
-const languageMenuVisible = ref(false)
-const currentLanguage = ref('th')
 
-const setLanguage = (lang) => {
-  currentLanguage.value = lang
-  window.dispatchEvent(new CustomEvent('language-changed', { detail: lang }))
-}
 
 
 
@@ -155,9 +129,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('user-updated', loadUser)
 })
-
-
-
 
 onMounted(() => {
   loadUser();
