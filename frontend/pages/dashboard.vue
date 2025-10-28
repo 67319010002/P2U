@@ -263,7 +263,8 @@
 import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import axios from "axios";
 
-import Sidebar from "./Sidebar.vue";
+// ✅ แก้ import ให้ถูกต้อง
+import Sidebar from '~/components/Sidebar.vue';
 
 // -----------------------------
 // State
@@ -334,13 +335,10 @@ const addToCart = (product) => {
   closeProduct();
 };
 
-
 const removeFromCart = (product) => {
-  console.log('Product to remove:', product); // Add this to debug
   if (product && product.id) {
     const existingIndex = cart.value.findIndex((item) => item.id === product.id);
     if (existingIndex !== -1) {
-      // Decrease quantity or remove the item
       if (cart.value[existingIndex].quantity > 1) {
         cart.value[existingIndex].quantity -= 1;
       } else {
@@ -352,7 +350,7 @@ const removeFromCart = (product) => {
   }
 };
 
-// ---------------
+// -----------------------------
 // Show cart
 // -----------------------------
 function goToProfile() {
