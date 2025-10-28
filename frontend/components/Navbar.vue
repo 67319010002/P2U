@@ -23,16 +23,22 @@
         <img :src="profileImageUrl" alt="Profile" class="w-full h-full object-cover" />
       </NuxtLink>
 
-      <!-- ปุ่มเปลี่ยนภาษา -->
+       <!-- ปุ่มเปลี่ยนภาษา -->
       <div class="relative">
-        <button @click="toggleLanguageMenu" class="text-white hover:scale-110 text-xl" title="Change Language">
+        <button @click="languageMenuVisible = !languageMenuVisible"
+                class="text-white hover:scale-110 text-xl"
+                title="Change Language">
           🌐
         </button>
-        <div v-if="showLanguageMenu" class="absolute right-0 mt-2 w-32 bg-white text-black rounded shadow-lg z-50">
-          <button @click="setLanguage('th')" class="w-full text-left px-4 py-2 hover:bg-gray-100 transition">
+
+        <div v-show="languageMenuVisible" class="absolute right-0 mt-2 w-32 bg-white text-black rounded shadow-lg z-50">
+          <!-- ใช้ v-if แสดงปุ่มที่ยังไม่ได้เลือก -->
+          <button v-if="currentLanguage !== 'th'" @click="currentLanguage = 'th'; languageMenuVisible = false"
+                  class="w-full text-left px-4 py-2 hover:bg-gray-100 transition">
             ภาษาไทย
           </button>
-          <button @click="setLanguage('en')" class="w-full text-left px-4 py-2 hover:bg-gray-100 transition">
+          <button v-if="currentLanguage !== 'en'" @click="currentLanguage = 'en'; languageMenuVisible = false"
+                  class="w-full text-left px-4 py-2 hover:bg-gray-100 transition">
             English
           </button>
         </div>
@@ -131,21 +137,24 @@ const handleLogout = () => {
   window.dispatchEvent(new Event("user-updated"));
 };
 
-// 🌐 ระบบเปลี่ยนภาษา
-const showLanguageMenu = ref(false);
+// 🌐 Language
+const languageMenuVisible = ref(false)
+const currentLanguage = ref('th')
 
-// toggle เมนูภาษา
-const toggleLanguageMenu = () => {
-  showLanguageMenu.value = !showLanguageMenu.value;
-  showSettings.value = false; // ปิดเมนู settings ถ้าเปิดอยู่
-};
-
-// เปลี่ยนภาษา
 const setLanguage = (lang) => {
-  console.log("เปลี่ยนเป็นภาษา:", lang);
-  // ถ้าใช้ i18n สามารถเพิ่มได้ทีหลัง เช่น locale.value = lang
-  showLanguageMenu.value = false;
-};
+  currentLanguage.value = lang
+  window.dispatchEvent(new CustomEvent('language-changed', { detail: lang }))
+}
+
+
+
+onMounted(() => {
+  loadUser()
+  window.addEventListener('user-updated', loadUser)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('user-updated', loadUser)
+})
 
 
 
