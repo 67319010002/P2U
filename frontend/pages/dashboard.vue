@@ -363,21 +363,22 @@ function goToProfile() {
 // -----------------------------
 const banners = ref([
   {
-    image: "/banners/banner1.jpg",
+    image: "https://i.ytimg.com/vi/RZZ1Bt1Y5io/maxresdefault.jpg",
     title: "SPRING / SUMMER COLLECTION 2025",
     subtitle: "Explore new digital art collections",
   },
   {
-    image: "/banners/banner2.jpg",
+    image: "https://cdn.pfps.gg/banners/8762-boa-hancock.png",
     title: "LIMITED EDITION ITEMS",
     subtitle: "Grab exclusive deals before they're gone!",
   },
   {
-    image: "/banners/banner3.jpg",
+    image: "https://i.pinimg.com/564x/e9/60/e2/e960e2338c8f5243a5fe931792b3987c.jpg",
     title: "TOP SELLERS THIS WEEK",
     subtitle: "Check out the most popular items",
   },
 ]);
+
 
 const currentBanner = ref(0);
 let bannerInterval = null;
