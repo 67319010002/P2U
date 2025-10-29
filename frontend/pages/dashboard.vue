@@ -16,6 +16,7 @@
 
     <!-- Main Content -->
     <main class="flex-1 p-8">
+     
       <!-- Products Tab -->
       <div v-if="activeTab === 'products'">
         <!-- 🖼️ Banner Carousel -->
@@ -45,7 +46,7 @@
               </div>
             </div>
           </div>
-          <h2 class="text-xl font-bold mb-4">🛒 Products</h2>
+          
           <!-- Navigation Buttons -->
           <button
             class="absolute top-1/2 -translate-y-1/2 left-2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full"
@@ -92,7 +93,11 @@
             ></span>
           </div>
         </div>
-
+        <!-- หมวดหมู่ -->
+    <Carta />
+    <center>
+    <h2 class="text-xl font-bold mb-4 center">🛒 Products</h2>
+    </center>
         <!-- Product Grid -->
         <div
           v-if="allProducts.length"
@@ -118,12 +123,12 @@
             </p>
           </div>
         </div>
-
+       
         <p v-else class="text-gray-400 mt-16 text-center">
           🔍 No products found.
         </p>
       </div>
-
+     
       <!-- Orders Tab -->
       <div v-if="activeTab === 'orders'">
         <h2 class="text-xl font-bold mb-4">📦 Orders</h2>
@@ -265,7 +270,7 @@ import axios from "axios";
 
 // ✅ แก้ import ให้ถูกต้อง
 import Sidebar from '~/components/Sidebar.vue';
-
+import Carta from "~/components/Carta.vue";
 // -----------------------------
 // State
 // -----------------------------
