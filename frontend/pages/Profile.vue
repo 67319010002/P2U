@@ -18,7 +18,7 @@
       <div class="md:w-1/4 space-y-5">
         <!-- Profile Info -->
         <div class="flex items-center space-x-6">
-          <div class="relative w-28 h-28 flex-shrink-0">
+          <div class="relative w-28 h-28 shrink-0">
             <img :src="user.profile_image_url || defaultProfile" alt="Profile"
               class="w-full h-full rounded-full border-4 border-pink-500 object-cover shadow-md" />
             <button @click="triggerFileInput"
