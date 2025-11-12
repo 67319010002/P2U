@@ -1,6 +1,7 @@
 <template>
     <!-- <div @click=""></div>
     <div @click=""></div>
+
   <div
     @mouseenter="expand = true"
     @mouseleave="expand = false"
@@ -19,9 +20,11 @@
 
     <!-- เมนู -->
     <!-- <nav class="flex-1 overflow-y-auto p-2 space-y-2">
+
       <div
-        v-for="item in menuItems"
+        v-for="item in topMenuItems"
         :key="item.name"
+        @click="navigate(item.route)"
         class="flex items-center p-3 rounded-lg hover:bg-gray-800 cursor-pointer transition-all duration-200"
       >
         <span class="text-xl w-6 text-center">{{ item.icon }}</span>
@@ -51,4 +54,15 @@
 //   { name: 'Settings', icon: '⚙️' },
 // ]
 
+
+function navigate(route) {
+  router.push(route)
+}
+
+function logout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  localStorage.removeItem('cart')
+  router.push('/login')
+}
 </script>
