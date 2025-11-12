@@ -38,7 +38,7 @@
                   @error="banner.image = defaultImage"
                 />
                 <div
-                  class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4"
+                  class="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent p-4"
                 >
                   <h3 class="text-lg font-bold">{{ banner.title }}</h3>
                   <p class="text-sm text-gray-300">{{ banner.subtitle }}</p>
@@ -177,18 +177,26 @@
               >
                 ✕
               </button>
-              
             </div>
           </div>
         </div>
         <p v-else class="text-gray-400 text-center mt-4">Your cart is empty</p>
-          <p class="text-right font-bold mt-2">
-            Total: ฿{{
-              cart
-                .reduce((sum, item) => sum + item.price * item.quantity, 0)
-                .toFixed(2)
-            }}
-          </p>
+        <p class="text-right font-bold mt-2">
+          Total: ฿{{
+            cart
+              .reduce((sum, item) => sum + item.price * item.quantity, 0)
+              .toFixed(2)
+          }}
+        </p>
+        <!-- Payment button  -->
+        <div v-if="cart.length" class="flex justify-end mt-4">
+          <NuxtLink
+            to="/payment"
+            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition-all"
+          >
+            💰 Checkout
+          </NuxtLink>
+        </div>
       </div>
     </main>
 
@@ -249,13 +257,13 @@
               class="bg-pink-600 hover:bg-white text-white hover:text-black font-bold py-3 px-8 rounded-lg flex-1"
               @click="addToCart(selectedProduct)"
             >
-              🛒 เพิ่มลงตะกร้า
+              🛒 Add to Cart
             </button>
             <NuxtLink
               to="/payment"
               class="flex-1 flex items-center justify-center bg-green-600 hover:bg-white text-white hover:text-black font-bold py-3 px-8 rounded-lg"
             >
-              💰 ซื้อเลย
+              💰 Buy Now
             </NuxtLink>
           </div>
         </div>
@@ -342,7 +350,9 @@ const addToCart = (product) => {
 
 const removeFromCart = (product) => {
   if (product && product.id) {
-    const existingIndex = cart.value.findIndex((item) => item.id === product.id);
+    const existingIndex = cart.value.findIndex(
+      (item) => item.id === product.id
+    );
     if (existingIndex !== -1) {
       if (cart.value[existingIndex].quantity > 1) {
         cart.value[existingIndex].quantity -= 1;
@@ -351,7 +361,7 @@ const removeFromCart = (product) => {
       }
     }
   } else {
-    console.error('Invalid product:', product);
+    console.error("Invalid product:", product);
   }
 };
 
@@ -368,22 +378,23 @@ function goToProfile() {
 // -----------------------------
 const banners = ref([
   {
-    image: "https://i.ytimg.com/vi/RZZ1Bt1Y5io/maxresdefault.jpg",
+    image:
+      "https://affiliate.priceza.com/wp-content/uploads/2020/11/11.11_HotDealHotItem_HeroBanner.jpg",
     title: "SPRING / SUMMER COLLECTION 2025",
     subtitle: "Explore new digital art collections",
   },
   {
-    image: "https://cdn.pfps.gg/banners/8762-boa-hancock.png",
+    image: "https://affiliate.priceza.com/wp-content/uploads/2020/11/4.png",
     title: "LIMITED EDITION ITEMS",
     subtitle: "Grab exclusive deals before they're gone!",
   },
   {
-    image: "https://i.pinimg.com/564x/e9/60/e2/e960e2338c8f5243a5fe931792b3987c.jpg",
+    image:
+      "https://www.umipro.com/pub/media/wysiwyg/news-2024/NocNoc-8.8-_-__duragres_1440x365.jpg",
     title: "TOP SELLERS THIS WEEK",
     subtitle: "Check out the most popular items",
   },
 ]);
-
 
 const currentBanner = ref(0);
 let bannerInterval = null;

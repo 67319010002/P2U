@@ -22,19 +22,14 @@
       <div class="md:w-1/4 space-y-5">
         <!-- Profile Info -->
         <div class="flex items-center space-x-6">
-          <div class="relative w-28 h-28 shrink-0 z-50">
-            <img
-              :src="user.profile_image_url || defaultProfile"
-              alt="Profile"
-              class="w-full h-full rounded-full border-4 border-pink-500 object-cover shadow-md"
-            />
-            <button
-              @click="triggerFileInput"
-              class="absolute bottom-0 right-0 z-50 bg-pink-600 hover:bg-pink-700 p-1.5 rounded-full shadow-md transition"
-              aria-label="Change profile picture"
-              title="Change profile picture"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="relative w-28 h-28 shrink-0">
+            <img :src="user.profile_image_url || defaultProfile" alt="Profile"
+              class="w-full h-full rounded-full border-4 border-pink-500 object-cover shadow-md" />
+            <button @click="triggerFileInput"
+              class="absolute bottom-0 right-0 bg-pink-600 hover:bg-pink-700 p-1.5 rounded-full shadow-md transition"
+              aria-label="Change profile picture" title="Change profile picture">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
 
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M11 5h6m2 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h10zM16 3l-1-1m0 0L9 8m7-6v6H9" />

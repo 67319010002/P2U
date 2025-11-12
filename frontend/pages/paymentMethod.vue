@@ -20,14 +20,19 @@
         </select>
 
         <button
+          @click="goToPayment"
           class="bg-pink-500 hover:bg-pink-600 text-black font-semibold px-6 py-3 rounded transition"
         >
           ดำเนินการต่อ
         </button>
+
+        <p v-if="selected" class="mt-4 text-green-400 font-semibold">
+          ✅ คุณเลือก: {{ selected }}
+        </p>
       </div>
 
       <!-- ขวา -->
-      <div class="md:w-1/3 bg-gray-700 rounded  ml-5 p-4">
+      <div class="md:w-1/3 bg-gray-700 rounded ml-5 p-4">
         <h3 class="text-lg font-semibold mb-4">วิธีชำระเงินที่รองรับ</h3>
         <div class="flex flex-wrap gap-2">
           <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" class="w-14 h-8 bg-white p-1 rounded" />
@@ -48,12 +53,16 @@ import { ref } from "vue";
 const router = useRouter();
 const selected = ref("");
 
-const goBack = () => {
-  if (selected.value) {
-    alert(`คุณเลือก: ${selected.value}`);
-    router.push("/checkout"); // กลับไปหน้าชำระเงิน
-  } else {
+const goToPayment = () => {
+  if (!selected.value) {
     alert("กรุณาเลือกวิธีชำระเงินก่อน");
+    return;
   }
+
+  // ส่งค่าที่เลือกไปหน้าชำระเงิน
+  router.push({
+    path: "/payment",
+    query: { method: selected.value }
+  });
 };
 </script>
