@@ -14,7 +14,7 @@
     </div>
 
     <div>
-      <sidebar />
+      <Sidebar />
     </div>
 
     <div v-if="user" class="flex flex-col md:flex-row md:space-x-8 space-y-8 md:space-y-0">
@@ -187,7 +187,7 @@
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
-import sidebar from '~/components/sidebar.vue'
+import Sidebar from '~/components/sidebar.vue'
 
 // Sidebar hover detection
 const expandSidebar = ref(false)
