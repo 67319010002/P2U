@@ -1,5 +1,5 @@
 <template>
-  <Sidebar />
+  <Sidebar/>
   <div class="flex min-h-screen bg-gray-900 text-white relative">
     <!-- Cart Icon -->
     <div v-if="showCartIcon" class="absolute top-4 right-6">
@@ -277,7 +277,7 @@ import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import axios from "axios";
 
 // ✅ แก้ import ให้ถูกต้อง
-import Sidebar from '~/components/Sidebar.vue';
+import Sidebar from '~/components/sidebar.vue';
 import Carta from "~/components/Carta.vue";
 // -----------------------------
 // State
