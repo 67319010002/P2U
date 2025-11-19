@@ -257,6 +257,7 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: 'auth' })
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
@@ -276,6 +277,14 @@ const router = useRouter()
 const baseURL = 'http://localhost:5000'
 const defaultProfile = '/default-profile.png'
 
+const isClient = process.client
+const getToken = () => {
+  if (!isClient) return null
+  const storedToken = localStorage.getItem('token')
+  if (!storedToken || storedToken === 'undefined' || storedToken === 'null') return null
+  return storedToken
+}
+
 const user = ref(null)
 const errorMsg = ref('')
 const successMsg = ref('')
@@ -289,27 +298,37 @@ const isEditing = ref(false)
 const editingIndex = ref(null)
 
 // Cart
-const cartItems = ref(JSON.parse(localStorage.getItem('cart') || '[]'))
+const cartItems = ref([])
+if (isClient) {
+  cartItems.value = JSON.parse(localStorage.getItem('cart') || '[]')
+}
 
-const formatImageUrl = (url) => url ? (url.startsWith('http') ? url : baseURL + url) : '/no-image.png'
-watch(cartItems, val => localStorage.setItem('cart', JSON.stringify(val)), { deep: true })
+const formatImageUrl = (url) => url ? (url.startsWith('http') ? url : baseURL + url) : '/default-product.svg'
+watch(cartItems, val => {
+  if (isClient) localStorage.setItem('cart', JSON.stringify(val))
+}, { deep: true })
 
 // Fetch profile
 onMounted(async () => {
   try {
-    const token = localStorage.getItem('token')
-    if (!token) throw new Error('No token found')
+    const token = getToken()
+    if (!token) return handleLogout()
     const res = await axios.get(baseURL + '/api/profile', { headers: { Authorization: `Bearer ${token}` } })
     if (res.data.profile_image_url && !res.data.profile_image_url.startsWith('http')) res.data.profile_image_url = baseURL + res.data.profile_image_url
     user.value = res.data
-  } catch (e) { console.error(e); router.push('/login') }
+  } catch (e) {
+    console.error(e)
+    if (e.response?.status === 401 || e.response?.status === 403) return handleLogout()
+    router.push('/login')
+  }
 })
 
 // Address functions
 const addOrUpdateAddress = async () => {
   errorMsg.value = ''; successMsg.value = ''
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
+    if (!token) return handleLogout()
     const endpoint = isEditing.value ? `${baseURL}/api/profile/address/${editingIndex.value}` : `${baseURL}/api/profile/address`
     const method = isEditing.value ? 'put' : 'post'
     const res = await axios({ method, url: endpoint, data: newAddress.value, headers: { Authorization: `Bearer ${token}` } })
@@ -324,7 +343,8 @@ const deleteAddress = async (i) => {
   if (confirm('Are you sure to delete this address?')) {
     errorMsg.value = ''; successMsg.value = ''
     try {
-      const token = localStorage.getItem('token')
+      const token = getToken()
+      if (!token) return handleLogout()
       const res = await axios.delete(`${baseURL}/api/profile/address/${i}`, { headers: { Authorization: `Bearer ${token}` } })
       user.value.addresses = res.data.addresses
       successMsg.value = 'Address deleted successfully.'
@@ -347,7 +367,8 @@ const uploadConfirmed = async () => {
   if (!selectedFile) return
   const formData = new FormData(); formData.append('profile_image', selectedFile)
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
+    if (!token) return handleLogout()
     const res = await axios.put(baseURL + '/api/profile/image', formData, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } })
     let imageUrl = res.data.profile_image_url; if (imageUrl && !imageUrl.startsWith('http')) imageUrl = baseURL + imageUrl
     user.value.profile_image_url = imageUrl
@@ -363,12 +384,14 @@ const cancelUpload = () => { if (previewImageUrl.value) URL.revokeObjectURL(prev
 
 // Logout
 const handleLogout = () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('username')
-  localStorage.removeItem('user')
-  localStorage.removeItem('cart')
+  if (isClient) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('username')
+    localStorage.removeItem('user')
+    localStorage.removeItem('cart')
+  }
   router.push('/login')
-  window.dispatchEvent(new Event('user-updated'))
+  if (isClient) window.dispatchEvent(new Event('user-updated'))
 }
 
 // Language
