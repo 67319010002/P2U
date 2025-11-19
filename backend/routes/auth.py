@@ -491,4 +491,6 @@ def address_options(index=None):
     response = current_app.make_default_options_response()
     response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS,PATCH'
     response.headers['Access-Control-Allow-Headers'] = 'Authorization,Content-Type'
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response

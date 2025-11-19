@@ -110,10 +110,10 @@
                     <p class="text-sm text-pink-300">{{ addr.phone }}</p>
                   </div>
                   <label class="flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="radio" name="defaultAddress" :checked="addr.is_default" :value="index"
-                      @change="selectAddress(index)" class="text-pink-500 focus:ring-pink-500" />
-                    <span :class="addr.is_default ? 'text-green-400 font-semibold' : 'text-gray-400'">
-                      {{ addr.is_default ? t('defaultAddress') : t('selectAddress') }}
+                    <input type="radio" name="defaultAddress" :checked="pendingDefaultIndex === index" :value="index"
+                      @change="queueDefaultSelection(index)" class="text-pink-500 focus:ring-pink-500" />
+                    <span :class="index === selectedAddressIndex ? 'text-green-400 font-semibold' : 'text-gray-400'">
+                      {{ index === selectedAddressIndex ? t('defaultAddress') : t('selectAddress') }}
                     </span>
                   </label>
                 </div>
@@ -131,6 +131,12 @@
                     🗑️ {{ t('delete') }}
                   </button>
                 </div>
+              </div>
+              <div v-if="isDefaultDirty" class="flex justify-end pt-2">
+                <button @click="confirmDefaultSelection" :disabled="isSettingDefault"
+                  class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all duration-200">
+                  {{ t('confirmDefault') }}
+                </button>
               </div>
             </div>
             <div v-else class="mb-6 bg-gray-900/50 rounded-xl p-6 border border-dashed border-gray-700 text-center text-gray-400">
@@ -307,8 +313,14 @@ let selectedFile = null
 let messageTimer = null
 
 const selectedAddressIndex = ref(null)
+const pendingDefaultIndex = ref(null)
 const isAddressSaving = ref(false)
+const isSettingDefault = ref(false)
 const addresses = computed(() => user.value?.addresses || [])
+const isDefaultDirty = computed(() =>
+  pendingDefaultIndex.value !== null &&
+  pendingDefaultIndex.value !== selectedAddressIndex.value
+)
 
 // Address
 const newAddress = ref({ name: '', phone: '', address_line: '', district: '', province: '', postal_code: '', is_default: false })
@@ -321,6 +333,7 @@ const applyAddressResponse = (list = []) => {
   user.value.addresses = normalized
   const defaultIndex = normalized.findIndex(addr => addr.is_default)
   selectedAddressIndex.value = defaultIndex >= 0 ? defaultIndex : null
+  pendingDefaultIndex.value = selectedAddressIndex.value
 }
 
 const clearMessages = () => {
@@ -436,18 +449,25 @@ const resetForm = () => {
   editingIndex.value = null
 }
 
-const selectAddress = async (i) => {
-  if (i === selectedAddressIndex.value) return
+const queueDefaultSelection = (i) => {
+  pendingDefaultIndex.value = i
+}
+
+const confirmDefaultSelection = async () => {
+  if (!isDefaultDirty.value || pendingDefaultIndex.value === null) return
   clearMessages()
+  isSettingDefault.value = true
   try {
     const token = getToken()
     if (!token) return handleLogout()
-    const res = await axios.patch(`${baseURL}/api/profile/address/default/${i}`, {}, { headers: { Authorization: `Bearer ${token}` } })
+    const res = await axios.patch(`${baseURL}/api/profile/address/default/${pendingDefaultIndex.value}`, {}, { headers: { Authorization: `Bearer ${token}` } })
     applyAddressResponse(res.data.addresses)
     showMessage('success', 'ตั้งค่าที่อยู่หลักเรียบร้อยแล้ว')
   } catch (err) {
     console.error(err)
     showMessage('error', err.response?.data?.msg || 'ตั้งค่าที่อยู่หลักไม่สำเร็จ')
+  } finally {
+    isSettingDefault.value = false
   }
 }
 
@@ -514,6 +534,7 @@ const t = (key) => {
       setDefault: 'ตั้งเป็นที่อยู่หลัก',
       defaultAddress: 'ที่อยู่หลัก',
       selectAddress: 'เลือกเป็นที่อยู่หลัก',
+      confirmDefault: 'ยืนยันที่อยู่หลัก',
       trackOrder: 'ติดตามคำสั่งซื้อ',
       myCart: 'ตะกร้าของฉัน'
     },
@@ -535,6 +556,7 @@ const t = (key) => {
       setDefault: 'Set as default address',
       defaultAddress: 'Default address',
       selectAddress: 'Select as default',
+      confirmDefault: 'Confirm default',
       trackOrder: 'Track Order',
       myCart: 'My Cart'
     }
