@@ -101,18 +101,23 @@
             </h2>
             
             <!-- Address List -->
-            <div v-if="user.addresses && user.addresses.length" class="space-y-4 mb-6">
-              <div v-for="(addr, index) in user.addresses" :key="index"
+            <div v-if="addresses.length" class="space-y-4 mb-6">
+              <div v-for="(addr, index) in addresses" :key="index"
                 class="bg-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-pink-500 transition-all duration-300">
-                <div class="flex items-start justify-between mb-3">
-                  <h3 class="font-semibold text-lg">{{ addr.name }}</h3>
-                  <span v-if="addr.is_default"
-                    class="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded-full border border-green-500">
-                    Default
-                  </span>
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-2">
+                  <div>
+                    <h3 class="font-semibold text-lg">{{ addr.name }}</h3>
+                    <p class="text-sm text-pink-300">{{ addr.phone }}</p>
+                  </div>
+                  <label class="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="radio" name="defaultAddress" :checked="addr.is_default" :value="index"
+                      @change="selectAddress(index)" class="text-pink-500 focus:ring-pink-500" />
+                    <span :class="addr.is_default ? 'text-green-400 font-semibold' : 'text-gray-400'">
+                      {{ addr.is_default ? t('defaultAddress') : t('selectAddress') }}
+                    </span>
+                  </label>
                 </div>
-                <div class="space-y-2 text-sm text-gray-300">
-                  <p>📱 {{ addr.phone }}</p>
+                <div class="space-y-1 text-sm text-gray-300">
                   <p>📍 {{ addr.address_line }}</p>
                   <p>🏙️ {{ addr.district }}, {{ addr.province }} {{ addr.postal_code }}</p>
                 </div>
@@ -123,10 +128,14 @@
                   </button>
                   <button @click="deleteAddress(index)"
                     class="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 rounded-lg transition-all duration-200">
-                    🗑️ Delete
+                    🗑️ {{ t('delete') }}
                   </button>
                 </div>
               </div>
+            </div>
+            <div v-else class="mb-6 bg-gray-900/50 rounded-xl p-6 border border-dashed border-gray-700 text-center text-gray-400">
+              <p class="mb-2 text-base">ยังไม่มีที่อยู่จัดส่ง</p>
+              <p class="text-sm">เพิ่มที่อยู่แรกของคุณเพื่อใช้งานในการสั่งซื้อ</p>
             </div>
 
             <!-- Add/Edit Address Form -->
@@ -154,11 +163,11 @@
                 <div class="flex items-center">
                   <input v-model="newAddress.is_default" type="checkbox" id="is_default"
                     class="w-4 h-4 text-pink-600 bg-gray-800 border-gray-600 rounded focus:ring-pink-500" />
-                  <label for="is_default" class="ml-2 text-sm text-gray-300">Set as default address</label>
+                  <label for="is_default" class="ml-2 text-sm text-gray-300">{{ t('setDefault') }}</label>
                 </div>
                 <div class="flex gap-2">
-                  <button type="submit"
-                    class="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300">
+                  <button type="submit" :disabled="isAddressSaving"
+                    class="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all duration-300">
                     {{ isEditing ? t('updateAddress') : t('addAddress') }}
                   </button>
                   <button v-if="isEditing" @click="cancelEdit" type="button"
@@ -258,19 +267,23 @@
 
 <script setup>
 definePageMeta({ middleware: 'auth' })
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import sidebar from '~/components/sidebar.vue'
 
 // Sidebar hover detection
 const expandSidebar = ref(false)
+let sidebarEl = null
+const handleSidebarEnter = () => expandSidebar.value = true
+const handleSidebarLeave = () => expandSidebar.value = false
 onMounted(() => {
-  const sidebarEl = document.querySelector('.fixed.left-0')
+  sidebarEl = document.querySelector('.fixed.left-0')
   if (sidebarEl) {
-    sidebarEl.addEventListener('mouseenter', () => expandSidebar.value = true)
-    sidebarEl.addEventListener('mouseleave', () => expandSidebar.value = false)
+    sidebarEl.addEventListener('mouseenter', handleSidebarEnter)
+    sidebarEl.addEventListener('mouseleave', handleSidebarLeave)
   }
+  fetchProfile()
 })
 
 const router = useRouter()
@@ -291,11 +304,44 @@ const successMsg = ref('')
 const fileInput = ref(null)
 const previewImageUrl = ref(null)
 let selectedFile = null
+let messageTimer = null
+
+const selectedAddressIndex = ref(null)
+const isAddressSaving = ref(false)
+const addresses = computed(() => user.value?.addresses || [])
 
 // Address
 const newAddress = ref({ name: '', phone: '', address_line: '', district: '', province: '', postal_code: '', is_default: false })
 const isEditing = ref(false)
 const editingIndex = ref(null)
+
+const applyAddressResponse = (list = []) => {
+  const normalized = Array.isArray(list) ? list : []
+  if (!user.value) user.value = {}
+  user.value.addresses = normalized
+  const defaultIndex = normalized.findIndex(addr => addr.is_default)
+  selectedAddressIndex.value = defaultIndex >= 0 ? defaultIndex : null
+}
+
+const clearMessages = () => {
+  errorMsg.value = ''
+  successMsg.value = ''
+}
+
+const showMessage = (type, message) => {
+  if (messageTimer) clearTimeout(messageTimer)
+  if (type === 'success') {
+    successMsg.value = message
+    errorMsg.value = ''
+  } else {
+    errorMsg.value = message
+    successMsg.value = ''
+  }
+  messageTimer = setTimeout(() => {
+    successMsg.value = ''
+    errorMsg.value = ''
+  }, 4000)
+}
 
 // Cart
 const cartItems = ref([])
@@ -308,50 +354,102 @@ watch(cartItems, val => {
   if (isClient) localStorage.setItem('cart', JSON.stringify(val))
 }, { deep: true })
 
-// Fetch profile
-onMounted(async () => {
+const fetchProfile = async () => {
   try {
+    clearMessages()
     const token = getToken()
     if (!token) return handleLogout()
     const res = await axios.get(baseURL + '/api/profile', { headers: { Authorization: `Bearer ${token}` } })
     if (res.data.profile_image_url && !res.data.profile_image_url.startsWith('http')) res.data.profile_image_url = baseURL + res.data.profile_image_url
     user.value = res.data
+    applyAddressResponse(res.data.addresses || [])
+    showMessage('success', 'โหลดข้อมูลโปรไฟล์สำเร็จ')
   } catch (e) {
     console.error(e)
+    showMessage('error', e.response?.data?.msg || 'ไม่สามารถโหลดโปรไฟล์ได้')
     if (e.response?.status === 401 || e.response?.status === 403) return handleLogout()
     router.push('/login')
   }
+}
+
+onBeforeUnmount(() => {
+  if (sidebarEl) {
+    sidebarEl.removeEventListener('mouseenter', handleSidebarEnter)
+    sidebarEl.removeEventListener('mouseleave', handleSidebarLeave)
+  }
+  if (messageTimer) clearTimeout(messageTimer)
+  if (previewImageUrl.value) URL.revokeObjectURL(previewImageUrl.value)
 })
 
 // Address functions
 const addOrUpdateAddress = async () => {
-  errorMsg.value = ''; successMsg.value = ''
+  if (isAddressSaving.value) return
+  clearMessages()
+  isAddressSaving.value = true
   try {
     const token = getToken()
     if (!token) return handleLogout()
-    const endpoint = isEditing.value ? `${baseURL}/api/profile/address/${editingIndex.value}` : `${baseURL}/api/profile/address`
-    const method = isEditing.value ? 'put' : 'post'
+    const isUpdate = isEditing.value && editingIndex.value !== null
+    const endpoint = isUpdate ? `${baseURL}/api/profile/address/${editingIndex.value}` : `${baseURL}/api/profile/address`
+    const method = isUpdate ? 'put' : 'post'
     const res = await axios({ method, url: endpoint, data: newAddress.value, headers: { Authorization: `Bearer ${token}` } })
-    user.value.addresses = res.data.addresses
-    successMsg.value = isEditing.value ? 'Address updated successfully.' : 'Address added successfully.'
+    applyAddressResponse(res.data.addresses)
+    showMessage('success', isUpdate ? 'อัปเดตที่อยู่เรียบร้อยแล้ว' : 'เพิ่มที่อยู่ใหม่เรียบร้อยแล้ว')
     resetForm()
-  } catch (err) { console.error(err); errorMsg.value = err.response?.data?.msg || 'Failed to save address.' }
-}
-const editAddress = (i) => { newAddress.value = { ...user.value.addresses[i] }; isEditing.value = true; editingIndex.value = i }
-const cancelEdit = () => resetForm()
-const deleteAddress = async (i) => {
-  if (confirm('Are you sure to delete this address?')) {
-    errorMsg.value = ''; successMsg.value = ''
-    try {
-      const token = getToken()
-      if (!token) return handleLogout()
-      const res = await axios.delete(`${baseURL}/api/profile/address/${i}`, { headers: { Authorization: `Bearer ${token}` } })
-      user.value.addresses = res.data.addresses
-      successMsg.value = 'Address deleted successfully.'
-    } catch (err) { console.error(err); errorMsg.value = err.response?.data?.msg || 'Failed to delete address.' }
+  } catch (err) {
+    console.error(err)
+    showMessage('error', err.response?.data?.msg || 'บันทึกที่อยู่ไม่สำเร็จ')
+  } finally {
+    isAddressSaving.value = false
   }
 }
-const resetForm = () => { newAddress.value = { name: '', phone: '', address_line: '', district: '', province: '', postal_code: '', is_default: false }; isEditing.value = false; editingIndex.value = null }
+
+const editAddress = (i) => {
+  const addr = addresses.value[i]
+  if (!addr) return
+  newAddress.value = { ...addr }
+  isEditing.value = true
+  editingIndex.value = i
+}
+
+const cancelEdit = () => resetForm()
+
+const deleteAddress = async (i) => {
+  if (!confirm('Are you sure to delete this address?')) return
+  clearMessages()
+  try {
+    const token = getToken()
+    if (!token) return handleLogout()
+    const res = await axios.delete(`${baseURL}/api/profile/address/${i}`, { headers: { Authorization: `Bearer ${token}` } })
+    applyAddressResponse(res.data.addresses)
+    showMessage('success', 'ลบที่อยู่เรียบร้อยแล้ว')
+    if (isEditing.value && editingIndex.value === i) resetForm()
+  } catch (err) {
+    console.error(err)
+    showMessage('error', err.response?.data?.msg || 'ลบที่อยู่ไม่สำเร็จ')
+  }
+}
+
+const resetForm = () => {
+  newAddress.value = { name: '', phone: '', address_line: '', district: '', province: '', postal_code: '', is_default: false }
+  isEditing.value = false
+  editingIndex.value = null
+}
+
+const selectAddress = async (i) => {
+  if (i === selectedAddressIndex.value) return
+  clearMessages()
+  try {
+    const token = getToken()
+    if (!token) return handleLogout()
+    const res = await axios.patch(`${baseURL}/api/profile/address/default/${i}`, {}, { headers: { Authorization: `Bearer ${token}` } })
+    applyAddressResponse(res.data.addresses)
+    showMessage('success', 'ตั้งค่าที่อยู่หลักเรียบร้อยแล้ว')
+  } catch (err) {
+    console.error(err)
+    showMessage('error', err.response?.data?.msg || 'ตั้งค่าที่อยู่หลักไม่สำเร็จ')
+  }
+}
 
 // Profile image
 const triggerFileInput = () => fileInput.value.click()
@@ -398,8 +496,48 @@ const handleLogout = () => {
 const currentLanguage = ref('th')
 const t = (key) => {
   const translations = {
-    th: { username: 'ชื่อผู้ใช้', fullName: 'ชื่อเต็ม', email: 'อีเมล', phone: 'เบอร์โทร', seller: 'ผู้ขาย', registered: 'ลงทะเบียนแล้ว', notRegistered: 'ยังไม่ลงทะเบียน', addresses: 'ที่อยู่', addNewAddress: 'เพิ่มที่อยู่ใหม่', editAddress: 'แก้ไขที่อยู่', addAddress: 'เพิ่มที่อยู่', updateAddress: 'อัปเดตที่อยู่', cancel: 'ยกเลิก', trackOrder: 'ติดตามคำสั่งซื้อ', myCart: 'ตะกร้าของฉัน' },
-    en: { username: 'Username', fullName: 'Full Name', email: 'Email', phone: 'Phone', seller: 'Seller', registered: 'Registered', notRegistered: 'Not Registered', addresses: 'Addresses', addNewAddress: 'Add New Address', editAddress: 'Edit Address', addAddress: 'Add Address', updateAddress: 'Update Address', cancel: 'Cancel', trackOrder: 'Track Order', myCart: 'My Cart' }
+    th: {
+      username: 'ชื่อผู้ใช้',
+      fullName: 'ชื่อเต็ม',
+      email: 'อีเมล',
+      phone: 'เบอร์โทร',
+      seller: 'ผู้ขาย',
+      registered: 'ลงทะเบียนแล้ว',
+      notRegistered: 'ยังไม่ลงทะเบียน',
+      addresses: 'ที่อยู่',
+      addNewAddress: 'เพิ่มที่อยู่ใหม่',
+      editAddress: 'แก้ไขที่อยู่',
+      addAddress: 'เพิ่มที่อยู่',
+      updateAddress: 'อัปเดตที่อยู่',
+      cancel: 'ยกเลิก',
+      delete: 'ลบ',
+      setDefault: 'ตั้งเป็นที่อยู่หลัก',
+      defaultAddress: 'ที่อยู่หลัก',
+      selectAddress: 'เลือกเป็นที่อยู่หลัก',
+      trackOrder: 'ติดตามคำสั่งซื้อ',
+      myCart: 'ตะกร้าของฉัน'
+    },
+    en: {
+      username: 'Username',
+      fullName: 'Full Name',
+      email: 'Email',
+      phone: 'Phone',
+      seller: 'Seller',
+      registered: 'Registered',
+      notRegistered: 'Not Registered',
+      addresses: 'Addresses',
+      addNewAddress: 'Add New Address',
+      editAddress: 'Edit Address',
+      addAddress: 'Add Address',
+      updateAddress: 'Update Address',
+      cancel: 'Cancel',
+      delete: 'Delete',
+      setDefault: 'Set as default address',
+      defaultAddress: 'Default address',
+      selectAddress: 'Select as default',
+      trackOrder: 'Track Order',
+      myCart: 'My Cart'
+    }
   }
   return translations[currentLanguage.value][key] || key
 }

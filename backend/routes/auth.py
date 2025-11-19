@@ -22,6 +22,21 @@ auth = Blueprint('auth', __name__)
 UPLOAD_FOLDER = 'static/uploads'
 
 
+def serialize_addresses(addresses):
+    return [
+        {
+            "name": addr.name,
+            "phone": addr.phone,
+            "address_line": addr.address_line,
+            "district": addr.district,
+            "province": addr.province,
+            "postal_code": addr.postal_code,
+            "is_default": addr.is_default
+        }
+        for addr in (addresses or [])
+    ]
+
+
 # Function to send email
 def send_verification_email(recipient_email, verification_code):
     try:
@@ -295,17 +310,7 @@ def profile():
         "is_seller": user.is_seller,
         "shop_name": user.shop_name if user.is_seller else None,
         "is_email_verified": user.is_email_verified,
-        "addresses": [
-            {
-                "name": addr.name,
-                "phone": addr.phone,
-                "address_line": addr.address_line,
-                "district": addr.district,
-                "province": addr.province,
-                "postal_code": addr.postal_code,
-                "is_default": addr.is_default
-            } for addr in user.addresses
-        ]
+        "addresses": serialize_addresses(user.addresses)
     }), 200
 
 # -----------------------------
@@ -334,6 +339,14 @@ def update_profile_image():
         return jsonify({"msg": "Invalid image file type"}), 400
 
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    # Remove previous profile image if it exists and is stored locally
+    if user.profile_image_url and user.profile_image_url.startswith(f"/{UPLOAD_FOLDER}/"):
+        old_image_path = os.path.join(current_app.root_path, user.profile_image_url.lstrip('/'))
+        if os.path.exists(old_image_path):
+            try:
+                os.remove(old_image_path)
+            except OSError as e:
+                current_app.logger.warning(f"Failed to remove old profile image: {e}")
     new_filename = f"{uuid.uuid4().hex}.{ext}"
     save_path = os.path.join(UPLOAD_FOLDER, new_filename)
     profile_image.save(save_path)
@@ -342,3 +355,140 @@ def update_profile_image():
     user.save()
 
     return jsonify({"profile_image_url": user.profile_image_url}), 200
+
+
+# -----------------------------
+# ✅ Address CRUD
+# -----------------------------
+def _get_user_or_404():
+    user_id = get_jwt_identity()
+    try:
+        user = User.objects(id=ObjectId(user_id)).first()
+    except (ValidationError, TypeError):
+        return None, jsonify({"msg": "Invalid user ID"}), 400
+    if not user:
+        return None, jsonify({"msg": "User not found"}), 404
+    return user, None, None
+
+
+def _ensure_default(addresses):
+    addresses = addresses or []
+    if not addresses:
+        return
+    if not any(addr.is_default for addr in addresses):
+        addresses[0].is_default = True
+
+
+def _validate_address_payload(data):
+    required_fields = ["name", "phone", "address_line", "district", "province", "postal_code"]
+    missing = [field for field in required_fields if not data.get(field)]
+    if missing:
+        return f"Missing fields: {', '.join(missing)}"
+    return None
+
+
+@auth.route('/profile/address', methods=['POST'])
+@jwt_required()
+def create_address():
+    user, response, status = _get_user_or_404()
+    if not user:
+        return response, status
+    data = request.get_json() or {}
+    error = _validate_address_payload(data)
+    if error:
+        return jsonify({"msg": error}), 400
+
+    is_default = bool(data.get('is_default'))
+    user.addresses = user.addresses or []
+
+    if is_default:
+        for addr in user.addresses:
+            addr.is_default = False
+    elif not user.addresses:
+        is_default = True
+
+    new_address = Address(
+        name=data.get('name'),
+        phone=data.get('phone'),
+        address_line=data.get('address_line'),
+        district=data.get('district'),
+        province=data.get('province'),
+        postal_code=data.get('postal_code'),
+        is_default=is_default
+    )
+    user.addresses.append(new_address)
+    user.save()
+    return jsonify({"addresses": serialize_addresses(user.addresses)}), 200
+
+
+@auth.route('/profile/address/<int:index>', methods=['PUT'])
+@jwt_required()
+def update_address(index):
+    user, response, status = _get_user_or_404()
+    if not user:
+        return response, status
+    addresses = user.addresses or []
+    if index < 0 or index >= len(addresses):
+        return jsonify({"msg": "Address not found"}), 404
+    data = request.get_json() or {}
+    error = _validate_address_payload(data)
+    if error:
+        return jsonify({"msg": error}), 400
+
+    user.addresses = addresses
+    address = user.addresses[index]
+    address.name = data.get('name')
+    address.phone = data.get('phone')
+    address.address_line = data.get('address_line')
+    address.district = data.get('district')
+    address.province = data.get('province')
+    address.postal_code = data.get('postal_code')
+
+    if 'is_default' in data and bool(data.get('is_default')):
+        for idx, addr in enumerate(user.addresses):
+            addr.is_default = (idx == index)
+
+    user.save()
+    return jsonify({"addresses": serialize_addresses(user.addresses)}), 200
+
+
+@auth.route('/profile/address/<int:index>', methods=['DELETE'])
+@jwt_required()
+def delete_address(index):
+    user, response, status = _get_user_or_404()
+    if not user:
+        return response, status
+    addresses = user.addresses or []
+    if index < 0 or index >= len(addresses):
+        return jsonify({"msg": "Address not found"}), 404
+    user.addresses = addresses
+    user.addresses.pop(index)
+    _ensure_default(user.addresses)
+    user.save()
+    return jsonify({"addresses": serialize_addresses(user.addresses)}), 200
+
+
+@auth.route('/profile/address/default/<int:index>', methods=['PATCH'])
+@jwt_required()
+def set_default_address(index):
+    user, response, status = _get_user_or_404()
+    if not user:
+        return response, status
+    addresses = user.addresses or []
+    if index < 0 or index >= len(addresses):
+        return jsonify({"msg": "Address not found"}), 404
+    user.addresses = addresses
+    for idx, addr in enumerate(user.addresses):
+        addr.is_default = (idx == index)
+    user.save()
+    return jsonify({"addresses": serialize_addresses(user.addresses)}), 200
+
+
+@auth.route('/profile/address', methods=['OPTIONS'])
+@auth.route('/profile/address/<int:index>', methods=['OPTIONS'])
+@auth.route('/profile/address/default/<int:index>', methods=['OPTIONS'])
+def address_options(index=None):
+    response = current_app.make_default_options_response()
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS,PATCH'
+    response.headers['Access-Control-Allow-Headers'] = 'Authorization,Content-Type'
+    return response
