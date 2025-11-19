@@ -6,53 +6,10 @@
       <div class="absolute right-0 -bottom-20 w-[480px] h-[480px] bg-indigo-500/15 blur-3xl rounded-full"></div>
     </div>
 
-    <div class="relative z-10 w-full max-w-6xl mx-auto px-4">
+    <div class="relative z-10 w-full max-w-6xl mx-auto px-4 p-10">
       <div class="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] items-stretch">
-        <article
-          class="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-3xl p-10 flex flex-col gap-10 shadow-[0_35px_90px_rgba(15,23,42,0.65)]">
-          <div class="space-y-6">
-            <p class="eyebrow text-pink-200">P2U KAISER</p>
-            <h1 class="text-4xl lg:text-5xl font-bold leading-tight text-glow">
-              ยินดีต้อนรับสู่คอมมูนิตี้นักสะสมยุคใหม่
-            </h1>
-            <p class="text-gray-100 text-lg">
-              ซื้อขายของสะสมและสินค้า preloved ด้วยระบบความปลอดภัยที่ไว้ใจได้ พร้อมบริการช่วยเหลือผู้ขายและผู้ซื้อครบวงจร
-            </p>
-          </div>
-
-          <div class="space-y-4">
-            <div class="flex items-center gap-3 text-gray-100">
-              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl">✨</span>
-              <p>รับเหรียญ P2U Coin และสิทธิพิเศษจากกิจกรรมประจำเดือน</p>
-            </div>
-            <div class="flex items-center gap-3 text-gray-100">
-              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl">🛡️</span>
-              <p>ระบบยืนยันผู้ใช้และร้านค้าเพื่อเพิ่มความน่าเชื่อถือ</p>
-            </div>
-            <div class="flex items-center gap-3 text-gray-100">
-              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl">🚀</span>
-              <p>เพิ่มยอดขายได้ไวขึ้นด้วยหน้า Shop และแคมเปญโปรโมต</p>
-            </div>
-          </div>
-
-          <div class="grid gap-6 sm:grid-cols-3 text-center">
-            <div>
-              <p class="text-3xl font-bold">+12K</p>
-              <p class="text-sm text-gray-300 mt-1">ผู้ใช้เชื่อใจ</p>
-            </div>
-            <div>
-              <p class="text-3xl font-bold">24/7</p>
-              <p class="text-sm text-gray-300 mt-1">เจ้าหน้าที่ดูแล</p>
-            </div>
-            <div>
-              <p class="text-3xl font-bold">฿8.5M</p>
-              <p class="text-sm text-gray-300 mt-1">มูลค่าสินค้าหมุนเวียน</p>
-            </div>
-          </div>
-        </article>
-
-        <div
-          class="rounded-3xl border border-white/10 bg-slate-950/80 backdrop-blur-2xl p-8 sm:p-10 shadow-[0_25px_70px_rgba(2,6,23,0.75)] space-y-6">
+        
+        <div class="rounded-3xl border border-white/10 bg-slate-950/80 backdrop-blur-2xl p-8 sm:p-10 shadow-[0_25px_70px_rgba(2,6,23,0.75)] space-y-6">
           <div class="space-y-2 text-center">
             <p class="text-sm uppercase tracking-[0.45em] text-pink-300">สร้างบัญชีใหม่</p>
             <h2 class="text-3xl font-semibold">เข้าร่วม P2U Kaiser</h2>
@@ -69,7 +26,7 @@
                   autocomplete="username" />
               </div>
               <div>
-                <label class="text-sm text-gray-300">อีเมล</label>
+                <label class="text-sm text-gray-300 block">อีเมล</label>
                 <input v-model="email" type="email" class="input-style" placeholder="your@email.com"
                   autocomplete="email" />
               </div>
@@ -129,6 +86,33 @@
             </NuxtLink>
           </p>
         </div>
+        <article
+          class="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-3xl p-10 flex flex-col gap-10 shadow-[0_35px_90px_rgba(15,23,42,0.65)]">
+          <div class="space-y-6">
+            <p class="eyebrow text-pink-200">P2U KAISER</p>
+            <h1 class="text-4xl lg:text-5xl font-bold leading-tight text-glow">
+              ยินดีต้อนรับสู่ P2U KAISER 
+            </h1>
+            <p class="text-gray-100 text-lg">
+              เปิดโอกาสให้คุณได้ซื้อขายสินค้าคุณภาพมือสองอย่างมั่นใจ ด้วยเทคโนโลยี AI ที่ช่วยคำนวณราคายุติธรรม และระบบตรวจสอบความน่าเชื่อถือที่เชื่อถือได้
+            </p>
+          </div>
+
+          <div class="space-y-4">
+            <div class="flex items-center gap-3 text-gray-100">
+              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl">✨</span>
+              <p>รับ P2U Coin และโบนัสพิเศษจากกิจกรรมภายในแพลตฟอร์ม</p>
+            </div>
+            <div class="flex items-center gap-3 text-gray-100">
+              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl">🛡️</span>
+              <p>ระบบยืนยันตัวตนที่เชื่อถือได้</p>
+            </div>
+            <div class="flex items-center gap-3 text-gray-100">
+              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl">🚀</span>
+              <p>พิ่มโอกาสในการขายด้วยเครื่องมือโปรโมตและการคำนวณราคาด้วย AI</p>
+            </div>
+          </div>
+        </article>
       </div>
     </div>
   </section>

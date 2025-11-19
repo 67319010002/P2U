@@ -1,73 +1,118 @@
 <template>
   <section class="layout-full relative min-h-screen bg-slate-950 text-white overflow-hidden">
-    <div class="absolute inset-0 bg-linear-to-br from-slate-950 via-slate-900 to-black"></div>
-    <div class="absolute inset-0 opacity-70 pointer-events-none">
-      <div class="absolute -right-16 top-10 w-[420px] h-[420px] bg-pink-600/30 blur-3xl rounded-full"></div>
-      <div class="absolute left-0 bottom-0 w-[520px] h-[520px] bg-indigo-500/25 blur-3xl rounded-full"></div>
+    <!-- Animated Background Gradients -->
+    <div class="absolute inset-0 overflow-hidden">
+      <div class="absolute -right-20 -top-20 w-96 h-96 bg-pink-500/20 blur-3xl animate-pulse"></div>
+      <div class="absolute -left-20 top-1/3 w-80 h-80 bg-purple-500/15 blur-3xl animate-pulse" style="animation-delay: 1s"></div>
+      <div class="absolute right-1/4 bottom-0 w-96 h-96 bg-indigo-500/20 blur-3xl animate-pulse" style="animation-delay: 2s"></div>
     </div>
 
+    <!-- Grid Pattern Overlay -->
+    <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]"></div>
+
     <div class="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
-      <div class="w-full max-w-[420px] rounded-3xl border border-white/10 bg-white/5 backdrop-blur-2xl p-10 shadow-[0_30px_80px_rgba(2,6,23,0.65)] space-y-8">
-        <div class="text-center space-y-3">
-          <p class="eyebrow text-pink-200">P2U Kaiser</p>
-          <h1 class="text-3xl font-semibold text-glow">ยินดีต้อนรับกลับ</h1>
-          <p class="text-sm text-gray-300">เข้าสู่ระบบเพื่อจัดการสินค้าที่คุณรัก</p>
+      <!-- Login Card -->
+      <div class="w-full max-w-md">
+        <!-- Decorative Elements -->
+        <div class="absolute -top-4 -left-4 w-24 h-24 bg-pink-500/10 blur-2xl"></div>
+        <div class="absolute -bottom-4 -right-4 w-32 h-32 bg-indigo-500/10 blur-2xl"></div>
+        
+        <div class="relative rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-8 shadow-2xl shadow-black/50 hover:border-white/20 transition-all duration-300">
+
+          <!-- Header -->
+          <div class="text-center space-y-2 mb-8">
+            <p class="text-4xl uppercase  text-pink-400 font-semibold  font-bold">P2U Kaiser</p>
+            <h1 class="text-2xl font-bold text-white">
+              ยินดีต้อนรับกลับ
+            </h1>
+            <p class="text-sm text-gray-400">เข้าสู่ระบบเพื่อจัดการสินค้าที่คุณรัก</p>
+          </div>
+
+          <!-- Login Form -->
+          <form class="space-y-5" @submit.prevent="handleLogin">
+            <!-- Username Input -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs uppercase tracking-widest text-gray-300 font-medium">ชื่อผู้ใช้</label>
+                <span class="text-[0.65rem] text-gray-500">ใช้ชื่อที่จดจำง่าย</span>
+              </div>
+              <div class="group relative">
+                <div class="absolute -inset-0.5 bg-pink-500/50 rounded-full opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 blur transition duration-300"></div>
+                <div class="relative flex items-center rounded-md bg-slate-950/90 border border-white/10 group-focus-within:border-pink-500/50 transition-all duration-300">
+                  <span class="absolute left-4 text-gray-400 group-focus-within:text-pink-400 transition-colors">
+                    <i class="bx bxs-user text-xl"></i>
+                  </span>
+                  <input 
+                    v-model="username" 
+                    placeholder="username" 
+                    class="w-full bg-transparent pl-12 pr-4 py-3.5 text-white placeholder-gray-500 focus:outline-none rounded-md" 
+                    autocomplete="username" 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Password Input -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs uppercase tracking-widest text-gray-300 font-medium">รหัสผ่าน</label>
+                <span class="text-[0.65rem] text-gray-500">เก็บข้อมูลของคุณให้ปลอดภัย</span>
+              </div>
+              <div class="group relative">
+                <div class="absolute -inset-0.5 bg-pink-500/50 rounded-full opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 blur transition duration-300"></div>
+                <div class="relative flex items-center rounded-md bg-slate-950/90 border border-white/10 group-focus-within:border-pink-500/50 transition-all duration-300">
+                  <span class="absolute left-4 text-gray-400 group-focus-within:text-pink-400 transition-colors">
+                    <i class='bxr  bxs-lock-keyhole' ></i> 
+                  </span>
+                  <input 
+                    v-model="password" 
+                    type="password" 
+                    placeholder="••••••••" 
+                    class="w-full bg-transparent pl-12 pr-4 py-3.5 text-white placeholder-gray-500 focus:outline-none rounded-md"
+                    autocomplete="current-password" 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Login Button -->
+            <button 
+              type="submit"
+              class="relative w-full mt-6 rounded-full bg-pink-600 hover:bg-pink-500 text-white font-semibold py-3.5 transition-all duration-300 shadow-lg shadow-pink-500/30 hover:shadow-pink-500/50 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden"
+              :disabled="loading"
+            >
+              <span class="absolute inset-0 w-full h-full bg-white/20 scale-0 group-hover:scale-110 transition-transform duration-300 rounded-full"></span>
+              <span class="relative flex items-center justify-center gap-2">
+                <span v-if="!loading">เข้าสู่ระบบ</span>
+                <span v-else class="flex items-center gap-2">
+                  <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  กำลังเข้าสู่ระบบ...
+                </span>
+              </span>
+            </button>
+          </form>
+
+          <!-- Error Message -->
+          <div v-if="errorMsg" class="mt-4 p-3 rounded-full bg-red-500/10 border border-red-500/30 backdrop-blur-sm">
+            <p class="text-center text-sm text-red-300 flex items-center justify-center gap-2">
+              <i class="bx bxs-error-circle"></i>
+              {{ errorMsg }}
+            </p>
+          </div>
+
+          <!-- Register Link -->
+          <div class="mt-6 pt-6 border-t border-white/10">
+            <p class="text-center text-sm text-gray-400">
+              ไม่มีบัญชี?
+              <NuxtLink to="/register" class="text-pink-400 font-semibold hover:text-pink-300 transition-all">
+                ลงทะเบียน
+              </NuxtLink>
+            </p>
+          </div>
         </div>
-
-        <form class="space-y-6" @submit.prevent="handleLogin">
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="form-label">ชื่อผู้ใช้</label>
-              <span class="form-hint">ใช้ชื่อที่จดจำง่าย</span>
-            </div>
-            <div
-              class="group relative rounded-2xl bg-linear-to-r from-white/15 via-transparent to-white/5 p-px transition">
-              <div
-                class="relative flex items-center rounded-[1.1rem] bg-slate-950/70 px-3 py-1 shadow-[inset_0_12px_40px_rgba(15,23,42,0.65)] group-focus-within:bg-slate-900/70">
-                <span class="login-icon group-focus-within:text-white">
-                  <i class="bx bxs-user text-lg"></i>
-                </span>
-                <input v-model="username" placeholder="username" class="input-style pl-12 pr-2" autocomplete="username" />
-              </div>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="form-label">รหัสผ่าน</label>
-              <span class="form-hint">เก็บข้อมูลของคุณให้ปลอดภัย</span>
-            </div>
-            <div
-              class="group relative rounded-2xl bg-linear-to-r from-white/15 via-transparent to-white/5 p-px transition">
-              <div
-                class="relative flex items-center rounded-[1.1rem] bg-slate-950/70 px-3 py-1 shadow-[inset_0_12px_40px_rgba(15,23,42,0.65)] group-focus-within:bg-slate-900/70">
-                <span class="login-icon group-focus-within:text-white">
-                  <i class="bxs-lock-keyhole bx-rotate-90 text-lg"></i>
-                </span>
-                <input v-model="password" type="password" placeholder="••••••••" class="input-style pl-12 pr-2"
-                  autocomplete="current-password" />
-              </div>
-            </div>
-          </div>
-
-          <button type="submit"
-            class="w-full rounded-2xl bg-pink-600/90 hover:bg-pink-500 text-white font-semibold py-3 transition shadow-lg shadow-pink-500/30 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:ring-offset-2 focus:ring-offset-slate-950 relative overflow-hidden group"
-            :disabled="loading">
-            <span class="absolute inset-0 bg-white/20 scale-0 group-hover:scale-110 transition-transform duration-300 rounded-2xl"></span>
-            <span class="relative">เข้าสู่ระบบ</span>
-          </button>
-        </form>
-
-        <p v-if="errorMsg" class="text-center text-sm text-red-300">
-          {{ errorMsg }}
-        </p>
-
-        <p class="text-center text-sm text-gray-400">
-          ไม่มีบัญชี?
-          <NuxtLink to="/register" class="text-pink-300 font-semibold hover:text-white transition">
-            ลงทะเบียน
-          </NuxtLink>
-        </p>
       </div>
     </div>
   </section>
@@ -79,22 +124,22 @@
 import axios from 'axios';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import Loading from '@/components/loading.vue';  // นำเข้า Loading.vue
+import Loading from '@/components/loading.vue';
 
 const username = ref('');
 const password = ref('');
 const errorMsg = ref('');
-const loading = ref(false);  // ตัวแปรสำหรับควบคุมการแสดงผลของแอนิเมชัน
+const loading = ref(false);
 const router = useRouter();
 
 const handleLogin = async () => {
   errorMsg.value = '';
   if (!username.value || !password.value) {
-    errorMsg.value = 'Please enter a username and password.';
+    errorMsg.value = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';
     return;
   }
 
-  loading.value = true;  // เริ่มแอนิเมชันโหลด
+  loading.value = true;
 
   try {
     const res = await axios.post('http://localhost:5000/api/login', {
@@ -104,7 +149,6 @@ const handleLogin = async () => {
 
     const user = res.data.user;
 
-    // ✅ กรณีที่ล็อกอินสำเร็จ
     if (user) {
       localStorage.setItem('token', res.data.access_token);
       localStorage.setItem('user', JSON.stringify({
@@ -121,28 +165,26 @@ const handleLogin = async () => {
     }
 
   } catch (err) {
-    errorMsg.value = err.response?.data?.msg || 'Login failed. Please try again.';
+    errorMsg.value = err.response?.data?.msg || 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
   } finally {
-    loading.value = false;  // หยุดแอนิเมชันโหลดเมื่อเสร็จสิ้น
+    loading.value = false;
   }
 };
 </script>
 
 <style lang="postcss" scoped>
-.input-style {
-  @apply w-full rounded-2xl border-0 bg-transparent px-4 py-4 text-white placeholder-gray-400
-    focus:outline-none focus:ring-0 transition;
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(1.05);
+  }
 }
 
-.login-icon {
-  @apply absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none transition;
-}
-
-.form-label {
-  @apply text-xs uppercase tracking-[0.4em] text-gray-300;
-}
-
-.form-hint {
-  @apply text-[0.65rem] text-gray-500;
+.animate-pulse {
+  animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 </style>

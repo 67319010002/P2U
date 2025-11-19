@@ -85,7 +85,8 @@
         <div class="text-center">
           <h2 class="text-xl font-bold mt-10 mb-5">🛒 สินค้า</h2>
         </div>
-        <!-- Product Grid -->
+
+  <!-- Product Grid -->
         <div v-if="allProducts.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <div v-for="product in allProducts" :key="product.id"
             class="bg-gray-800 rounded-lg shadow-md p-4 cursor-pointer hover:bg-gray-700 transition"
@@ -106,7 +107,7 @@
           🔍 No products found.
         </p>
       </div>
-
+        
       <!-- Orders Tab -->
       <div v-if="activeTab === 'orders'">
         <h2 class="text-xl font-bold mb-4">📦 Orders</h2>
@@ -173,44 +174,71 @@
           ✕
         </button>
 
-        <!-- ส่วนรูปสินค้า -->
-        <div class="w-full md:w-1/2 flex flex-col items-center bg-gray-800 p-6">
-          <img :src="selectedProduct.image_url || defaultImage" alt="Product"
-            class="w-full h-96 object-contain rounded-lg bg-gray-700"
-            @error="selectedProduct.image_url = defaultImage" />
-
-          <div class="flex gap-2 mt-4">
-            <img v-for="(img, i) in [selectedProduct.image_url]" :key="i"
-              :src="selectedProduct.image_url || defaultImage"
-              class="w-20 h-20 rounded-lg object-cover cursor-pointer border border-gray-600 hover:border-pink-400" />
-          </div>
+        <!-- Product Image Section -->
+        <div class="w-full md:w-1/2 bg-gray-800 p-8 flex items-center justify-center">
+          <img 
+            :src="selectedProduct.image_url || defaultImage" 
+            :alt="selectedProduct.name"
+            class="w-full h-auto max-h-96 object-contain rounded-lg"
+            @error="selectedProduct.image_url = defaultImage"
+          />
         </div>
 
-        <!-- ส่วนรายละเอียดสินค้า -->
-        <div class="flex-1 p-6 text-white flex flex-col justify-between">
+        <!-- Product Details Section -->
+        <div class="flex-1 p-8 flex flex-col justify-between">
           <div>
-            <h2 class="text-3xl font-bold mb-2">{{ selectedProduct.name }}</h2>
-            <p class="text-gray-300 mb-4">{{ selectedProduct.description }}</p>
+            <!-- Title -->
+            <h2 class="text-3xl font-bold mb-4 text-white">{{ selectedProduct.name }}</h2>
+            
+            <!-- Description -->
+            <p class="text-gray-300 mb-6 leading-relaxed">{{ selectedProduct.description }}</p>
 
-            <div class="flex items-center gap-3 mb-4">
-              <span class="text-yellow-400 text-xl">★★★★★</span>
+            <!-- Rating -->
+            <div class="flex items-center gap-3 mb-6">
+              <div class="flex text-yellow-400 text-xl">
+                <span v-for="i in 5" :key="i">★</span>
+              </div>
               <span class="text-gray-400 text-sm">4.9 (3.2k รีวิว)</span>
             </div>
 
-            <p class="text-4xl text-pink-400 font-extrabold mb-6">
-              ฿{{ selectedProduct.price }}
-            </p>
+            <!-- Price -->
+            <div class="bg-gray-800 rounded-xl p-6 mb-6">
+              <p class="text-gray-400 text-sm mb-2">ราคา</p>
+              <p class="text-4xl font-extrabold text-pink-400">฿{{ selectedProduct.price }}</p>
+            </div>
+
+            <!-- Seller Info -->
+            <div class="bg-gray-800 rounded-xl p-4 mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-linear-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                  {{ selectedProduct.seller.username.charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <p class="font-semibold text-white">{{ selectedProduct.seller.username }}</p>
+                  <p class="text-sm text-gray-400">{{ selectedProduct.seller.shop_name || 'ร้านค้า' }}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
+          <!-- Action Buttons -->
           <div class="flex gap-4">
-            <button class="bg-pink-600 hover:bg-white text-white hover:text-black font-bold py-3 px-8 rounded-lg flex-1"
+            <button 
+              class="flex-1 bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-pink-500/30"
               @click="addToCart(selectedProduct)">
-              🛒 Add to Cart
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M7 22q-.825 0-1.412-.587T5 20t.588-1.412T7 18t1.413.588T9 20t-.587 1.413T7 22m10 0q-.825 0-1.412-.587T15 20t.588-1.412T17 18t1.413.588T19 20t-.587 1.413T17 22M6.15 6l2.4 5h7l2.75-5zM5.2 4h14.75q.575 0 .875.513t.025 1.037l-3.55 6.4q-.275.5-.737.775T15.55 13H8.1L7 15h12v2H7q-1.125 0-1.7-.987t-.05-1.963L6.6 11.6L3 4H1V2h3.25z"/>
+              </svg>
+              เพิ่มลงตะกร้า
             </button>
-            <NuxtLink to="/payment"
-              class="flex-1 flex items-center justify-center bg-green-600 hover:bg-white text-white hover:text-black font-bold py-3 px-8 rounded-lg">
-              💰 Buy Now
-            </NuxtLink>
+            <button
+              class="flex-1 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-green-500/30"
+              @click="buyNow(selectedProduct)">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/>
+              </svg>
+              ซื้อเลย
+            </button>
           </div>
         </div>
       </div>
@@ -234,6 +262,29 @@ const defaultImage = "/default-product.svg";
 const allProducts = ref([]);
 const selectedProduct = ref(null);
 const showCartIcon = ref(true);
+
+
+// -----------------------------
+// buy now
+// -----------------------------
+const buyNow = (product) => {
+  // เพิ่มสินค้าลงตะกร้าก่อน
+  const existing = cart.value.find((item) => item.id === product.id);
+  if (existing) {
+    existing.quantity = (existing.quantity || 1) + 1;
+  } else {
+    cart.value.push({ ...product, quantity: 1 });
+  }
+  
+  // บันทึกลง localStorage
+  if (process.client) {
+    localStorage.setItem("cart", JSON.stringify(cart.value));
+  }
+  
+  // ไปหน้า payment
+  closeProduct();
+  navigateTo('/payment');
+};
 
 // -----------------------------
 // Cart - Client only

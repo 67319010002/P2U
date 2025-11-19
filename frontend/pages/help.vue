@@ -1,5 +1,5 @@
 <template>
-  <div class="help-page">
+  <div class="help-page  ">
     <!-- Header Section -->
     <section class="hero">
       <div class="container">
@@ -113,6 +113,7 @@ const toggleFaq = (index) => {
   padding: 0 20px;
 }
 
+
 /* Hero Section */
 .hero {
   background:rgb(28, 27, 41);
@@ -142,6 +143,8 @@ const toggleFaq = (index) => {
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
 }
+
+
 
 .search-input {
   flex: 1;

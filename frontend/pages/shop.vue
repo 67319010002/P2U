@@ -30,7 +30,7 @@
     <main class="container mx-auto px-4 py-8">
       <!-- Header -->
       <div class="text-center mb-12">
-        <h1 class="text-5xl font-bold mb-4 bg-linear-to-r from-pink-400 to-purple-500 bg-clip-text text-transparent">
+        <h1 class="text-5xl font-bold mb-4 bg-linear-to-r text-white bg-clip-text ">
           🛍️ สินค้าทั้งหมด
         </h1>
         <p class="text-gray-400 text-lg">เลือกซื้อสินค้าคุณภาพจากร้านค้าชั้นนำ</p>
@@ -124,7 +124,7 @@
         
         <!-- Close Button -->
         <button 
-          class="absolute top-4 right-4 z-10 bg-gray-800 hover:bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all" 
+          class="absolute top-4 right-4 z-10 bg-gray-800 :hoverbg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all" 
           @click="closeProduct">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24">
             <path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/>
@@ -188,14 +188,14 @@
               </svg>
               เพิ่มลงตะกร้า
             </button>
-            <NuxtLink 
-              to="/payment"
-              class="flex-1 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-green-500/30">
+            <button
+              class="flex-1 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-green-500/30"
+              @click="buyNow(selectedProduct)">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/>
               </svg>
               ซื้อเลย
-            </NuxtLink>
+            </button>
           </div>
         </div>
       </div>
@@ -275,6 +275,30 @@ const openProduct = (product) => {
 const closeProduct = () => {
   selectedProduct.value = null
 }
+
+
+// -----------------------------
+// buy now
+// -----------------------------
+const buyNow = (product) => {
+  // เพิ่มสินค้าลงตะกร้าก่อน
+  const existing = cart.value.find((item) => item.id === product.id);
+  if (existing) {
+    existing.quantity = (existing.quantity || 1) + 1;
+  } else {
+    cart.value.push({ ...product, quantity: 1 });
+  }
+  
+  // บันทึกลง localStorage
+  if (process.client) {
+    localStorage.setItem("cart", JSON.stringify(cart.value));
+  }
+  
+  // ไปหน้า payment
+  closeProduct();
+  navigateTo('/payment');
+};
+
 
 // Cart functions
 const addToCart = (product) => {

@@ -1,50 +1,74 @@
 <template>
-  <section class="space-y-16 text-white">
-    <header class="text-center space-y-4">
-      <p class="eyebrow text-sm tracking-[0.3em] text-gray-400">Creator</p>
-      <h1 class="text-4xl md:text-5xl font-semibold text-glow">Meet the dream team</h1>
-      <p class="max-w-3xl mx-auto text-gray-400 text-lg">
+  <section class="space-y-16 text-white relative overflow-hidden">
+    <!-- Background gradient effects -->
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <header class="text-center space-y-4 pt-10 relative z-10">
+      <p class="eyebrow text-sm tracking-[0.3em] text-gray-400 animate-fade-in">สร้างสรรค์โดยทีม P2U Kaiser</p>
+      <h1 class="text-4xl md:text-6xl font-bold text-glow bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent animate-slide-up">
+        คณะผู้จัดทำ
+      </h1>
+      <p class="max-w-3xl mx-auto text-gray-300 text-lg leading-relaxed animate-slide-up" style="animation-delay: 0.1s">
         พวกเราคือทีม P2U Kaiser ที่ขับเคลื่อนประสบการณ์มือสองด้วยไอเดียใหม่ๆ,
         งานออกแบบ และเทคโนโลยีที่น่าเชื่อถือ
       </p>
     </header>
 
-    <section class="space-y-8">
+    <section class="space-y-8 p-10 relative z-10">
       <div class="flex items-center justify-between flex-wrap gap-4">
-        <h2 class="text-sm uppercase tracking-[0.45em] text-pink-400">Core crew</h2>
-        <div class="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent"></div>
+        <h2 class="text-sm uppercase tracking-[0.45em] text-pink-400 font-semibold">ทีมหลัก</h2>
+        <div class="h-px flex-1 bg-gradient-to-r from-pink-400/40 via-pink-400/20 to-transparent"></div>
       </div>
       <div class="grid gap-8 md:grid-cols-3">
         <article v-for="member in coreTeam" :key="member.name"
-          class="surface-card text-center group transition transform hover:-translate-y-1">
-          <div class="mx-auto w-32 h-32 rounded-full overflow-hidden border border-white/10 shadow-lg">
-            <img :src="member.image || defaultImage" :alt="member.name" class="w-full h-full object-cover"
-              @error="handleImageError" loading="lazy" />
+          class="surface-card text-center group transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-pink-500/20 relative overflow-hidden">
+          <!-- Hover effect background -->
+          <div class="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          
+          <div class="relative z-10">
+            <div class="mx-auto w-32 h-32 rounded-full overflow-hidden border-2 border-pink-400/30 shadow-lg group-hover:border-pink-400 group-hover:shadow-pink-400/50 transition-all duration-300 group-hover:scale-110">
+              <img :src="member.image || defaultImage" :alt="member.name" class="w-full h-full object-cover"
+                @error="handleImageError" loading="lazy" />
+            </div>
+            <div class="mt-6 space-y-1">
+              <p class="text-xl font-semibold group-hover:text-pink-400 transition-colors duration-300">{{ member.name }}</p>
+              <p class="text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-300">{{ member.role }}</p>
+            </div>
           </div>
-          <div class="mt-6 space-y-1">
-            <p class="text-xl font-semibold">{{ member.name }}</p>
-            <p class="text-sm text-gray-400">{{ member.role }}</p>
-          </div>
+
+          <!-- Corner accent -->
+          <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-pink-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </article>
       </div>
     </section>
 
-    <section class="space-y-8">
+    <section class="space-y-8 p-10 relative z-10">
       <div class="flex items-center justify-between flex-wrap gap-4">
-        <h2 class="text-sm uppercase tracking-[0.45em] text-indigo-400">Extended squad</h2>
-        <div class="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent"></div>
+        <h2 class="text-sm  uppercase tracking-[0.45em] text-indigo-400 font-semibold ">ทีมเสริม</h2>
+        <div class="h-px flex-1 bg-gradient-to-r from-indigo-400/40 via-indigo-400/20 to-transparent"></div>
       </div>
       <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         <article v-for="member in extendedTeam" :key="member.name"
-          class="surface-card text-center group transition transform hover:-translate-y-1">
-          <div class="mx-auto w-28 h-28 rounded-full overflow-hidden border border-white/10 shadow-lg">
-            <img :src="member.image || defaultImage" :alt="member.name" class="w-full h-full object-cover"
-              @error="handleImageError" loading="lazy" />
+          class="surface-card text-center group transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 relative overflow-hidden">
+          <!-- Hover effect background -->
+          <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          
+          <div class="relative z-10">
+            <div class="mx-auto w-28 h-28 rounded-full overflow-hidden border-2 border-indigo-400/30 shadow-lg group-hover:border-indigo-400 group-hover:shadow-indigo-400/50 transition-all duration-300 group-hover:scale-110">
+              <img :src="member.image || defaultImage" :alt="member.name" class="w-full h-full object-cover"
+                @error="handleImageError" loading="lazy" />
+            </div>
+            <div class="mt-4 space-y-1">
+              <p class="text-lg font-semibold group-hover:text-indigo-400 transition-colors duration-300">{{ member.name }}</p>
+              <p class="text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-300">{{ member.role }}</p>
+            </div>
           </div>
-          <div class="mt-4 space-y-1">
-            <p class="text-lg font-semibold">{{ member.name }}</p>
-            <p class="text-sm text-gray-400">{{ member.role }}</p>
-          </div>
+
+          <!-- Corner accent -->
+          <div class="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-indigo-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </article>
       </div>
     </section>
@@ -118,3 +142,37 @@ const extendedTeam = [
   }
 ]
 </script>
+
+<style scoped>
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.8s ease-out;
+}
+
+.text-glow {
+  text-shadow: 0 0 20px rgba(219, 39, 119, 0.3);
+}
+</style>
