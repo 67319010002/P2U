@@ -99,7 +99,7 @@
           <div v-if="errorMsg" class="mt-4 p-3 rounded-full bg-red-500/10 border border-red-500/30 backdrop-blur-sm">
             <p class="text-center text-sm text-red-300 flex items-center justify-center gap-2">
               <i class="bx bxs-error-circle"></i>
-              {{ errorMsg }}
+              {{ errorMsg }}+
             </p>
           </div>
 
