@@ -44,7 +44,7 @@
                 class="min-w-full h-60 sm:h-72 md:h-80 bg-gray-700 relative">
                 <img :src="banner.image" alt="Banner" class="w-full h-full object-cover"
                   @error="banner.image = defaultImage" />
-                <div class="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent p-4">
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                   <h3 class="text-lg font-bold">{{ banner.title }}</h3>
                   <p class="text-sm text-gray-300">{{ banner.subtitle }}</p>
                 </div>
@@ -86,26 +86,57 @@
           <h2 class="text-xl font-bold mt-10 mb-5">🛒 สินค้า</h2>
         </div>
 
-  <!-- Product Grid -->
-        <div v-if="allProducts.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-          <div v-for="product in allProducts" :key="product.id"
-            class="bg-gray-800 rounded-lg shadow-md p-4 cursor-pointer hover:bg-gray-700 transition"
+        <!-- Products Grid -->
+        <div v-if="allProducts.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div 
+            v-for="product in allProducts" 
+            :key="product.id"
+            class="bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/20 border border-gray-700 hover:border-pink-500"
             @click="openProduct(product)">
-            <img :src="product.image_url || defaultImage" class="w-full h-40 object-cover rounded mb-3"
-              @error="product.image_url = defaultImage" />
-            <h3 class="font-semibold">{{ product.name }}</h3>
-            <p class="text-sm text-gray-400">{{ product.description }}</p>
-            <p class="mt-2 font-bold text-indigo-400">฿{{ product.price }}</p>
-            <p class="text-sm text-gray-400 mt-1">
-              Seller: {{ product.seller.username }} | Shop:
-              {{ product.seller.shop_name || "N/A" }}
-            </p>
+            
+            <!-- Product Image -->
+            <div class="relative h-40 bg-gray-700 overflow-hidden group">
+              <img 
+                :src="product.image_url || defaultImage" 
+                :alt="product.name"
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                @error="product.image_url = defaultImage"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="p-3">
+              <h3 class="font-semibold text-sm mb-1 line-clamp-2 text-white">{{ product.name }}</h3>
+              <p class="text-xs text-gray-400 mb-2 line-clamp-1">{{ product.description }}</p>
+              
+              <!-- Price -->
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-lg font-bold text-pink-400">฿{{ product.price }}</span>
+                <div class="flex items-center gap-1 text-yellow-400 text-xs">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2L9.19 8.63L2 9.24l5.46 4.73L5.82 21z"/>
+                  </svg>
+                  <span>4.9</span>
+                </div>
+              </div>
+
+              <!-- Seller Info -->
+              <div class="flex items-center gap-1.5 text-xs text-gray-500 border-t border-gray-700 pt-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M12 12q-1.65 0-2.825-1.175T8 8t1.175-2.825T12 4t2.825 1.175T16 8t-1.175 2.825T12 12m-8 8v-2.8q0-.85.438-1.562T5.6 14.55q1.55-.775 3.15-1.162T12 13t3.25.388t3.15 1.162q.725.375 1.163 1.088T20 17.2V20z"/>
+                </svg>
+                <span class="truncate">{{ product.seller.username }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <p v-else class="text-gray-400 mt-16 text-center">
-          🔍 No products found.
-        </p>
+        <!-- No Products Found -->
+        <div v-else class="text-center py-20">
+          <div class="text-6xl mb-4">🔍</div>
+          <p class="text-gray-400 text-xl">ไม่พบสินค้าที่ค้นหา</p>
+        </div>
       </div>
         
       <!-- Orders Tab -->
@@ -210,7 +241,7 @@
             <!-- Seller Info -->
             <div class="bg-gray-800 rounded-xl p-4 mb-6">
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-linear-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
                   {{ selectedProduct.seller.username.charAt(0).toUpperCase() }}
                 </div>
                 <div>
@@ -224,7 +255,7 @@
           <!-- Action Buttons -->
           <div class="flex gap-4">
             <button 
-              class="flex-1 bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-pink-500/30"
+              class="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-pink-500/30"
               @click="addToCart(selectedProduct)">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M7 22q-.825 0-1.412-.587T5 20t.588-1.412T7 18t1.413.588T9 20t-.587 1.413T7 22m10 0q-.825 0-1.412-.587T15 20t.588-1.412T17 18t1.413.588T19 20t-.587 1.413T17 22M6.15 6l2.4 5h7l2.75-5zM5.2 4h14.75q.575 0 .875.513t.025 1.037l-3.55 6.4q-.275.5-.737.775T15.55 13H8.1L7 15h12v2H7q-1.125 0-1.7-.987t-.05-1.963L6.6 11.6L3 4H1V2h3.25z"/>
@@ -232,7 +263,7 @@
               เพิ่มลงตะกร้า
             </button>
             <button
-              class="flex-1 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-green-500/30"
+              class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-green-500/30"
               @click="buyNow(selectedProduct)">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/>
@@ -251,9 +282,9 @@ import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import axios from "axios";
 
 // ✅ แก้ import ให้ถูกต้อง
-
 import Carta from "~/components/Carta.vue";
 import Banner1 from "~/components/banner1.vue";
+
 // -----------------------------
 // State
 // -----------------------------
@@ -262,7 +293,6 @@ const defaultImage = "/default-product.svg";
 const allProducts = ref([]);
 const selectedProduct = ref(null);
 const showCartIcon = ref(true);
-
 
 // -----------------------------
 // buy now

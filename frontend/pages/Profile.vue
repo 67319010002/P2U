@@ -1,189 +1,258 @@
 <template>
-
-  <div class="p-6 max-w-8xl mx-auto bg-black text-white mt-1 mb-1 mr-1 transition-all duration-300">
-    <div class="md:w-1/4 space-y-5">
-      <div class="flex items-center justify-center mb-6 relative">
-        <h1 class="text-3xl font-extrabold text-center">
-          My <span class="text-pink-600">Profile</span>
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-6 transition-all duration-300">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-10">
+        <h1 class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
+          My Profile
         </h1>
+        <p class="text-gray-400 mt-2">จัดการข้อมูลส่วนตัวและที่อยู่ของคุณ</p>
       </div>
-    </div>
 
-    <div>
-      <sidebar />
-    </div>
+      <div>
+        <sidebar />
+      </div>
 
-    <div v-if="user" class="flex flex-col md:flex-row md:space-x-8 space-y-8 md:space-y-0">
-      <!-- Left Sidebar: Profile + Addresses -->
-      <div class="md:w-1/4 space-y-5">
-        <!-- Profile Info -->
-        <div class="flex items-center space-x-6">
-          <div class="relative w-28 h-28 shrink-0">
-            <img :src="user.profile_image_url || defaultProfile" alt="Profile"
-              class="w-full h-full rounded-full border-4 border-pink-500 object-cover shadow-md" />
-            <button @click="triggerFileInput"
-              class="absolute bottom-0 right-0 bg-pink-600 hover:bg-pink-700 p-1.5 rounded-full shadow-md transition"
-              aria-label="Change profile picture" title="Change profile picture">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
+      <div v-if="user" class="flex flex-col lg:flex-row gap-8">
+        <!-- Left Sidebar -->
+        <div class="lg:w-1/3 space-y-6">
+          <!-- Profile Card -->
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-700 hover:border-pink-500 transition-all duration-300">
+            <div class="flex flex-col items-center">
+              <!-- Profile Image -->
+              <div class="relative mb-4">
+                <div class="w-32 h-32 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 p-1">
+                  <img :src="user.profile_image_url || defaultProfile" alt="Profile"
+                    class="w-full h-full rounded-full object-cover bg-gray-800" />
+                </div>
+                <button @click="triggerFileInput"
+                  class="absolute bottom-0 right-0 bg-pink-600 hover:bg-pink-700 p-2 rounded-full shadow-lg transform hover:scale-110 transition-all duration-200"
+                  aria-label="Change profile picture">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
+              </div>
 
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M11 5h6m2 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h10zM16 3l-1-1m0 0L9 8m7-6v6H9" />
-              </svg>
+              <!-- User Info -->
+              <div class="w-full space-y-3">
+                <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                  <p class="text-xs text-gray-400">{{ t('username') }}</p>
+                  <p class="text-white font-semibold">{{ user.username }}</p>
+                </div>
+                <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                  <p class="text-xs text-gray-400">{{ t('fullName') }}</p>
+                  <p class="text-white font-semibold">{{ user.full_name }}</p>
+                </div>
+                <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                  <p class="text-xs text-gray-400">{{ t('email') }}</p>
+                  <p class="text-white font-semibold text-sm">{{ user.email }}</p>
+                </div>
+                <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                  <p class="text-xs text-gray-400">{{ t('phone') }}</p>
+                  <p class="text-white font-semibold">{{ user.phone_number }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Seller Status Card -->
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-gray-400 text-sm">{{ t('seller') }}</span>
+              <span v-if="user.is_seller" class="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded-full border border-green-500">
+                {{ t('registered') }}
+              </span>
+              <span v-else class="px-3 py-1 bg-gray-500/20 text-gray-400 text-xs font-semibold rounded-full border border-gray-500">
+                {{ t('notRegistered') }}
+              </span>
+            </div>
+            <button v-if="user.is_seller" @click="router.push('/seller')"
+              class="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+              Go to Seller Page
             </button>
-            <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
+            <button v-else @click="router.push('/Registerseller')"
+              class="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+              Register as Seller
+            </button>
           </div>
-          <div class="space-y-2">
-            <p><span class="font-semibold text-pink-400">{{ t('username') }}:</span> {{ user.username }}</p>
-            <p><span class="font-semibold text-pink-400">{{ t('fullName') }}:</span> {{ user.full_name }}</p>
-            <p><span class="font-semibold text-pink-400">{{ t('email') }}:</span> {{ user.email }}</p>
-            <p><span class="font-semibold text-pink-400">{{ t('phone') }}:</span> {{ user.phone_number }}</p>
-          </div>
-        </div>
 
-        <!-- Seller Status -->
-        <div class="flex items-center space-x-2 mt-4">
-          <span class="font-semibold text-pink-400">{{ t('seller') }}:</span>
-          <span>{{ user.is_seller ? t('registered') : t('notRegistered') }}</span>
-          <button v-if="user.is_seller" @click="router.push('/seller')"
-            class="px-2 py-1 bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold rounded-lg transition">
-            Go to Seller Page
-          </button>
-          <button v-else @click="router.push('/Registerseller')"
-            class="px-2 py-1 bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold rounded-lg transition">
-            Register as Seller
-          </button>
-        </div>
-        <!-- เพิ่มปุ่ม Link ไปหน้า ai.vue ที่นี่ -->
-        <div class="mt-6">
+          <!-- AI Evaluation Button -->
           <button @click="router.push('/ai')"
-            class="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 rounded-lg transition">
-            ไปยังหน้าประเมินสินค้า
+            class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+            🤖 ไปยังหน้าประเมินสินค้า
+          </button>
+
+          <!-- Logout Button -->
+          <button @click="handleLogout"
+            class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+            🚪 ออกจากระบบ
           </button>
         </div>
-        <!-- Addresses -->
 
-        <div class="w-full mt-8">
-          <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">{{ t('addresses') }}</h2>
-          <div v-if="user.addresses && user.addresses.length" class="space-y-4">
-            <div v-for="(addr, index) in user.addresses" :key="index"
-              class="bg-gray-800 rounded-lg p-4 shadow-inner relative">
-              <div class="flex items-center justify-between">
-
-                <h3 class="text-lg font-semibold mb-3 border-b border-gray-700 pb-2">{{ isEditing ? t('editAddress') :
-                  t('addNewAddress') }}</h3>
-                <span v-if="addr.is_default"
-                  class="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full">Default</span>
-              </div>
-              <p><span class="font-semibold text-pink-400">Name:</span> {{ addr.name }}</p>
-              <p><span class="font-semibold text-pink-400">Phone:</span> {{ addr.phone }}</p>
-              <p><span class="font-semibold text-pink-400">Address:</span> {{ addr.address_line }}, {{ addr.district }},
-                {{ addr.province }}, {{ addr.postal_code }}</p>
-              <div class="mt-2 flex gap-2">
-                <button @click="editAddress(index)"
-                  class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition">{{
-                    t('editAddress') }}</button>
-                <button @click="deleteAddress(index)"
-                  class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition">Delete</button>
+        <!-- Right Content -->
+        <div class="lg:w-2/3 space-y-6">
+          <!-- Addresses Section -->
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-700">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+              📍 {{ t('addresses') }}
+            </h2>
+            
+            <!-- Address List -->
+            <div v-if="user.addresses && user.addresses.length" class="space-y-4 mb-6">
+              <div v-for="(addr, index) in user.addresses" :key="index"
+                class="bg-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-pink-500 transition-all duration-300">
+                <div class="flex items-start justify-between mb-3">
+                  <h3 class="font-semibold text-lg">{{ addr.name }}</h3>
+                  <span v-if="addr.is_default"
+                    class="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded-full border border-green-500">
+                    Default
+                  </span>
+                </div>
+                <div class="space-y-2 text-sm text-gray-300">
+                  <p>📱 {{ addr.phone }}</p>
+                  <p>📍 {{ addr.address_line }}</p>
+                  <p>🏙️ {{ addr.district }}, {{ addr.province }} {{ addr.postal_code }}</p>
+                </div>
+                <div class="mt-4 flex gap-2">
+                  <button @click="editAddress(index)"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded-lg transition-all duration-200">
+                    ✏️ {{ t('editAddress') }}
+                  </button>
+                  <button @click="deleteAddress(index)"
+                    class="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 rounded-lg transition-all duration-200">
+                    🗑️ Delete
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Add/Edit Address Form -->
-          <div class="mt-6 bg-gray-800 rounded-lg p-5 shadow-inner">
-            <h3 class="text-lg font-semibold mb-3 border-b border-gray-700 pb-2">
-              {{ isEditing ? t('editAddress') : t('addNewAddress') }}
-            </h3>
-            <form @submit.prevent="addOrUpdateAddress">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input v-model="newAddress.name" :placeholder="t('fullName')" type="text" class="input-field"
-                  required />
-                <input v-model="newAddress.phone" :placeholder="t('phone')" type="text" class="input-field" required />
+            <!-- Add/Edit Address Form -->
+            <div class="bg-gray-900/50 rounded-xl p-5 border border-gray-700">
+              <h3 class="text-lg font-semibold mb-4">
+                {{ isEditing ? '✏️ ' + t('editAddress') : '➕ ' + t('addNewAddress') }}
+              </h3>
+              <form @submit.prevent="addOrUpdateAddress" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input v-model="newAddress.name" :placeholder="t('fullName')" type="text"
+                    class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-pink-500 transition-colors" required />
+                  <input v-model="newAddress.phone" :placeholder="t('phone')" type="text"
+                    class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-pink-500 transition-colors" required />
+                </div>
                 <input v-model="newAddress.address_line" placeholder="Address Line" type="text"
-                  class="input-field col-span-2" required />
-                <input v-model="newAddress.district" placeholder="District" type="text" class="input-field" required />
-                <input v-model="newAddress.province" placeholder="Province" type="text" class="input-field" required />
-                <input v-model="newAddress.postal_code" placeholder="Postal Code" type="text" class="input-field"
-                  required />
-              </div>
-              <div class="flex items-center mt-4">
-                <input v-model="newAddress.is_default" type="checkbox" id="is_default" class="mr-2" />
-                <label for="is_default" class="text-sm">Set as default address</label>
-              </div>
-              <button type="submit"
-                class="mt-4 w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 rounded-lg transition">{{
-                  isEditing ? t('updateAddress') : t('addAddress') }}</button>
-              <button v-if="isEditing" @click="cancelEdit" type="button"
-                class="mt-2 w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-lg transition">{{
-                  t('cancel') }}</button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Content -->
-      <div class="md:w-3/4 space-y-6">
-
-        <!-- Track Order -->
-        <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">{{ t('trackOrder') }}</h2>
-        <div class="bg-gray-800 rounded-lg p-4 shadow-inner min-h-48 flex items-center justify-center text-gray-400">
-          <p>ข้อมูลการติดตามจะปรากฏที่นี่</p>
-        </div>
-
-
-        <!-- Cart Items -->
-        <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">🛒 {{ t('myCart') }}</h2>
-        <div v-if="cartItems.length > 0" class="space-y-4">
-          <div v-for="(item, index) in cartItems" :key="index"
-            class="bg-gray-800 p-4 rounded-lg flex justify-between items-center shadow-inner">
-            <div class="flex items-center space-x-3">
-              <img :src="formatImageUrl(item.image)" alt="product" class="w-16 h-16 object-cover rounded" />
-              <div>
-                <p class="font-semibold text-white">{{ item.name }}</p>
-                <p class="text-sm text-gray-400">Qty: {{ item.quantity }}</p>
-              </div>
+                  class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-pink-500 transition-colors" required />
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <input v-model="newAddress.district" placeholder="District" type="text"
+                    class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-pink-500 transition-colors" required />
+                  <input v-model="newAddress.province" placeholder="Province" type="text"
+                    class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-pink-500 transition-colors" required />
+                  <input v-model="newAddress.postal_code" placeholder="Postal Code" type="text"
+                    class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-pink-500 transition-colors" required />
+                </div>
+                <div class="flex items-center">
+                  <input v-model="newAddress.is_default" type="checkbox" id="is_default"
+                    class="w-4 h-4 text-pink-600 bg-gray-800 border-gray-600 rounded focus:ring-pink-500" />
+                  <label for="is_default" class="ml-2 text-sm text-gray-300">Set as default address</label>
+                </div>
+                <div class="flex gap-2">
+                  <button type="submit"
+                    class="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300">
+                    {{ isEditing ? t('updateAddress') : t('addAddress') }}
+                  </button>
+                  <button v-if="isEditing" @click="cancelEdit" type="button"
+                    class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 rounded-lg transition-all duration-300">
+                    {{ t('cancel') }}
+                  </button>
+                </div>
+              </form>
             </div>
-            <span class="font-semibold text-pink-400">{{ item.price }} ฿</span>
           </div>
-           <NuxtLink to="/payment">
-          <button class="w-full bg-pink-600 hover:bg-pink-700 text-white py-2 rounded-lg mt-2">ไปที่หน้าชำระเงิน</button>
-          </NuxtLink>
+
+          <!-- Track Order Section -->
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-700">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+              📦 {{ t('trackOrder') }}
+            </h2>
+            <div class="bg-gray-900/50 rounded-xl p-8 border border-gray-700 flex items-center justify-center min-h-[200px]">
+              <p class="text-gray-400 text-center">ข้อมูลการติดตามจะปรากฏที่นี่</p>
+            </div>
+          </div>
+
+          <!-- Cart Items Section -->
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-700">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+              🛒 {{ t('myCart') }}
+            </h2>
+            <div v-if="cartItems.length > 0" class="space-y-4">
+              <div v-for="(item, index) in cartItems" :key="index"
+                class="bg-gray-900/50 rounded-xl p-4 border border-gray-700 hover:border-pink-500 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-4">
+                    <div class="w-20 h-20 rounded-lg overflow-hidden bg-gray-800">
+                      <img :src="formatImageUrl(item.image)" alt="product" class="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <p class="font-semibold text-white">{{ item.name }}</p>
+                      <p class="text-sm text-gray-400">จำนวน: {{ item.quantity }}</p>
+                    </div>
+                  </div>
+                  <span class="font-bold text-xl text-pink-400">{{ item.price }} ฿</span>
+                </div>
+              </div>
+              <NuxtLink to="/payment">
+                <button class="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold py-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                  💳 ไปที่หน้าชำระเงิน
+                </button>
+              </NuxtLink>
+            </div>
+            <div v-else class="bg-gray-900/50 rounded-xl p-8 border border-gray-700 flex items-center justify-center min-h-[200px]">
+              <p class="text-gray-400 text-center">🛒 รถเข็นของคุณว่างเปล่า</p>
+            </div>
+          </div>
         </div>
-        <div v-else class="text-gray-400 text-sm text-center">รถเข็นของคุณว่างเปล่า</div>
+      </div>
+
+      <div v-if="!user" class="text-center text-gray-400 mt-10">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+        <p class="mt-4">กำลังโหลด...</p>
       </div>
     </div>
 
-    <!-- Logout -->
-    <div class="md:w-1/4 space-y-5 mt-4">
-      <button @click="handleLogout"
-        class="mt-8 w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 rounded-lg transition">
-        ออกจากระบบ
-      </button>
-      <div v-if="!user" class="text-center text-gray-400 mt-10">โหลด...</div>
+    <!-- Messages -->
+    <div v-if="errorMsg || successMsg" class="fixed bottom-4 right-4 z-50">
+      <div v-if="errorMsg" class="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg animate-bounce">
+        ❌ {{ errorMsg }}
+      </div>
+      <div v-if="successMsg" class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-bounce">
+        ✅ {{ successMsg }}
+      </div>
     </div>
 
-    <p v-if="errorMsg" class="text-red-400 text-center mt-4">{{ errorMsg }}</p>
-    <p v-if="successMsg" class="text-green-400 text-center mt-4">{{ successMsg }}</p>
-
-    <!-- Profile Image Preview -->
-    <div v-if="previewImageUrl" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-      <div class="bg-white p-6 rounded-lg max-w-sm w-full text-center text-black shadow-xl">
-        <h2 class="text-xl font-bold mb-4">Preview <span class="text-pink-600">Image</span></h2>
-        <img :src="previewImageUrl" alt="Preview"
-          class="w-32 h-32 mx-auto object-cover rounded-full border border-gray-300 mb-4" />
-        <div class="flex justify-center gap-4">
+    <!-- Profile Image Preview Modal -->
+    <div v-if="previewImageUrl" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 backdrop-blur-sm">
+      <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-2xl max-w-md w-full text-center shadow-2xl border border-gray-700">
+        <h2 class="text-2xl font-bold mb-6">
+          Preview <span class="text-pink-600">Image</span>
+        </h2>
+        <div class="mb-6">
+          <div class="w-40 h-40 mx-auto rounded-full bg-gradient-to-br from-pink-500 to-purple-600 p-1">
+            <img :src="previewImageUrl" alt="Preview" class="w-full h-full rounded-full object-cover bg-gray-800" />
+          </div>
+        </div>
+        <div class="flex gap-4">
           <button @click="uploadConfirmed"
-            class="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded font-semibold">
-            Upload
+            class="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300">
+            ✅ Upload
           </button>
           <button @click="cancelUpload"
-            class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded font-semibold">
-            Cancel
+            class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 rounded-lg transition-all duration-300">
+            ❌ Cancel
           </button>
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -214,7 +283,6 @@ const fileInput = ref(null)
 const previewImageUrl = ref(null)
 let selectedFile = null
 
-
 // Address
 const newAddress = ref({ name: '', phone: '', address_line: '', district: '', province: '', postal_code: '', is_default: false })
 const isEditing = ref(false)
@@ -236,7 +304,6 @@ onMounted(async () => {
     user.value = res.data
   } catch (e) { console.error(e); router.push('/login') }
 })
-
 
 // Address functions
 const addOrUpdateAddress = async () => {
@@ -294,16 +361,7 @@ const uploadConfirmed = async () => {
 }
 const cancelUpload = () => { if (previewImageUrl.value) URL.revokeObjectURL(previewImageUrl.value); previewImageUrl.value = null; selectedFile = null }
 
-// Cart
-const addToCart = (p) => {
-  const ex = cartItems.value.find(i => i.id === p.id)
-  if (ex) ex.quantity += 1
-  else { let img = p.image || '/no-image.png'; if (!img.startsWith('http')) img = baseURL + img; cartItems.value.push({ ...p, image: img, quantity: 1 }) }
-}
-
-
 // Logout
-
 const handleLogout = () => {
   localStorage.removeItem('token')
   localStorage.removeItem('username')
@@ -312,7 +370,6 @@ const handleLogout = () => {
   router.push('/login')
   window.dispatchEvent(new Event('user-updated'))
 }
-
 
 // Language
 const currentLanguage = ref('th')
