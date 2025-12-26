@@ -336,3 +336,130 @@ def update_profile_image():
     user.save()
 
     return jsonify({"profile_image_url": user.profile_image_url}), 200
+
+
+# -----------------------------
+# ✅ Get Wishlist
+# -----------------------------
+@auth.route('/wishlist', methods=['GET'])
+@jwt_required()
+def get_wishlist():
+    user_id = get_jwt_identity()
+    try:
+        user = User.objects(id=ObjectId(user_id)).first()
+    except (ValidationError, TypeError):
+        return jsonify({"msg": "Invalid user ID"}), 400
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    from models import Product
+    wishlist_items = []
+    for product_ref in user.wishlist:
+        try:
+            if product_ref:
+                wishlist_items.append({
+                    "id": str(product_ref.id),
+                    "name": product_ref.name,
+                    "price": float(product_ref.price),
+                    "image_url": product_ref.image_url,
+                    "seller": {
+                        "id": str(product_ref.seller.id),
+                        "username": product_ref.seller.username,
+                        "shop_name": product_ref.seller.shop_name
+                    } if product_ref.seller else None
+                })
+        except:
+            continue
+
+    return jsonify({
+        "wishlist": wishlist_items,
+        "total": len(wishlist_items)
+    }), 200
+
+
+# -----------------------------
+# ✅ Add to Wishlist
+# -----------------------------
+@auth.route('/wishlist/<product_id>', methods=['POST'])
+@jwt_required()
+def add_to_wishlist(product_id):
+    user_id = get_jwt_identity()
+    try:
+        user = User.objects(id=ObjectId(user_id)).first()
+    except (ValidationError, TypeError):
+        return jsonify({"msg": "Invalid user ID"}), 400
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    from models import Product
+    try:
+        product = Product.objects.get(id=ObjectId(product_id))
+    except:
+        return jsonify({"msg": "Product not found"}), 404
+
+    # Check if already in wishlist
+    if product in user.wishlist:
+        return jsonify({"msg": "Product already in wishlist"}), 400
+
+    user.wishlist.append(product)
+    user.save()
+
+    return jsonify({"msg": "Added to wishlist"}), 201
+
+
+# -----------------------------
+# ✅ Remove from Wishlist
+# -----------------------------
+@auth.route('/wishlist/<product_id>', methods=['DELETE'])
+@jwt_required()
+def remove_from_wishlist(product_id):
+    user_id = get_jwt_identity()
+    try:
+        user = User.objects(id=ObjectId(user_id)).first()
+    except (ValidationError, TypeError):
+        return jsonify({"msg": "Invalid user ID"}), 400
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    from models import Product
+    try:
+        product = Product.objects.get(id=ObjectId(product_id))
+    except:
+        return jsonify({"msg": "Product not found"}), 404
+
+    if product not in user.wishlist:
+        return jsonify({"msg": "Product not in wishlist"}), 400
+
+    user.wishlist.remove(product)
+    user.save()
+
+    return jsonify({"msg": "Removed from wishlist"}), 200
+
+
+# -----------------------------
+# ✅ Check if in Wishlist
+# -----------------------------
+@auth.route('/wishlist/<product_id>/check', methods=['GET'])
+@jwt_required()
+def check_wishlist(product_id):
+    user_id = get_jwt_identity()
+    try:
+        user = User.objects(id=ObjectId(user_id)).first()
+    except (ValidationError, TypeError):
+        return jsonify({"msg": "Invalid user ID"}), 400
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    from models import Product
+    try:
+        product = Product.objects.get(id=ObjectId(product_id))
+        in_wishlist = product in user.wishlist
+    except:
+        in_wishlist = False
+
+    return jsonify({"in_wishlist": in_wishlist}), 200
+

@@ -1,61 +1,97 @@
 <template>
   <div
-    class="fixed left-0 top-1/2 transform -translate-y-1/2 flex flex-col items-center p-2 z-50 shadow-lg rounded-3xl transition-all duration-300"
-    :class="[
-      expand ? 'w-56 p-4' : 'w-16 p-2',
-      isProfilePage ? 'bg-gray-100 text-gray-800' : 'bg-pink-100 text-pink-800'
-    ]"
+    class="fixed left-4 top-1/2 transform -translate-y-1/2 flex flex-col items-center z-50 transition-all duration-300 group"
+    :class="expand ? 'w-52' : 'w-16'"
     @mouseenter="expand = true"
     @mouseleave="expand = false"
   >
-    <!-- Profile Image -->
-    <div
-      class="relative transition-all duration-300"
-      :class="expand ? 'w-12 h-12 mb-2' : 'w-10 h-10 mb-1'"
-    >
-      <img
-        v-if="profileImageUrlLoaded"
-        :src="profileImageUrl"
-        class="w-full h-full rounded-full border-2 border-gray-300 object-cover transition-all duration-300"
-        alt="Profile"
-      />
-      <div
-        v-else
-        class="w-full h-full rounded-full border-2 border-gray-300 bg-gray-200 animate-pulse"
-      ></div>
-    </div>
+    <div class="glass rounded-2xl p-3 shadow-lg w-full">
+      <!-- Profile Section -->
+      <div class="flex flex-col items-center mb-4 pb-4 border-b border-white/10">
+        <div
+          class="relative transition-all duration-300"
+          :class="expand ? 'w-16 h-16 mb-3' : 'w-10 h-10'"
+        >
+          <img
+            v-if="profileImageUrlLoaded"
+            :src="profileImageUrl"
+            class="w-full h-full rounded-xl object-cover border-2 border-primary-500/50 transition-all duration-300"
+            alt="Profile"
+          />
+          <div
+            v-else
+            class="w-full h-full rounded-xl border-2 border-primary-500/30 skeleton"
+          ></div>
+          <!-- Online indicator -->
+          <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-dark-800"></div>
+        </div>
 
-    <!-- Username -->
-    <span
-      v-if="expand"
-      class="text-sm font-semibold mb-4 truncate w-full text-center transition-all duration-300"
-      :class="isProfilePage ? 'text-gray-800' : 'text-pink-800'"
-    >
-      {{ username }}
-    </span>
-
-    <!-- Menu Items -->
-    <nav class="flex-1 w-full space-y-2 mt-2">
-      <div
-        v-for="item in menuItems"
-        :key="item.name"
-        class="flex items-center p-2 rounded-xl hover:bg-gray-200 cursor-pointer transition-all duration-300 w-full"
-        @click="navigate(item.route)"
-        :class="isProfilePage ? 'text-gray-800' : 'text-pink-800'"
-      >
-        <span class="text-lg">{{ item.icon }}</span>
-        <span v-if="expand" class="ml-3 text-sm truncate">{{ item.name }}</span>
+        <Transition name="fade">
+          <div v-if="expand" class="text-center">
+            <p class="text-sm font-semibold text-white truncate w-full">{{ username }}</p>
+            <p v-if="coinBalance !== null" class="text-xs text-primary-400 flex items-center justify-center gap-1 mt-1">
+              <span>🪙</span>
+              <span>{{ coinBalance.toLocaleString() }} Coins</span>
+            </p>
+          </div>
+        </Transition>
       </div>
-    </nav>
 
-    <!-- Logout -->
-    <div
-      class="w-full mt-auto flex items-center p-2 rounded-xl hover:bg-gray-300 cursor-pointer transition-all duration-300"
-      @click="handleLogout"
-      :class="isProfilePage ? 'text-gray-800' : 'text-pink-800'"
-    >
-      <span class="text-lg">🚪</span>
-      <span v-if="expand" class="ml-3 text-sm">ออกระบบ</span>
+      <!-- Menu Items -->
+      <nav class="space-y-1">
+        <div
+          v-for="item in menuItems"
+          :key="item.name"
+          class="flex items-center p-2.5 rounded-xl cursor-pointer transition-all duration-300"
+          :class="[
+            isActive(item.route) 
+              ? 'bg-primary-500/20 text-primary-400' 
+              : 'hover:bg-white/10 text-dark-300 hover:text-white'
+          ]"
+          @click="navigate(item.route)"
+        >
+          <span class="text-xl" :class="expand ? '' : 'mx-auto'">{{ item.icon }}</span>
+          <Transition name="slide">
+            <span v-if="expand" class="ml-3 text-sm font-medium truncate">{{ item.name }}</span>
+          </Transition>
+          <!-- Badge for notifications/orders -->
+          <span 
+            v-if="item.badge && item.badge > 0" 
+            class="ml-auto px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full"
+            :class="expand ? '' : 'hidden'"
+          >
+            {{ item.badge > 99 ? '99+' : item.badge }}
+          </span>
+        </div>
+      </nav>
+
+      <!-- Divider -->
+      <div class="my-3 border-t border-white/10"></div>
+
+      <!-- Quick Actions -->
+      <div class="space-y-1">
+        <div
+          v-if="user?.is_seller"
+          class="flex items-center p-2.5 rounded-xl cursor-pointer hover:bg-accent-500/20 text-accent-400 transition-all duration-300"
+          @click="navigate('/AddProduct')"
+        >
+          <span class="text-xl" :class="expand ? '' : 'mx-auto'">➕</span>
+          <Transition name="slide">
+            <span v-if="expand" class="ml-3 text-sm font-medium">เพิ่มสินค้า</span>
+          </Transition>
+        </div>
+
+        <!-- Logout -->
+        <div
+          class="flex items-center p-2.5 rounded-xl cursor-pointer hover:bg-red-500/20 text-red-400 transition-all duration-300"
+          @click="handleLogout"
+        >
+          <span class="text-xl" :class="expand ? '' : 'mx-auto'">🚪</span>
+          <Transition name="slide">
+            <span v-if="expand" class="ml-3 text-sm font-medium">ออกจากระบบ</span>
+          </Transition>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -63,17 +99,19 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import axios from "axios";
 
 const router = useRouter();
 const route = useRoute();
 const expand = ref(false);
 const user = ref(null);
 const profileImageUrlLoaded = ref(false);
+const coinBalance = ref(null);
 
 const baseUrl = "http://localhost:5000";
 
 const profileImageUrl = computed(() => {
-  if (!user.value || !user.value.profile_image_url) return "/default-profile.png";
+  if (!user.value || !user.value.profile_image_url) return "/guest-profile.png";
   return user.value.profile_image_url.startsWith("http")
     ? user.value.profile_image_url
     : baseUrl + user.value.profile_image_url;
@@ -81,17 +119,24 @@ const profileImageUrl = computed(() => {
 
 const username = computed(() => user.value?.username || "ผู้ใช้งาน");
 
-const menuItems = [
+const menuItems = computed(() => [
   { name: "ร้านค้า", icon: "🏠", route: "/dashboard" },
+  { name: "ประมูล", icon: "🔨", route: "/auction" },
+  { name: "เช็คอิน", icon: "📅", route: "/check-in" },
+  { name: "ภารกิจ", icon: "🎯", route: "/missions" },
   { name: "โปรไฟล์", icon: "👤", route: "/profile" },
-  { name: "ตั้งค่า", icon: "⚙️", route: "/settings" },
-];
+  { name: "คำสั่งซื้อ", icon: "📦", route: "/orders" },
+  { name: "รายการโปรด", icon: "❤️", route: "/wishlist" },
+  { name: "แจ้งเตือน", icon: "🔔", route: "/notifications" },
+  { name: "แชท", icon: "💬", route: "/chat" },
+  ...(user.value?.is_seller ? [{ name: "แดชบอร์ดผู้ขาย", icon: "📊", route: "/seller-dashboard" }] : []),
+  { name: "เติมเหรียญ", icon: "🪙", route: "/topup" },
+]);
 
-// ตรวจสอบหน้า profile
-const isProfilePage = computed(() => route.path === "/profile");
+const isActive = (path) => route.path === path;
 
-function navigate(route) {
-  router.push(route);
+function navigate(path) {
+  router.push(path);
 }
 
 function handleLogout() {
@@ -102,11 +147,27 @@ function handleLogout() {
   window.dispatchEvent(new Event("user-updated"));
 }
 
-function fetchUserProfile() {
+async function fetchUserProfile() {
   profileImageUrlLoaded.value = false;
   const storedUser = localStorage.getItem("user");
-  if (storedUser) user.value = JSON.parse(storedUser);
-  else user.value = null;
+  if (storedUser) {
+    user.value = JSON.parse(storedUser);
+    
+    // Fetch coin balance
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const res = await axios.get(`${baseUrl}/api/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        coinBalance.value = res.data.coin_balance || 0;
+      } catch (e) {
+        console.error("Failed to fetch profile:", e);
+      }
+    }
+  } else {
+    user.value = null;
+  }
 
   const img = new Image();
   img.src = profileImageUrl.value;
@@ -121,17 +182,31 @@ onMounted(() => {
   fetchUserProfile();
   window.addEventListener("user-updated", fetchUserProfile);
 });
+
 onBeforeUnmount(() => {
   window.removeEventListener("user-updated", fetchUserProfile);
 });
 </script>
 
-<style>
-/* เพิ่ม shadow อ่อนเพื่อให้ดูละมุน */
-.bg-pink-100 {
-  box-shadow: 0 4px 15px rgba(219, 112, 147, 0.2);
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
 }
-.bg-gray-100 {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.2s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
 }
 </style>

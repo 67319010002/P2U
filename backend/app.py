@@ -13,6 +13,14 @@ from routes.seller import seller
 from routes.product import product
 from routes.seller_rank import seller_rank  # <-- AI Ranking
 from routes.coin import coin_bp  # <-- Coin / Topup
+from routes.admin import admin  # <-- Admin
+from routes.reviews import reviews  # <-- Reviews
+from routes.notifications import notifications  # <-- Notifications
+from routes.orders import orders  # <-- Orders
+from routes.chat import chat  # <-- Chat
+from routes.gamification import gamification  # <-- Gamification
+from routes.recommendations import recommendations  # <-- AI Recommendations
+from routes.auction import auction  # <-- Auction
 
 def create_app():
     app = Flask(__name__)
@@ -40,6 +48,14 @@ def create_app():
     app.register_blueprint(product, url_prefix="/api")
     app.register_blueprint(seller_rank, url_prefix="/api")  # AI Ranking
     app.register_blueprint(coin_bp, url_prefix="/api")      # Coin / Topup
+    app.register_blueprint(admin, url_prefix="/api")        # Admin
+    app.register_blueprint(reviews, url_prefix="/api")      # Reviews
+    app.register_blueprint(notifications, url_prefix="/api") # Notifications
+    app.register_blueprint(orders, url_prefix="/api")       # Orders
+    app.register_blueprint(chat, url_prefix="/api")         # Chat
+    app.register_blueprint(gamification, url_prefix="/api")  # Gamification
+    app.register_blueprint(recommendations, url_prefix="/api") # AI Recommendations
+    app.register_blueprint(auction, url_prefix="/api")        # Auction
 
     # Serve profile files
     @app.route('/static/uploads/<path:filename>')

@@ -38,6 +38,7 @@ class User(Document):
     addresses = ListField(EmbeddedDocumentField(Address))
 
     is_seller = BooleanField(default=False)
+    is_admin = BooleanField(default=False)  # Admin flag
     shop_name = StringField()
     
     is_active = BooleanField(default=True)
@@ -62,6 +63,13 @@ class User(Document):
     ai_score = FloatField(default=0.0)           # คะแนนจาก AI
     ai_level = StringField(default="C")          # ระดับ (S, A, B, C)
 
+    # ===== Gamification =====
+    member_level = StringField(default="Bronze", choices=["Bronze", "Silver", "Gold", "Diamond"])
+    xp = IntField(default=0)                      # Experience points
+    check_in_streak = IntField(default=0)         # Current streak days
+    last_check_in = DateTimeField()               # Last check-in date
+    total_spent = FloatField(default=0.0)         # Total amount spent
+
     meta = {'collection': 'users'}
 
 
@@ -71,6 +79,7 @@ class Product(Document):
     description = StringField()
     price = DecimalField(required=True, min_value=0)
     image_url = StringField()
+    category = StringField(default='all')  # Category for filtering
     seller = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
     created_at = DateTimeField(default=datetime.utcnow)
     meta = {'collection': 'products'}
@@ -90,6 +99,102 @@ class Order(Document):
     user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
     items = ListField(ReferenceField('CartItem'))
     total_price = DecimalField(required=True, min_value=0)
-    status = StringField(default='pending')
+    status = StringField(default='pending')  # pending, processing, completed, cancelled
     created_at = DateTimeField(default=datetime.utcnow)
     meta = {'collection': 'orders'}
+
+
+# -------- Review Model --------
+class Review(Document):
+    product = ReferenceField('Product', required=True, reverse_delete_rule=CASCADE)
+    user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
+    rating = IntField(required=True, min_value=1, max_value=5)  # 1-5 stars
+    comment = StringField(max_length=500)
+    created_at = DateTimeField(default=datetime.utcnow)
+    meta = {'collection': 'reviews'}
+
+
+# -------- Notification Model --------
+class Notification(Document):
+    user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
+    title = StringField(required=True)
+    message = StringField(required=True)
+    type = StringField(default='info', choices=['info', 'order', 'review', 'promo', 'system'])
+    is_read = BooleanField(default=False)
+    link = StringField()  # Optional link to navigate
+    created_at = DateTimeField(default=datetime.utcnow)
+    meta = {'collection': 'notifications'}
+
+
+# -------- Conversation Model (Chat) --------
+class Conversation(Document):
+    participants = ListField(ReferenceField('User'), required=True)  # 2 users
+    last_message = StringField()
+    last_message_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.utcnow)
+    meta = {'collection': 'conversations'}
+
+
+# -------- Message Model (Chat) --------
+class Message(Document):
+    conversation = ReferenceField('Conversation', required=True, reverse_delete_rule=CASCADE)
+    sender = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
+    content = StringField(required=True, max_length=1000)
+    is_read = BooleanField(default=False)
+    created_at = DateTimeField(default=datetime.utcnow)
+    meta = {'collection': 'messages'}
+
+
+# -------- Mission Model --------
+class Mission(Document):
+    title = StringField(required=True)
+    description = StringField()
+    type = StringField(required=True, choices=['daily', 'weekly', 'achievement'])
+    requirement_type = StringField(required=True, choices=['check_in', 'purchase', 'spend', 'review', 'order_count'])
+    requirement_value = IntField(required=True)  # Target value to complete
+    xp_reward = IntField(default=0)
+    coin_reward = IntField(default=0)
+    is_active = BooleanField(default=True)
+    meta = {'collection': 'missions'}
+
+
+# -------- UserMission Model --------
+class UserMission(Document):
+    user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
+    mission = ReferenceField('Mission', required=True, reverse_delete_rule=CASCADE)
+    progress = IntField(default=0)
+    is_completed = BooleanField(default=False)
+    is_claimed = BooleanField(default=False)
+    completed_at = DateTimeField()
+    claimed_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.utcnow)
+    meta = {'collection': 'user_missions'}
+
+
+# -------- Auction Model --------
+class Auction(Document):
+    title = StringField(required=True, max_length=200)
+    description = StringField()
+    image_url = StringField()
+    category = StringField(default='all')
+    starting_price = DecimalField(required=True, min_value=0)
+    current_price = DecimalField(required=True, min_value=0)
+    min_bid_increment = DecimalField(default=10)  # ขั้นต่ำในการเพิ่มราคา
+    seller = ReferenceField('User', required=True)
+    winner = ReferenceField('User')  # ผู้ชนะการประมูล
+    start_time = DateTimeField(default=datetime.utcnow)
+    end_time = DateTimeField(required=True)  # เวลาสิ้นสุดการประมูล
+    is_active = BooleanField(default=True)
+    is_ended = BooleanField(default=False)
+    total_bids = IntField(default=0)
+    created_at = DateTimeField(default=datetime.utcnow)
+    meta = {'collection': 'auctions'}
+
+
+# -------- AuctionBid Model --------
+class AuctionBid(Document):
+    auction = ReferenceField('Auction', required=True, reverse_delete_rule=CASCADE)
+    bidder = ReferenceField('User', required=True)
+    amount = DecimalField(required=True, min_value=0)
+    created_at = DateTimeField(default=datetime.utcnow)
+    meta = {'collection': 'auction_bids', 'ordering': ['-created_at']}

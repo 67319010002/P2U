@@ -9,8 +9,8 @@ export default defineNuxtConfig({
     plugins: [tailwindcss()],
   },
 
-  modules: ["@nuxtjs/i18n"],
-  
+  modules: [],
+
   app: {
     head: {
       link: [

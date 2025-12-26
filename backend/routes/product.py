@@ -94,7 +94,8 @@ def get_all_products():
             "name": p.name,
             "description": p.description,
             "price": float(p.price),
-            "image_url": p.image_url,  # ตอน save ลง DB เราเก็บ full URL แล้ว
+            "image_url": p.image_url,
+            "category": p.category or 'all',
             "seller": {
                 "id": str(p.seller.id),
                 "username": p.seller.username,
@@ -156,3 +157,136 @@ def delete_product(product_id):
         return jsonify({"msg": "Product deleted successfully."}), 200
     except Exception as e:
         return jsonify({"msg": str(e)}), 500
+
+
+# -----------------------------
+# Seed Products (Delete old, add new)
+# -----------------------------
+@product.route('/products/seed', methods=['POST'])
+def seed_products():
+    """Delete all products and create new demo products with AI images"""
+    # Get or create a demo seller
+    demo_seller = User.objects(username="P2UKAISER_Shop").first()
+    if not demo_seller:
+        from werkzeug.security import generate_password_hash
+        demo_seller = User(
+            username="P2UKAISER_Shop",
+            email="shop@p2ukaiser.com",
+            password=generate_password_hash("shop123"),
+            full_name="P2UKAISER Official Shop",
+            is_seller=True,
+            shop_name="P2UKAISER Official",
+            is_email_verified=True
+        )
+        demo_seller.save()
+    
+    # Delete all existing products
+    Product.objects.delete()
+    
+    # New products with AI images
+    products_data = [
+        {
+            "name": "iPhone 16 Pro Max",
+            "description": "สมาร์ทโฟนรุ่นล่าสุด จอ 6.7 นิ้ว กล้อง 48MP ชิป A18 Pro",
+            "price": 49900,
+            "category": "electronics",
+            "image_url": "/static/products/product_iphone_1766769641862.png"
+        },
+        {
+            "name": "Sony WH-1000XM5",
+            "description": "หูฟังไร้สาย Noise Cancelling คุณภาพระดับพรีเมียม",
+            "price": 12990,
+            "category": "electronics",
+            "image_url": "/static/products/product_headphones_1766769657879.png"
+        },
+        {
+            "name": "Nike Air Max Pink",
+            "description": "รองเท้าวิ่งสุดเท่ น้ำหนักเบา ดีไซน์สวย",
+            "price": 4590,
+            "category": "fashion",
+            "image_url": "/static/products/product_sneakers_1766769676542.png"
+        },
+        {
+            "name": "Apple Watch Ultra 2",
+            "description": "สมาร์ทวอทช์สำหรับนักผจญภัย GPS + LTE แบตอึด",
+            "price": 31900,
+            "category": "electronics",
+            "image_url": "/static/products/product_watch_1766769694809.png"
+        },
+        {
+            "name": "Minimalist Backpack",
+            "description": "กระเป๋าเป้สไตล์มินิมอล กันน้ำ ใส่โน๊ตบุ๊คได้",
+            "price": 1990,
+            "category": "fashion",
+            "image_url": "/static/products/product_backpack_1766769712117.png"
+        },
+        {
+            "name": "Razer DeathAdder V3 Pro",
+            "description": "เมาส์เกมมิ่งไร้สาย เซนเซอร์ 30K DPI RGB",
+            "price": 4990,
+            "category": "gaming",
+            "image_url": "/static/products/product_gaming_mouse_1766769731233.png"
+        },
+        # More products with AI images
+        {
+            "name": "MacBook Pro M3",
+            "description": "โน้ตบุ๊คประสิทธิภาพสูง ชิป M3 Pro RAM 18GB",
+            "price": 89900,
+            "category": "electronics",
+            "image_url": "/static/products/product_macbook_1766770139240.png"
+        },
+        {
+            "name": "PS5 Slim",
+            "description": "เครื่องเล่นเกมรุ่นใหม่ พร้อมคอนโทรลเลอร์ DualSense",
+            "price": 18990,
+            "category": "gaming",
+            "image_url": "/static/products/product_ps5_1766770153698.png"
+        },
+        {
+            "name": "เสื้อยืด Oversized",
+            "description": "เสื้อยืดผ้าคอตตอน 100% สวมสบาย มีหลายสี",
+            "price": 390,
+            "category": "fashion",
+            "image_url": "/static/products/product_tshirt_1766770253429.png"
+        },
+        {
+            "name": "ลิปสติก MAC Ruby Woo",
+            "description": "ลิปสติกสีแดงคลาสสิค เนื้อแมท ติดทน",
+            "price": 890,
+            "category": "beauty",
+            "image_url": "/static/products/product_lipstick_1766770192997.png"
+        },
+        {
+            "name": "กระทะไฟฟ้า Philips",
+            "description": "กระทะไฟฟ้าเคลือบเซรามิก ทำอาหารง่าย",
+            "price": 1290,
+            "category": "home",
+            "image_url": "/static/products/product_pan_1766770209597.png"
+        },
+        {
+            "name": "ลูกฟุตบอล Adidas",
+            "description": "ลูกฟุตบอลหนัง PU คุณภาพสูง เบอร์ 5",
+            "price": 790,
+            "category": "sports",
+            "image_url": "/static/products/product_football_1766770226683.png"
+        },
+    ]
+    
+    created = []
+    for p in products_data:
+        new_product = Product(
+            name=p["name"],
+            description=p["description"],
+            price=p["price"],
+            category=p.get("category", "all"),
+            image_url=p["image_url"],
+            seller=demo_seller
+        )
+        new_product.save()
+        created.append(p["name"])
+    
+    return jsonify({
+        "msg": f"Created {len(created)} products",
+        "products": created
+    }), 201
+
