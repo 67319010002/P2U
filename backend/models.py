@@ -70,6 +70,15 @@ class User(Document):
     last_check_in = DateTimeField()               # Last check-in date
     total_spent = FloatField(default=0.0)         # Total amount spent
 
+    # ===== Identity Verification =====
+    is_phone_verified = BooleanField(default=False)
+    phone_verification_code = StringField()
+    phone_verification_expiry = DateTimeField()
+    is_id_verified = BooleanField(default=False)  # ID card verified (for sellers)
+    id_card_front_url = StringField()
+    id_card_back_url = StringField()
+    verification_date = DateTimeField()
+
     meta = {'collection': 'users'}
 
 
@@ -78,7 +87,10 @@ class Product(Document):
     name = StringField(required=True, max_length=100)
     description = StringField()
     price = DecimalField(required=True, min_value=0)
-    image_url = StringField()
+    image_url = StringField()  # Main image (backward compatible)
+    images = ListField(StringField())  # Multiple product images
+    video_url = StringField()  # Product video URL
+    view_360_images = ListField(StringField())  # 360° view images
     category = StringField(default='all')  # Category for filtering
     seller = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
     created_at = DateTimeField(default=datetime.utcnow)
@@ -198,3 +210,39 @@ class AuctionBid(Document):
     amount = DecimalField(required=True, min_value=0)
     created_at = DateTimeField(default=datetime.utcnow)
     meta = {'collection': 'auction_bids', 'ordering': ['-created_at']}
+
+
+# -------- AutoBid Model (Auction Enhancement) --------
+class AutoBid(Document):
+    auction = ReferenceField('Auction', required=True, reverse_delete_rule=CASCADE)
+    user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
+    max_amount = DecimalField(required=True, min_value=0)  # Maximum bid limit
+    current_bid = DecimalField(default=0)  # Current auto-bid amount
+    is_active = BooleanField(default=True)
+    created_at = DateTimeField(default=datetime.utcnow)
+    meta = {'collection': 'auto_bids'}
+
+
+# -------- Seller Ranking History --------
+class SellerRankingHistory(Document):
+    seller = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
+    score = FloatField(required=True)
+    level = StringField(required=True)  # S, A, B, C
+    rank_position = IntField()  # Position in leaderboard
+    total_sales = FloatField(default=0.0)
+    rating_avg = FloatField(default=0.0)
+    recorded_at = DateTimeField(default=datetime.utcnow)
+    meta = {'collection': 'seller_ranking_history', 'ordering': ['-recorded_at']}
+
+
+# -------- Price Statistics (for Price Recommendation) --------
+class PriceStatistics(Document):
+    category = StringField(required=True, unique=True)
+    avg_price = FloatField(default=0.0)
+    min_price = FloatField(default=0.0)
+    max_price = FloatField(default=0.0)
+    median_price = FloatField(default=0.0)
+    total_products = IntField(default=0)
+    updated_at = DateTimeField(default=datetime.utcnow)
+    meta = {'collection': 'price_statistics'}
+

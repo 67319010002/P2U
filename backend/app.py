@@ -21,6 +21,7 @@ from routes.chat import chat  # <-- Chat
 from routes.gamification import gamification  # <-- Gamification
 from routes.recommendations import recommendations  # <-- AI Recommendations
 from routes.auction import auction  # <-- Auction
+from routes.price_analysis import price_analysis  # <-- Price Recommendation
 
 def create_app():
     app = Flask(__name__)
@@ -56,6 +57,7 @@ def create_app():
     app.register_blueprint(gamification, url_prefix="/api")  # Gamification
     app.register_blueprint(recommendations, url_prefix="/api") # AI Recommendations
     app.register_blueprint(auction, url_prefix="/api")        # Auction
+    app.register_blueprint(price_analysis, url_prefix="/api")  # Price Recommendation
 
     # Serve profile files
     @app.route('/static/uploads/<path:filename>')

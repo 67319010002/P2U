@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from bson import ObjectId
 from datetime import datetime, timedelta
 
-from models import User, Auction, AuctionBid, Notification
+from models import User, Auction, AuctionBid, Notification, AutoBid
 
 auction = Blueprint('auction', __name__)
 
@@ -337,3 +337,246 @@ def seed_auctions():
         "msg": f"Created {len(created)} demo auctions",
         "auctions": created
     }), 201
+
+
+# -----------------------------
+# Auto-Bid: Set Auto Bid
+# -----------------------------
+@auction.route('/auctions/<auction_id>/auto-bid', methods=['POST'])
+@jwt_required()
+def set_auto_bid(auction_id):
+    """Set auto-bid for an auction"""
+    user_id = get_jwt_identity()
+    user = User.objects(id=ObjectId(user_id)).first()
+    
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    
+    try:
+        a = Auction.objects.get(id=ObjectId(auction_id))
+    except:
+        return jsonify({"msg": "Auction not found"}), 404
+    
+    if a.is_ended or datetime.utcnow() >= a.end_time:
+        return jsonify({"msg": "การประมูลสิ้นสุดแล้ว"}), 400
+    
+    if str(a.seller.id) == user_id:
+        return jsonify({"msg": "ไม่สามารถประมูลสินค้าของตัวเองได้"}), 400
+    
+    data = request.get_json()
+    max_amount = float(data.get('max_amount', 0))
+    
+    min_bid = float(a.current_price) + float(a.min_bid_increment)
+    if max_amount < min_bid:
+        return jsonify({"msg": f"ราคาสูงสุดต้องไม่น้อยกว่า ฿{min_bid:,.0f}"}), 400
+    
+    # Check existing auto-bid
+    existing = AutoBid.objects(auction=a, user=user, is_active=True).first()
+    if existing:
+        existing.max_amount = max_amount
+        existing.save()
+        msg = "อัปเดต Auto-Bid สำเร็จ"
+    else:
+        AutoBid(
+            auction=a,
+            user=user,
+            max_amount=max_amount
+        ).save()
+        msg = "ตั้งค่า Auto-Bid สำเร็จ"
+    
+    # Process auto-bid immediately
+    process_auto_bids(a)
+    
+    return jsonify({
+        "msg": msg,
+        "max_amount": max_amount,
+        "current_price": float(a.current_price)
+    }), 200
+
+
+# -----------------------------
+# Auto-Bid: Cancel Auto Bid
+# -----------------------------
+@auction.route('/auctions/<auction_id>/auto-bid', methods=['DELETE'])
+@jwt_required()
+def cancel_auto_bid(auction_id):
+    """Cancel auto-bid for an auction"""
+    user_id = get_jwt_identity()
+    user = User.objects(id=ObjectId(user_id)).first()
+    
+    try:
+        a = Auction.objects.get(id=ObjectId(auction_id))
+    except:
+        return jsonify({"msg": "Auction not found"}), 404
+    
+    auto_bid = AutoBid.objects(auction=a, user=user, is_active=True).first()
+    if not auto_bid:
+        return jsonify({"msg": "ไม่พบ Auto-Bid"}), 404
+    
+    auto_bid.is_active = False
+    auto_bid.save()
+    
+    return jsonify({"msg": "ยกเลิก Auto-Bid สำเร็จ"}), 200
+
+
+# -----------------------------
+# Auto-Bid: Get My Auto Bids
+# -----------------------------
+@auction.route('/auctions/my-auto-bids', methods=['GET'])
+@jwt_required()
+def get_my_auto_bids():
+    """Get all active auto-bids for current user"""
+    user_id = get_jwt_identity()
+    user = User.objects(id=ObjectId(user_id)).first()
+    
+    auto_bids = AutoBid.objects(user=user, is_active=True)
+    
+    result = []
+    for ab in auto_bids:
+        a = ab.auction
+        if a.is_ended:
+            continue
+        
+        result.append({
+            "id": str(ab.id),
+            "auction_id": str(a.id),
+            "auction_title": a.title,
+            "auction_image": a.image_url,
+            "max_amount": float(ab.max_amount),
+            "current_bid": float(ab.current_bid),
+            "current_price": float(a.current_price),
+            "is_winning": str(a.winner.id) == user_id if a.winner else False,
+            "time_left": max(0, int((a.end_time - datetime.utcnow()).total_seconds()))
+        })
+    
+    return jsonify({"auto_bids": result}), 200
+
+
+# -----------------------------
+# Auction History
+# -----------------------------
+@auction.route('/auctions/my-history', methods=['GET'])
+@jwt_required()
+def get_my_auction_history():
+    """Get user's auction participation history"""
+    user_id = get_jwt_identity()
+    user = User.objects(id=ObjectId(user_id)).first()
+    
+    # Get unique auctions user has bid on
+    user_bids = AuctionBid.objects(bidder=user).order_by('-created_at')
+    auction_ids = list(set([str(b.auction.id) for b in user_bids]))
+    
+    result = {
+        "won": [],
+        "lost": [],
+        "active": []
+    }
+    
+    for aid in auction_ids:
+        try:
+            a = Auction.objects.get(id=ObjectId(aid))
+        except:
+            continue
+        
+        # Get user's highest bid
+        user_highest = AuctionBid.objects(auction=a, bidder=user).order_by('-amount').first()
+        
+        auction_data = {
+            "id": str(a.id),
+            "title": a.title,
+            "image_url": a.image_url,
+            "current_price": float(a.current_price),
+            "my_highest_bid": float(user_highest.amount) if user_highest else 0,
+            "total_bids": a.total_bids,
+            "end_time": a.end_time.isoformat(),
+            "is_ended": a.is_ended
+        }
+        
+        if a.is_ended:
+            if a.winner and str(a.winner.id) == user_id:
+                result["won"].append(auction_data)
+            else:
+                result["lost"].append(auction_data)
+        else:
+            auction_data["time_left"] = max(0, int((a.end_time - datetime.utcnow()).total_seconds()))
+            auction_data["is_winning"] = str(a.winner.id) == user_id if a.winner else False
+            result["active"].append(auction_data)
+    
+    return jsonify({
+        "history": result,
+        "stats": {
+            "total_participated": len(auction_ids),
+            "won": len(result["won"]),
+            "lost": len(result["lost"]),
+            "active": len(result["active"])
+        }
+    }), 200
+
+
+# -----------------------------
+# Helper: Process Auto-Bids
+# -----------------------------
+def process_auto_bids(auction):
+    """Process all auto-bids for an auction"""
+    if auction.is_ended:
+        return
+    
+    # Get all active auto-bids, sorted by max_amount (highest first)
+    auto_bids = AutoBid.objects(auction=auction, is_active=True).order_by('-max_amount')
+    
+    if len(auto_bids) < 1:
+        return
+    
+    current_price = float(auction.current_price)
+    increment = float(auction.min_bid_increment)
+    
+    # If only one auto-bidder, bid minimum
+    if len(auto_bids) == 1:
+        ab = auto_bids[0]
+        if float(ab.max_amount) > current_price:
+            new_price = current_price + increment
+            if new_price <= float(ab.max_amount):
+                place_auto_bid(auction, ab.user, new_price)
+                ab.current_bid = new_price
+                ab.save()
+        return
+    
+    # Multiple auto-bidders: compete
+    highest = auto_bids[0]
+    second = auto_bids[1]
+    
+    # New price beats second highest by one increment
+    new_price = min(float(highest.max_amount), float(second.max_amount) + increment)
+    
+    if new_price > current_price:
+        place_auto_bid(auction, highest.user, new_price)
+        highest.current_bid = new_price
+        highest.save()
+
+
+def place_auto_bid(auction, user, amount):
+    """Place an auto-bid"""
+    new_bid = AuctionBid(
+        auction=auction,
+        bidder=user,
+        amount=amount
+    )
+    new_bid.save()
+    
+    # Update auction
+    old_winner = auction.winner
+    auction.current_price = amount
+    auction.total_bids += 1
+    auction.winner = user
+    auction.save()
+    
+    # Notify previous winner if different
+    if old_winner and str(old_winner.id) != str(user.id):
+        Notification(
+            user=old_winner,
+            title="⚠️ Auto-Bid: มีคนเสนอราคาสูงกว่า!",
+            message=f"มีคนเสนอราคา ฿{amount:,.0f} สำหรับ '{auction.title}'",
+            type="order",
+            link=f"/auctions/{str(auction.id)}"
+        ).save()
+
