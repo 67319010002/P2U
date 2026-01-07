@@ -1,7 +1,8 @@
 <template>
-  <div class="p-6 max-w-8xl mx-auto bg-black text-white mt-1 mb-1 mr-1 transition-all duration-300 min-h-screen">
-    <div class="md:w-1/4 space-y-5">
-      <div class="flex items-center justify-center mb-6 relative">
+  <div class="p-6 md:pl-32 max-w-8xl mx-auto bg-black text-white mt-1 mb-1 mr-1 transition-all duration-300 min-h-screen">
+    
+    <div class="md:w-full space-y-5"> 
+      <div class="flex items-center  mb-6 relative">
         <h1 class="text-3xl font-extrabold text-center">
           My <span class="text-pink-600">Profile</span>
         </h1>
@@ -13,8 +14,7 @@
     </div>
 
     <div v-if="user" class="flex flex-col md:flex-row md:space-x-8 space-y-8 md:space-y-0">
-      <div class="md:w-1/4 space-y-5">
-        <div class="flex items-center space-x-6">
+      <div class="md:w-1/3 space-y-5"> <div class="flex items-center space-x-6">
           <div class="relative w-28 h-28 shrink-0">
             <img :src="user.profile_image_url || defaultProfile" alt="Profile"
               class="w-full h-full rounded-full border-4 border-pink-500 object-cover shadow-md" />
@@ -36,7 +36,7 @@
             <p><span class="font-semibold text-pink-400">{{ t('phone') }}:</span> {{ user.phone_number }}</p>
           </div>
         </div>
-
+        
         <div class="flex items-center space-x-2 mt-4">
           <span class="font-semibold text-pink-400">{{ t('seller') }}:</span>
           <span>{{ user.is_seller ? t('registered') : t('notRegistered') }}</span>
@@ -117,7 +117,7 @@
         </div>
       </div>
 
-      <div class="md:w-3/4 space-y-6">
+      <div class="md:w-2/3 space-y-6">
         <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">{{ t('trackOrder') }}</h2>
         <div class="bg-gray-800 rounded-lg p-4 shadow-inner min-h-48 flex items-center justify-center text-gray-400">
           <p>Tracking information will appear here.</p>
@@ -153,7 +153,7 @@
           <div class="mt-4 p-4 bg-gray-800 rounded-xl border border-pink-500/20">
             <div class="flex justify-between items-center mb-4">
               <span class="text-gray-400 font-medium">ยอดรวมสุทธิ:</span>
-              <span class="text-2xl font-black text-pink-500">฿{{ totalPrice.toLocaleString() }}</span>
+              <span class="text-2xl font-black text-pink-500">🪙 ฿{{ totalPrice.toLocaleString() }}</span>
             </div>
             <button @click="router.push('/cart')" class="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-lg font-bold shadow-lg shadow-pink-600/20 transition-all active:scale-95">
               ไปที่หน้าตะกร้าสินค้า ✨
@@ -163,39 +163,18 @@
         <div v-else class="text-gray-400 text-sm text-center py-12 bg-gray-800/30 rounded-xl border border-dashed border-gray-700">
            🏰 ตะกร้าว่างเปล่าเพคะ
         </div>
-      </div>
-    </div>
 
-    <div v-if="user" class="md:w-1/4 space-y-5 mt-4">
-      <button @click="handleLogout"
-        class="mt-8 w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 rounded-lg transition">
-        Logout
-      </button>
-    </div>
-    
-    <div v-if="!user" class="text-center text-gray-400 mt-20 animate-pulse">Loading Profile...</div>
-
-    <p v-if="errorMsg" class="text-red-400 text-center mt-4">{{ errorMsg }}</p>
-    <p v-if="successMsg" class="text-green-400 text-center mt-4">{{ successMsg }}</p>
-
-    <div v-if="previewImageUrl" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-      <div class="bg-white p-6 rounded-2xl max-w-sm w-full text-center text-black shadow-xl">
-        <h2 class="text-xl font-bold mb-4">Preview <span class="text-pink-600">Image</span></h2>
-        <img :src="previewImageUrl" alt="Preview"
-          class="w-32 h-32 mx-auto object-cover rounded-full border border-gray-300 mb-4" />
-        <div class="flex justify-center gap-4">
-          <button @click="uploadConfirmed"
-            class="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-xl font-semibold transition">
-            Upload
-          </button>
-          <button @click="cancelUpload"
-            class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-xl font-semibold transition">
-            Cancel
+        <div class="pt-10 border-t border-gray-800">
+           <button @click="handleLogout"
+            class="w-full md:w-48 bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 rounded-lg transition mx-auto block">
+            Logout
           </button>
         </div>
       </div>
     </div>
-  </div>
+    
+    <div v-if="!user" class="text-center text-gray-400 mt-20 animate-pulse">Loading Profile...</div>
+    </div>
 </template>
 
 <script setup>
