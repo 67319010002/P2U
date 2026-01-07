@@ -121,6 +121,7 @@ const username = computed(() => user.value?.username || "ผู้ใช้ง�
 
 const menuItems = computed(() => [
   { name: "ร้านค้า", icon: "🏠", route: "/dashboard" },
+  { name: "ตระกร้าสินค้า", icon: "🛒", route: "/cart" },
   { name: "ประมูล", icon: "🔨", route: "/auction" },
   { name: "เช็คอิน", icon: "📅", route: "/check-in" },
   { name: "ภารกิจ", icon: "🎯", route: "/missions" },
