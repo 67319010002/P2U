@@ -31,7 +31,6 @@
       </button>
     </div>
   </div>
-  
 </template>
 
 <script>
@@ -42,7 +41,7 @@ export default {
       this.$router.push("/dashboard"); // กลับไปหน้าแรก
     },
     goToOrders() {
-      this.$router.push("/payment"); // ไปหน้ารายการสั่งซื้อ
+      this.$router.push("/orders"); // ไปหน้าคำสั่งซื้อ ✅
     },
   },
 };
