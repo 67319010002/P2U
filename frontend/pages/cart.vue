@@ -97,17 +97,31 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRouter } from 'vue-router'; // ✅ นำเข้า useRouter
+import { useRouter } from 'vue-router';
 
-const router = useRouter(); // ✅ ใช้งาน router
+const router = useRouter();
 const cart = ref([]);
 
-// ✅ โหลดข้อมูลและเพิ่มสถานะ selected
+// ✅ ฟังก์ชันดึง UserID เพื่อสร้างชื่อ Key เฉพาะตัว
+const getCartKey = () => {
+  if (process.client) {
+    const user = localStorage.getItem('user');
+    if (user) {
+      const userData = JSON.parse(user);
+      const id = userData.id || userData._id || userData.email;
+      return `cart_${id}`;
+    }
+  }
+  return 'cart_guest'; // กรณีไม่ได้ login หรือหา user ไม่เจอ
+};
+
+// ✅ โหลดข้อมูลจาก Key ของ User นั้นๆ
 const loadCart = () => {
   if (process.client) {
-    const savedCart = localStorage.getItem("cart");
+    const cartKey = getCartKey();
+    const savedCart = localStorage.getItem(cartKey);
     const parsed = savedCart ? JSON.parse(savedCart) : [];
-    // เพิ่ม property selected: true ให้ทุกรายการที่โหลดขึ้นมา (ถ้ายังไม่มี)
+    
     cart.value = parsed.map(item => ({
       ...item,
       selected: item.selected !== undefined ? item.selected : true
@@ -115,11 +129,15 @@ const loadCart = () => {
   }
 };
 
+// ✅ บันทึกลง Key ของ User นั้นๆ เมื่อมีการเปลี่ยนแปลง
 watch(cart, (newCart) => {
-  localStorage.setItem("cart", JSON.stringify(newCart));
+  if (process.client) {
+    const cartKey = getCartKey();
+    localStorage.setItem(cartKey, JSON.stringify(newCart));
+  }
 }, { deep: true });
 
-// ✅ คำนวณยอดรวมเฉพาะชิ้นที่ถูกติ๊กถูก
+// ✅ คำนวณยอดรวม (เฉพาะชิ้นที่เลือก)
 const totalPrice = computed(() => {
   return cart.value
     .filter(item => item.selected)
@@ -136,7 +154,7 @@ const isAllSelected = computed(() => {
   return cart.value.length > 0 && cart.value.every(item => item.selected);
 });
 
-// --- ฟังก์ชันจัดการ ---
+// --- ฟังก์ชันจัดการระบบตระกร้า ---
 
 const toggleSelectAll = (e) => {
   const isChecked = e.target.checked;
@@ -154,15 +172,12 @@ const removeItem = (item) => {
   cart.value = cart.value.filter(i => i.id !== item.id);
 };
 
-// ✅ แก้ไขฟังก์ชันชำระเงิน
 const checkout = () => {
   const selectedItems = cart.value.filter(i => i.selected);
   
   if (selectedItems.length > 0) {
-    // 1. เก็บสินค้าที่เลือกไว้ใน checkout_items เพื่อให้หน้า payment ดึงไปใช้
+    // เก็บรายการที่จะชำระเงิน (ตัวนี้ใช้ชื่อกลางได้เพราะเป็น Temp data ก่อนจ่ายเงิน)
     localStorage.setItem("checkout_items", JSON.stringify(selectedItems));
-    
-    // 2. ไปที่หน้าชำระเงิน
     router.push("/payment");
   } else {
     alert("กรุณาเลือกสินค้าที่ต้องการชำระเงินก่อนนะเพคะ! 👑");

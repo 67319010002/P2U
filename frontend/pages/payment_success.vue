@@ -1,85 +1,48 @@
 <template>
   <div class="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-6">
-    <div class="bg-green-600 rounded-full p-4 mb-6">
+    <div class="bg-green-600 rounded-full p-4 mb-6 animate-bounce">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
       </svg>
     </div>
 
-    <h1 class="text-3xl font-bold mb-2">ชำระเงินสำเร็จ!</h1>
+    <h1 class="text-3xl font-bold mb-2">ชำระเงินสำเร็จแล้วเพคะ! ✨</h1>
     <p class="text-lg text-gray-300 mb-6 text-center">
-      ขอบคุณที่ใช้บริการกับเรา<br />
-      ระบบได้รับการชำระเงินของคุณเรียบร้อยแล้ว
+      ขอบคุณที่เลือกซื้อสินค้ากับเรา<br />
+      เจ้าหญิงสามารถตรวจสอบสถานะการจัดส่งได้ที่หน้าประวัติเพคะ
     </p>
 
     <div class="flex gap-4">
       <button
         @click="goToOrders"
-        class="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-lg transition"
+        class="bg-pink-600 hover:bg-pink-700 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-pink-500/20 transition-all hover:scale-105 active:scale-95"
       >
-        ดูคำสั่งซื้อ
+        📦 ดูคำสั่งซื้อ
       </button>
 
       <button
         @click="goHome"
-        class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition"
+        class="bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-2xl font-bold transition-all hover:scale-105 active:scale-95"
       >
-        กลับไปหน้าแรก
+        🏠 กลับหน้าแรก
       </button>
     </div>
   </div>
 </template>
 
 <script>
-import axios from "axios";
-
 export default {
   name: "PaymentSuccess",
 
-  data() {
-    return {
-      // ✅ เพิ่ม baseUrl ให้ชี้ไปที่ Flask
-      baseUrl: 'http://localhost:5000'
-    }
-  },
-
-  async mounted() {
-    // สร้างออเดอร์ให้ผู้ขายทันทีหลังชำระเงินสำเร็จ
-    await this.createOrderForSeller();
+  mounted() {
+    // หน้านี้มาถึงคือสำเร็จแล้วเพคะ ไม่ต้องเรียก API สร้างออเดอร์ซ้ำแล้ว
+    console.log("Payment flow completed successfully! ✨");
+    
+    // เคลียร์เศษซากข้อมูลที่อาจหลงเหลือ (เผื่อไว้เพคะ)
+    localStorage.removeItem("checkout_items");
   },
 
   methods: {
-    async createOrderForSeller() {
-      try {
-        const token = localStorage.getItem('token');
-        
-        // ✅ ดึงรายการสินค้าจาก Query หรือ LocalStorage ตามที่คุณเก็บไว้ในหน้า Payment
-        // โค้ด Backend ของคุณต้องการ Array ของ ID ในฟิลด์ 'cart_items'
-        const itemIds = this.$route.query.items ? this.$route.query.items.split(',') : [];
-
-        if (itemIds.length === 0) {
-           console.warn("ไม่พบข้อมูลสินค้าที่จะสร้างออเดอร์");
-           return;
-        }
-
-        // ✅ เรียก API ไปที่ Port 5000 พร้อมแนบ Token
-        const response = await axios.post(`${this.baseUrl}/api/orders`, 
-          {
-            cart_items: itemIds // ส่งเป็น [id1, id2, ...] ตามที่ Flask รอรับ
-          }, 
-          {
-            headers: { 
-              Authorization: `Bearer ${token}` 
-            }
-          }
-        );
-
-        console.log("✅ สร้างออเดอร์สำเร็จ:", response.data);
-      } catch (error) {
-        console.error("❌ ส่งออเดอร์ให้ผู้ขายไม่สำเร็จ:", error.response?.data || error.message);
-      }
-    },
-
     goHome() {
       this.$router.push("/dashboard");
     },
@@ -90,3 +53,14 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* เพิ่มอนิเมชั่นนิดหน่อยให้ดูสมกับเป็นหน้าสำเร็จเพคะ */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-bounce {
+  animation: bounce 2s infinite;
+}
+</style>

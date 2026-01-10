@@ -5,30 +5,27 @@
 
     <main class="p-6">
       <div class="fixed bottom-8 right-8 z-50">
-  <NuxtLink to="/cart" class="group relative flex items-center justify-center">
-    
-    <div class="absolute inset-0 bg-primary-500 rounded-full blur-xl opacity-40 group-hover:opacity-70 group-hover:scale-125 transition-all duration-500"></div>
-    
-    <button class="relative w-16 h-16 bg-gradient-to-br from-pink-400 to-primary-600 rounded-full shadow-[0_0_20px_rgba(236,72,153,0.5)] border-2 border-white/30 flex items-center justify-center text-2xl transition-all duration-300 group-hover:scale-110 group-hover:-rotate-12 overflow-hidden">
-      
-      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
-      
-      <span class="relative z-10 filter drop-shadow-md">🛒</span>
-    </button>
+        <NuxtLink to="/cart" class="group relative flex items-center justify-center">
+          <div class="absolute inset-0 bg-primary-500 rounded-full blur-xl opacity-40 group-hover:opacity-70 group-hover:scale-125 transition-all duration-500"></div>
+          
+          <button class="relative w-16 h-16 bg-gradient-to-br from-pink-400 to-primary-600 rounded-full shadow-[0_0_20px_rgba(236,72,153,0.5)] border-2 border-white/30 flex items-center justify-center text-2xl transition-all duration-300 group-hover:scale-110 group-hover:-rotate-12 overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
+            <span class="relative z-10 filter drop-shadow-md">🛒</span>
+          </button>
 
-    <span 
-      v-if="cart.length > 0"
-      class="absolute -top-1 -right-1 bg-white text-primary-600 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-500 animate-bounce"
-    >
-      {{ cart.reduce((total, item) => total + item.quantity, 0) }}
-    </span>
-    
-    <span class="absolute right-20 bg-dark-800 text-white text-xs py-2 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/10 whitespace-nowrap">
-      ดูตะกร้าสินค้า ✨
-    </span>
-  </NuxtLink>
-</div>
-      <!-- Banner Carousel -->
+          <span 
+            v-if="totalCartItems > 0"
+            class="absolute -top-1 -right-1 bg-white text-primary-600 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-primary-500 animate-bounce"
+          >
+            {{ totalCartItems }}
+          </span>
+          
+          <span class="absolute right-20 bg-dark-800 text-white text-xs py-2 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/10 whitespace-nowrap">
+            ดูตะกร้าสินค้า ✨
+          </span>
+        </NuxtLink>
+      </div>
+
       <div class="relative mb-8 rounded-2xl overflow-hidden shadow-lg">
         <div class="flex transition-transform duration-500" :style="{ transform: `translateX(-${currentBanner * 100}%)` }">
           <div v-for="(banner, index) in banners" :key="index" class="min-w-full h-64 md:h-80 relative">
@@ -41,24 +38,16 @@
           </div>
         </div>
         
-        <!-- Nav Buttons -->
-        <button @click="prevBanner" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-primary-500 rounded-full flex items-center justify-center text-white transition-colors">
-          ←
-        </button>
-        <button @click="nextBanner" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-primary-500 rounded-full flex items-center justify-center text-white transition-colors">
-          →
-        </button>
+        <button @click="prevBanner" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-primary-500 rounded-full flex items-center justify-center text-white transition-colors"> ← </button>
+        <button @click="nextBanner" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-primary-500 rounded-full flex items-center justify-center text-white transition-colors"> → </button>
         
-        <!-- Indicators -->
         <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
           <span v-for="(_, index) in banners" :key="'dot-' + index" class="w-2 h-2 rounded-full transition-colors" :class="currentBanner === index ? 'bg-primary-500' : 'bg-white/50'"></span>
         </div>
       </div>
 
-      <!-- Categories -->
       <ProductCategories @category-change="filterByCategory" />
 
-      <!-- Products Header -->
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-xl font-bold text-white">
           🛍️ สินค้าทั้งหมด
@@ -71,27 +60,11 @@
         </div>
       </div>
 
-      <!-- Product Grid -->
       <div v-if="filteredProducts.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        <div 
-          v-for="product in filteredProducts" 
-          :key="product.id" 
-          class="product-card cursor-pointer group"
-          @click="openProduct(product)"
-        >
+        <div v-for="product in filteredProducts" :key="product.id" class="product-card cursor-pointer group" @click="openProduct(product)">
           <div class="aspect-square relative overflow-hidden">
-            <img 
-              :src="product.image_url || defaultImage" 
-              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-              @error="product.image_url = defaultImage"
-            />
-            
-            <button 
-              @click.stop="toggleWishlist(product)"
-              class="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-red-500 transition-colors"
-            >
-              💖
-            </button>
+            <img :src="product.image_url || defaultImage" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" @error="product.image_url = defaultImage" />
+            <button @click.stop="toggleWishlist(product)" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-red-500 transition-colors"> 💖 </button>
           </div>
           <div class="p-3">
             <h3 class="text-sm font-medium text-white truncate">{{ product.name }}</h3>
@@ -100,23 +73,15 @@
           </div>
         </div>
       </div>
-      
-      <div v-else class="text-center py-20">
-        <div class="w-20 h-20 rounded-full bg-dark-800 mx-auto mb-4 flex items-center justify-center text-4xl">🔍</div>
-        <p class="text-dark-400">ไม่พบสินค้า</p>
-      </div>
 
-      <!-- Product Modal -->
       <Teleport to="body">
         <Transition name="fade">
           <div v-if="selectedProduct" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click="closeProduct">
             <div class="glass rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in" @click.stop>
-              <!-- Image -->
               <div class="md:w-1/2 bg-dark-900">
                 <img :src="selectedProduct.image_url || defaultImage" class="w-full h-64 md:h-full object-cover" />
               </div>
               
-              <!-- Details -->
               <div class="md:w-1/2 p-6 flex flex-col">
                 <button @click="closeProduct" class="self-end text-dark-400 hover:text-white text-2xl mb-4">✕</button>
                 
@@ -138,9 +103,9 @@
                   <button @click="addToCart(selectedProduct)" class="flex-1 btn-primary">
                     🛒 เพิ่มลงตะกร้า
                   </button>
-                  <NuxtLink to="/payment" class="flex-1 btn-accent text-center" @click="addToCart(selectedProduct)">
+                  <button @click="buyNow(selectedProduct)" class="flex-1 btn-accent">
                     💳 ซื้อเลย
-                  </NuxtLink>
+                  </button>
                 </div>
               </div>
             </div>
@@ -154,23 +119,69 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import axios from "axios";
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const defaultImage = "/default-item.svg";
 const allProducts = ref([]);
 const selectedProduct = ref(null);
 const selectedCategory = ref('all');
 const sortBy = ref('latest');
 
-// Cart
-const cart = ref([]);
-if (process.client) {
-  cart.value = JSON.parse(localStorage.getItem("cart") || "[]");
-  watch(cart, (newVal) => {
-    localStorage.setItem("cart", JSON.stringify(newVal));
-  }, { deep: true });
-}
+// --- 🛒 ระบบตระกร้าแบบแยก User (Logic ใหม่ที่เสถียรขึ้น) ---
 
-// Banner
+const getCartKey = () => {
+  if (process.client) {
+    const user = localStorage.getItem('user');
+    if (user) {
+      const userData = JSON.parse(user);
+      return `cart_${userData.id || userData._id || userData.email}`;
+    }
+  }
+  return 'cart_guest';
+};
+
+const cart = ref([]);
+
+const loadCart = () => {
+  if (process.client) {
+    const key = getCartKey();
+    const saved = localStorage.getItem(key);
+    cart.value = saved ? JSON.parse(saved) : [];
+  }
+};
+
+// นับจำนวนชิ้นทั้งหมด (เพื่อให้เลขที่ Badge เด้งตามจริง)
+const totalCartItems = computed(() => {
+  return cart.value.reduce((total, item) => total + item.quantity, 0);
+});
+
+// Watch และบันทึกลง LocalStorage ตาม User Key
+watch(cart, (newVal) => {
+  if (process.client) {
+    const key = getCartKey();
+    localStorage.setItem(key, JSON.stringify(newVal));
+  }
+}, { deep: true });
+
+const addToCart = (product) => {
+  const existing = cart.value.find((item) => item.id === product.id);
+  if (existing) {
+    existing.quantity++;
+  } else {
+    // ใส่ selected: true เพื่อให้ในหน้า Cart ติ๊กถูกให้อัตโนมัติ
+    cart.value.push({ ...product, quantity: 1, selected: true });
+  }
+  closeProduct();
+};
+
+const buyNow = (product) => {
+  addToCart(product);
+  router.push('/cart');
+};
+
+// --- 🖼️ ระบบ Banner & การดึงข้อมูล ---
+
 const banners = ref([
   { image: "https://affiliate.priceza.com/wp-content/uploads/2020/11/11.11_HotDealHotItem_HeroBanner.jpg", title: "🎉 MEGA SALE 11.11", subtitle: "ลดสูงสุด 90% ทุกหมวดหมู่!" },
   { image: "https://affiliate.priceza.com/wp-content/uploads/2020/11/4.png", title: "💎 สินค้า Limited Edition", subtitle: "ของหายากราคาพิเศษ" },
@@ -182,28 +193,16 @@ let bannerInterval = null;
 const nextBanner = () => { currentBanner.value = (currentBanner.value + 1) % banners.value.length; };
 const prevBanner = () => { currentBanner.value = (currentBanner.value - 1 + banners.value.length) % banners.value.length; };
 
-// Filter & Sort
 const filteredProducts = computed(() => {
   let products = [...allProducts.value];
-  
-  if (selectedCategory.value !== 'all') {
-    products = products.filter(p => p.category === selectedCategory.value);
-  }
-  
-  if (sortBy.value === 'price-low') {
-    products.sort((a, b) => a.price - b.price);
-  } else if (sortBy.value === 'price-high') {
-    products.sort((a, b) => b.price - a.price);
-  }
-  
+  if (selectedCategory.value !== 'all') products = products.filter(p => p.category === selectedCategory.value);
+  if (sortBy.value === 'price-low') products.sort((a, b) => a.price - b.price);
+  else if (sortBy.value === 'price-high') products.sort((a, b) => b.price - a.price);
   return products;
 });
 
-function filterByCategory(cat) {
-  selectedCategory.value = cat;
-}
+const filterByCategory = (cat) => { selectedCategory.value = cat; };
 
-// Fetch products
 const fetchProducts = async () => {
   try {
     const res = await axios.get("http://localhost:5000/api/products");
@@ -217,25 +216,12 @@ const fetchProducts = async () => {
       seller: p.seller || { username: "Unknown", shop_name: "" },
     }));
   } catch (err) {
-    console.error("Failed to fetch products:", err);
     allProducts.value = [];
   }
 };
 
-// Modal
 const openProduct = (product) => { selectedProduct.value = product; };
 const closeProduct = () => { selectedProduct.value = null; };
-
-// Cart
-const addToCart = (product) => {
-  const existing = cart.value.find((item) => item.id === product.id);
-  if (existing) {
-    existing.quantity++;
-  } else {
-    cart.value.push({ ...product, quantity: 1 });
-  }
-  closeProduct();
-};
 
 const toggleWishlist = async (product) => {
   const token = localStorage.getItem('token');
@@ -244,19 +230,16 @@ const toggleWishlist = async (product) => {
     await axios.post(`http://localhost:5000/api/wishlist/${product.id}`, {}, {
       headers: { Authorization: `Bearer ${token}` }
     });
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 };
 
 onMounted(() => {
   fetchProducts();
+  loadCart(); 
   bannerInterval = setInterval(nextBanner, 5000);
 });
 
-onBeforeUnmount(() => {
-  if (bannerInterval) clearInterval(bannerInterval);
-});
+onBeforeUnmount(() => { if (bannerInterval) clearInterval(bannerInterval); });
 </script>
 
 <style scoped>

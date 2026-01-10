@@ -80,7 +80,6 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 
-// ✅ URL ต้องมี /api เพื่อให้ตรงกับโครงสร้าง Backend
 const baseURL = "http://localhost:5000/api"; 
 const defaultImage = "/no-image.png";
 
@@ -99,12 +98,20 @@ const onImgError = (event) => {
   event.target.src = defaultImage;
 };
 
+const getCartKey = () => {
+  const user = localStorage.getItem('user');
+  if (user) {
+    const userData = JSON.parse(user);
+    return `cart_${userData.id || userData._id || userData.email}`;
+  }
+  return 'cart_guest';
+};
+
 onMounted(() => {
   const storedCheckout = localStorage.getItem("checkout_items");
   if (storedCheckout) {
     try {
       cartItems.value = JSON.parse(storedCheckout);
-      console.log("Items for Payment:", cartItems.value);
     } catch {
       cartItems.value = [];
     }
@@ -143,11 +150,9 @@ const buyNow = async () => {
       return;
     }
 
-    // ✅ ส่ง ID ที่มีอยู่ในข้อมูล (ดึงทั้งจาก _id และ id)
     const itemIds = cartItems.value.map(item => item._id || item.id).filter(id => id);
     
-    console.log("Sending IDs to Backend:", itemIds);
-
+    // --- STEP 1: สร้างคำสั่งซื้อ ---
     const response = await fetch(`${baseURL}/orders`, {
       method: "POST",
       headers: {
@@ -162,12 +167,33 @@ const buyNow = async () => {
     const result = await response.json();
 
     if (response.ok) {
+      // ✅ แก้ไข: ใช้ order_id ให้ตรงกับ Backend
+      const newOrderId = result.order_id;
+
+      // --- STEP 2: อัปเดตสถานะเป็น 'paid' ทันที ---
+      if (newOrderId) {
+        try {
+          // เรียก API /pay เพื่อเปลี่ยนสถานะเป็นชำระเงินแล้ว
+          await fetch(`${baseURL}/orders/${newOrderId}/pay`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+            // Backend จัดการเปลี่ยนเป็น paid ให้อัตโนมัติเพคะ
+          });
+        } catch (payErr) {
+          console.error("Auto-pay update failed:", payErr);
+        }
+      }
+
       alert("ชำระเงินสำเร็จแล้วเพคะ! ✨");
 
       // ลบรายการที่ซื้อแล้วออกจากตะกร้าหลัก
-      const fullCart = JSON.parse(localStorage.getItem("cart") || "[]");
+      const cartKey = getCartKey();
+      const fullCart = JSON.parse(localStorage.getItem(cartKey) || "[]");
       const remainingCart = fullCart.filter(item => !itemIds.includes(item._id || item.id));
-      localStorage.setItem("cart", JSON.stringify(remainingCart));
+      localStorage.setItem(cartKey, JSON.stringify(remainingCart));
 
       // ล้างรายการ checkout
       localStorage.removeItem("checkout_items");
@@ -178,7 +204,7 @@ const buyNow = async () => {
     }
   } catch (error) {
     console.error("Error creating order:", error);
-    alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ ตรวจสอบว่าเรียก URL /api/orders ถูกต้องหรือไม่นะเพคะ");
+    alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้นะเพคะ");
   }
 };
 </script>
