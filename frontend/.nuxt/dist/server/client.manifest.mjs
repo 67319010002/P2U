@@ -1,0 +1,1 @@
+export { default } from "file:///C:/Users/Frameza/Documents/GitHub/P2U/frontend/node_modules/@nuxt/vite-builder/dist/runtime/client.manifest.mjs"
