@@ -7,11 +7,8 @@
         <h1 class="text-2xl font-bold text-white text-center mb-6">Register as Seller</h1>
         
         <input v-model="shopName" placeholder="ชื่อร้านค้า" class="mb-3 p-3 w-full rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white focus:border-white" />
-        <input v-model="fullName" placeholder="ชื่อ-นามสกุล" class="mb-3 p-3 w-full rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white focus:border-white" />
         <input v-model="phoneNumber" placeholder="เบอร์โทรศัพท์" class="mb-3 p-3 w-full rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white focus:border-white" />
 
-        <input v-model="addressName" placeholder="ชื่อผู้รับ" class="mb-3 p-3 w-full rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white focus:border-white" />
-        <input v-model="addressPhone" placeholder="เบอร์โทรศัพท์ผู้รับ" class="mb-3 p-3 w-full rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white focus:border-white" />
         <input v-model="addressLine" placeholder="ที่อยู่" class="mb-3 p-3 w-full rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white focus:border-white" />
         <input v-model="district" placeholder="อำเภอ/เขต" class="mb-3 p-3 w-full rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white focus:border-white" />
         <input v-model="province" placeholder="จังหวัด" class="mb-3 p-3 w-full rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white focus:border-white" />
@@ -108,9 +105,7 @@ const successMsg = ref('');
 
 // Data for seller registration (Stage 1)
 const shopName = ref('');
-const fullName = ref('');
 const phoneNumber = ref('');
-const addressName = ref('');
 const addressPhone = ref('');
 const addressLine = ref('');
 const district = ref('');
@@ -131,7 +126,7 @@ const handleRegisterSeller = async () => {
   successMsg.value = '';
   isLoading.value = true;
 
-  if (!shopName.value || !fullName.value || !addressLine.value) {
+  if (!shopName.value || !addressLine.value) {
     errorMsg.value = 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน';
     isLoading.value = false;
     return;
@@ -147,9 +142,7 @@ const handleRegisterSeller = async () => {
   try {
     const res = await axios.post('http://localhost:5000/api/register-seller', {
       shop_name: shopName.value,
-      full_name: fullName.value,
       phone_number: phoneNumber.value,
-      address_name: addressName.value,
       address_phone: addressPhone.value,
       address_line: addressLine.value,
       district: district.value,
