@@ -228,21 +228,19 @@ def register_seller():
 
     data = request.get_json()
     shop_name = data.get('shop_name')
-    full_name = data.get('full_name')
     phone_number = data.get('phone_number')
 
-    address_name = data.get('address_name')
     address_phone = data.get('address_phone')
     address_line = data.get('address_line')
     district = data.get('district')
     province = data.get('province')
     postal_code = data.get('postal_code')
     
-    if not all([shop_name, full_name, address_line, district, province, postal_code]):
+    if not all([shop_name, address_line, district, province, postal_code]):
         return jsonify({"msg": "Required seller information is missing"}), 400
 
     new_address = Address(
-        name=address_name or full_name,
+        name=shop_name,
         phone=address_phone or phone_number,
         address_line=address_line,
         district=district,
@@ -254,7 +252,7 @@ def register_seller():
     try:
         user.is_seller = True
         user.shop_name = shop_name
-        user.full_name = full_name
+        
         user.phone_number = phone_number
         user.addresses.append(new_address)
         user.save()
