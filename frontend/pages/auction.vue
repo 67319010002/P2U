@@ -64,7 +64,7 @@
             <div class="flex items-end justify-between mt-4">
               <div>
                 <p class="text-dark-400 text-xs">ราคาปัจจุบัน</p>
-                <p class="text-2xl font-bold text-primary-400">฿{{ auction.current_price.toLocaleString() }}</p>
+                <p class="text-2xl font-bold text-primary-400">🪙 {{ auction.current_price.toLocaleString() }} Token</p>
               </div>
               <button class="btn-primary px-4 py-2 text-sm">
                 ประมูลเลย
@@ -109,7 +109,7 @@
                   <div class="glass-light rounded-xl p-4 mb-4">
                     <div class="flex justify-between items-center">
                       <span class="text-dark-400">ราคาปัจจุบัน</span>
-                      <span class="text-3xl font-bold text-primary-400">฿{{ selectedAuction.current_price?.toLocaleString() }}</span>
+                      <span class="text-3xl font-bold text-primary-400">🪙 {{ selectedAuction.current_price?.toLocaleString() }}</span>
                     </div>
                     <div class="flex justify-between items-center mt-2">
                       <span class="text-dark-400 text-sm">จำนวนราคา</span>
@@ -117,9 +117,17 @@
                     </div>
                   </div>
                   
+                  <!-- Your Token Balance -->
+                  <div class="glass-light rounded-xl p-3 mb-4 flex justify-between items-center">
+                    <span class="text-dark-400 text-sm">Token ของคุณ</span>
+                    <span class="text-lg font-bold" :class="tokenBalance >= minBid ? 'text-green-400' : 'text-red-400'">
+                      🪙 {{ tokenBalance.toLocaleString() }}
+                    </span>
+                  </div>
+                  
                   <!-- Bid Input -->
                   <div class="mb-4">
-                    <label class="text-dark-300 text-sm mb-2 block">ใส่ราคาของคุณ (ขั้นต่ำ ฿{{ minBid.toLocaleString() }})</label>
+                    <label class="text-dark-300 text-sm mb-2 block">ใส่ Token ของคุณ (ขั้นต่ำ {{ minBid.toLocaleString() }} Token)</label>
                     <input 
                       v-model.number="bidAmount" 
                       type="number" 
@@ -201,6 +209,7 @@ const bidAmount = ref(0);
 const bidHistory = ref([]);
 const isLoading = ref(false);
 const isSeller = ref(false);
+const tokenBalance = ref(0);
 
 const baseUrl = 'http://localhost:5000';
 
@@ -316,8 +325,23 @@ async function placeBid() {
 // Timer to update time_left
 let timer = null;
 
+async function fetchTokenBalance() {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+  
+  try {
+    const res = await axios.get(`${baseUrl}/api/token/balance`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    tokenBalance.value = res.data.token_balance || 0;
+  } catch (err) {
+    console.error('Failed to fetch token balance:', err);
+  }
+}
+
 onMounted(() => {
   fetchAuctions();
+  fetchTokenBalance();
   // Seed auctions if empty
   axios.post(`${baseUrl}/api/auctions/seed`).catch(() => {});
   
