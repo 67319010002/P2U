@@ -4,7 +4,7 @@ from werkzeug.security import check_password_hash
 from bson import ObjectId
 from functools import wraps
 
-from models import User, Product, Order
+from models import User, Product, Order, TokenRequest, Notification
 
 admin = Blueprint('admin', __name__)
 
@@ -236,3 +236,151 @@ def update_order_status(order_id):
         return jsonify({"msg": "Order status updated", "status": new_status}), 200
     except:
         return jsonify({"msg": "Order not found"}), 404
+
+
+# -----------------------------
+# Get All Token Requests (Admin)
+# -----------------------------
+@admin.route('/admin/token-requests', methods=['GET'])
+@admin_required
+def get_token_requests():
+    status_filter = request.args.get('status', 'all')
+    
+    if status_filter == 'all':
+        requests = TokenRequest.objects.order_by('-created_at')
+    else:
+        requests = TokenRequest.objects(status=status_filter).order_by('-created_at')
+    
+    result = []
+    for r in requests:
+        result.append({
+            "id": str(r.id),
+            "user": {
+                "id": str(r.user.id),
+                "username": r.user.username,
+                "email": r.user.email
+            } if r.user else None,
+            "amount": r.amount,
+            "status": r.status,
+            "payment_proof_url": r.payment_proof_url,
+            "admin_note": r.admin_note,
+            "created_at": r.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "processed_at": r.processed_at.strftime("%Y-%m-%d %H:%M:%S") if r.processed_at else None
+        })
+    
+    return jsonify({"requests": result}), 200
+
+
+# -----------------------------
+# Approve Token Request (Admin)
+# -----------------------------
+@admin.route('/admin/token-requests/<request_id>/approve', methods=['PUT'])
+@admin_required
+def approve_token_request(request_id):
+    from datetime import datetime
+    
+    admin_id = get_jwt_identity()
+    admin_user = User.objects(id=ObjectId(admin_id)).first()
+    
+    data = request.get_json() or {}
+    admin_note = data.get('admin_note', '')
+    
+    try:
+        token_request = TokenRequest.objects.get(id=ObjectId(request_id))
+    except:
+        return jsonify({"msg": "Token request not found"}), 404
+    
+    if token_request.status != 'pending':
+        return jsonify({"msg": "คำขอนี้ได้รับการดำเนินการแล้ว"}), 400
+    
+    # อัปเดตคำขอ
+    token_request.status = 'approved'
+    token_request.admin_note = admin_note
+    token_request.approved_by = admin_user
+    token_request.processed_at = datetime.utcnow()
+    token_request.save()
+    
+    # เพิ่ม Token ให้ผู้ใช้
+    user = token_request.user
+    user.token_balance = (user.token_balance or 0) + token_request.amount
+    user.save()
+    
+    # แจ้งเตือนผู้ใช้
+    Notification(
+        user=user,
+        title="✅ คำขอเติม Token ได้รับการอนุมัติ",
+        message=f"คุณได้รับ {token_request.amount} Token แล้ว! ใช้สำหรับประมูลสินค้าได้เลย",
+        type="system",
+        link="/token-topup"
+    ).save()
+    
+    return jsonify({
+        "msg": f"อนุมัติ Token {token_request.amount} ให้ {user.username} สำเร็จ",
+        "new_balance": user.token_balance
+    }), 200
+
+
+# -----------------------------
+# Reject Token Request (Admin)
+# -----------------------------
+@admin.route('/admin/token-requests/<request_id>/reject', methods=['PUT'])
+@admin_required
+def reject_token_request(request_id):
+    from datetime import datetime
+    
+    admin_id = get_jwt_identity()
+    admin_user = User.objects(id=ObjectId(admin_id)).first()
+    
+    data = request.get_json() or {}
+    admin_note = data.get('admin_note', 'ไม่ผ่านการตรวจสอบ')
+    
+    try:
+        token_request = TokenRequest.objects.get(id=ObjectId(request_id))
+    except:
+        return jsonify({"msg": "Token request not found"}), 404
+    
+    if token_request.status != 'pending':
+        return jsonify({"msg": "คำขอนี้ได้รับการดำเนินการแล้ว"}), 400
+    
+    # อัปเดตคำขอ
+    token_request.status = 'rejected'
+    token_request.admin_note = admin_note
+    token_request.approved_by = admin_user
+    token_request.processed_at = datetime.utcnow()
+    token_request.save()
+    
+    # แจ้งเตือนผู้ใช้
+    user = token_request.user
+    Notification(
+        user=user,
+        title="❌ คำขอเติม Token ถูกปฏิเสธ",
+        message=f"คำขอ {token_request.amount} Token ถูกปฏิเสธ: {admin_note}",
+        type="system",
+        link="/token-topup"
+    ).save()
+    
+    return jsonify({
+        "msg": f"ปฏิเสธคำขอของ {user.username} สำเร็จ"
+    }), 200
+
+
+# -----------------------------
+# Get Token Stats (Admin)
+# -----------------------------
+@admin.route('/admin/token-stats', methods=['GET'])
+@admin_required
+def get_token_stats():
+    pending_count = TokenRequest.objects(status='pending').count()
+    approved_count = TokenRequest.objects(status='approved').count()
+    rejected_count = TokenRequest.objects(status='rejected').count()
+    
+    # คำนวณยอด Token ที่อนุมัติทั้งหมด
+    approved_requests = TokenRequest.objects(status='approved')
+    total_approved_tokens = sum(r.amount for r in approved_requests)
+    
+    return jsonify({
+        "pending": pending_count,
+        "approved": approved_count,
+        "rejected": rejected_count,
+        "total_approved_tokens": total_approved_tokens
+    }), 200

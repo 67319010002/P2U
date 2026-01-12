@@ -230,3 +230,15 @@ class PriceStatistics(Document):
     total_products = IntField(default=0)
     updated_at = DateTimeField(default=datetime.utcnow)
     meta = {'collection': 'price_statistics'}
+
+# -------- Token Request Model (Admin Approval) --------
+class TokenRequest(Document):
+    user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
+    amount = IntField(required=True)  # จำนวน Token ที่ต้องการ
+    payment_proof_url = StringField()  # หลักฐานการชำระเงิน (optional)
+    status = StringField(default='pending', choices=['pending', 'approved', 'rejected'])
+    admin_note = StringField()  # หมายเหตุจาก admin
+    approved_by = ReferenceField('User')  # Admin ที่อนุมัติ
+    created_at = DateTimeField(default=datetime.utcnow)
+    processed_at = DateTimeField()
+    meta = {'collection': 'token_requests', 'ordering': ['-created_at']}

@@ -225,6 +225,75 @@
           </table>
         </div>
       </div>
+
+      <!-- Token Requests Table -->
+      <div v-if="activeTab === 'tokens'" class="card overflow-hidden">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-white">คำขอเติม Token</h2>
+          <div class="flex gap-2">
+            <span class="badge badge-warning">{{ tokenStats.pending || 0 }} รอตรวจสอบ</span>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-dark-800/50">
+              <tr>
+                <th class="text-left p-4 text-dark-400 text-sm font-medium">ผู้ใช้</th>
+                <th class="text-left p-4 text-dark-400 text-sm font-medium">จำนวน Token</th>
+                <th class="text-left p-4 text-dark-400 text-sm font-medium">สถานะ</th>
+                <th class="text-left p-4 text-dark-400 text-sm font-medium">วันที่</th>
+                <th class="text-right p-4 text-dark-400 text-sm font-medium">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="req in tokenRequests" :key="req.id" class="border-b border-white/5 hover:bg-white/5">
+                <td class="p-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-white font-bold">
+                      {{ req.user?.username?.charAt(0).toUpperCase() }}
+                    </div>
+                    <div>
+                      <p class="text-white font-medium">{{ req.user?.username }}</p>
+                      <p class="text-dark-500 text-xs">{{ req.user?.email }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-4 text-primary-400 font-bold text-lg">🪙 {{ req.amount?.toLocaleString() }}</td>
+                <td class="p-4">
+                  <span 
+                    class="badge"
+                    :class="{
+                      'bg-yellow-500/20 text-yellow-400': req.status === 'pending',
+                      'bg-green-500/20 text-green-400': req.status === 'approved',
+                      'bg-red-500/20 text-red-400': req.status === 'rejected'
+                    }"
+                  >
+                    {{ req.status === 'pending' ? '⏳ รอตรวจสอบ' : req.status === 'approved' ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธ' }}
+                  </span>
+                </td>
+                <td class="p-4 text-dark-400 text-sm">{{ req.created_at }}</td>
+                <td class="p-4 text-right">
+                  <div v-if="req.status === 'pending'" class="flex gap-2 justify-end">
+                    <button 
+                      @click="approveToken(req)" 
+                      class="px-3 py-1.5 rounded-lg text-sm bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                    >
+                      ✅ อนุมัติ
+                    </button>
+                    <button 
+                      @click="rejectToken(req)" 
+                      class="px-3 py-1.5 rounded-lg text-sm bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                    >
+                      ❌ ปฏิเสธ
+                    </button>
+                  </div>
+                  <span v-else class="text-dark-500 text-sm">{{ req.admin_note || 'ดำเนินการแล้ว' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -240,12 +309,15 @@ const stats = ref({});
 const users = ref([]);
 const products = ref([]);
 const orders = ref([]);
+const tokenRequests = ref([]);
+const tokenStats = ref({});
 const activeTab = ref('users');
 
 const tabs = [
   { id: 'users', name: 'ผู้ใช้', icon: '👥' },
   { id: 'products', name: 'สินค้า', icon: '📦' },
   { id: 'orders', name: 'คำสั่งซื้อ', icon: '🛒' },
+  { id: 'tokens', name: 'คำขอ Token', icon: '🪙' },
 ];
 
 const baseUrl = 'http://localhost:5000';
@@ -271,6 +343,9 @@ async function fetchData() {
     users.value = usersRes.data;
     products.value = productsRes.data;
     orders.value = ordersRes.data;
+    
+    // Fetch token requests separately
+    fetchTokenRequests();
   } catch (err) {
     console.error('Failed to fetch admin data:', err);
     if (err.response?.status === 401 || err.response?.status === 403) {
@@ -337,6 +412,59 @@ function handleLogout() {
   router.push('/admin-login');
 }
 
+async function fetchTokenRequests() {
+  const token = localStorage.getItem('admin_token');
+  if (!token) return;
+  
+  try {
+    const [requestsRes, statsRes] = await Promise.all([
+      axios.get(`${baseUrl}/api/admin/token-requests`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }),
+      axios.get(`${baseUrl}/api/admin/token-stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    ]);
+    tokenRequests.value = requestsRes.data.requests || [];
+    tokenStats.value = statsRes.data || {};
+  } catch (err) {
+    console.error('Failed to fetch token requests:', err);
+  }
+}
+
+async function approveToken(req) {
+  if (!confirm(`อนุมัติ ${req.amount.toLocaleString()} Token ให้ ${req.user?.username}?`)) return;
+  
+  const token = localStorage.getItem('admin_token');
+  try {
+    await axios.put(`${baseUrl}/api/admin/token-requests/${req.id}/approve`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    alert(`✅ อนุมัติ ${req.amount.toLocaleString()} Token ให้ ${req.user?.username} สำเร็จ!`);
+    fetchTokenRequests();
+  } catch (err) {
+    alert(err.response?.data?.msg || 'อนุมัติไม่สำเร็จ');
+  }
+}
+
+async function rejectToken(req) {
+  const reason = prompt('ระบุเหตุผลในการปฏิเสธ (ถ้ามี):', '');
+  if (reason === null) return; // Cancelled
+  
+  const token = localStorage.getItem('admin_token');
+  try {
+    await axios.put(`${baseUrl}/api/admin/token-requests/${req.id}/reject`, {
+      admin_note: reason || 'ไม่ผ่านการตรวจสอบ'
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    alert(`❌ ปฏิเสธคำขอของ ${req.user?.username} แล้ว`);
+    fetchTokenRequests();
+  } catch (err) {
+    alert(err.response?.data?.msg || 'ปฏิเสธไม่สำเร็จ');
+  }
+}
+
 onMounted(() => {
   const storedAdmin = localStorage.getItem('admin_user');
   if (storedAdmin) {
@@ -345,3 +473,13 @@ onMounted(() => {
   fetchData();
 });
 </script>
+
+<style scoped>
+.badge-warning {
+  background-color: rgba(234, 179, 8, 0.2);
+  color: #facc15;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+}
+</style>

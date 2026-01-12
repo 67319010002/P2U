@@ -116,12 +116,12 @@ def get_auction(auction_id):
 
 
 # -----------------------------
-# Place a Bid
+# Place a Bid (Using Tokens)
 # -----------------------------
 @auction.route('/auctions/<auction_id>/bid', methods=['POST'])
 @jwt_required()
 def place_bid(auction_id):
-    """Place a bid on an auction"""
+    """Place a bid on an auction using tokens"""
     user_id = get_jwt_identity()
     user = User.objects(id=ObjectId(user_id)).first()
     
@@ -142,11 +142,43 @@ def place_bid(auction_id):
         return jsonify({"msg": "ไม่สามารถประมูลสินค้าของตัวเองได้"}), 400
     
     data = request.get_json()
-    bid_amount = float(data.get('amount', 0))
+    bid_amount = int(data.get('amount', 0))  # Token เป็น integer
     
-    min_bid = float(a.current_price) + float(a.min_bid_increment)
+    min_bid = int(a.current_price) + int(a.min_bid_increment)
     if bid_amount < min_bid:
-        return jsonify({"msg": f"ราคาต้องไม่น้อยกว่า ฿{min_bid:,.0f}"}), 400
+        return jsonify({"msg": f"Token ต้องไม่น้อยกว่า {min_bid:,} Token"}), 400
+    
+    # ตรวจสอบ Token balance
+    user_token_balance = user.token_balance or 0
+    if user_token_balance < bid_amount:
+        return jsonify({
+            "msg": f"Token ไม่เพียงพอ คุณมี {user_token_balance:,} Token แต่ต้องการ {bid_amount:,} Token",
+            "token_balance": user_token_balance,
+            "required": bid_amount
+        }), 400
+    
+    # หา previous highest bidder เพื่อคืน Token
+    previous_highest_bid = AuctionBid.objects(auction=a).order_by('-amount').first()
+    previous_bidder = previous_highest_bid.bidder if previous_highest_bid else None
+    previous_amount = int(previous_highest_bid.amount) if previous_highest_bid else 0
+    
+    # หัก Token จาก user ที่ประมูล
+    user.token_balance = user_token_balance - bid_amount
+    user.save()
+    
+    # คืน Token ให้คนที่ถูกแซง (ถ้ามี และไม่ใช่คนเดียวกัน)
+    if previous_bidder and str(previous_bidder.id) != user_id:
+        previous_bidder.token_balance = (previous_bidder.token_balance or 0) + previous_amount
+        previous_bidder.save()
+        
+        # แจ้งเตือนคนที่ถูกแซง
+        Notification(
+            user=previous_bidder,
+            title="⚠️ มีคนเสนอราคาสูงกว่า!",
+            message=f"คุณถูกแซงในการประมูล '{a.title}' และได้รับ {previous_amount:,} Token คืนแล้ว",
+            type="order",
+            link=f"/auction"
+        ).save()
     
     # Create bid
     new_bid = AuctionBid(
@@ -162,22 +194,12 @@ def place_bid(auction_id):
     a.winner = user  # Tentative winner
     a.save()
     
-    # Notify previous highest bidder
-    previous_bids = AuctionBid.objects(auction=a, amount__lt=bid_amount).order_by('-amount').first()
-    if previous_bids and str(previous_bids.bidder.id) != user_id:
-        Notification(
-            user=previous_bids.bidder,
-            title="⚠️ มีคนเสนอราคาสูงกว่า!",
-            message=f"มีคนเสนอราคา ฿{bid_amount:,.0f} สำหรับ '{a.title}'",
-            type="order",
-            link=f"/auctions/{auction_id}"
-        ).save()
-    
     return jsonify({
         "msg": "ประมูลสำเร็จ!",
-        "current_price": float(a.current_price),
+        "current_price": int(a.current_price),
         "total_bids": a.total_bids,
-        "your_bid": bid_amount
+        "your_bid": bid_amount,
+        "remaining_tokens": user.token_balance
     }), 200
 
 
