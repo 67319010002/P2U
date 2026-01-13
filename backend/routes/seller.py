@@ -45,6 +45,7 @@ def get_seller_products():
             "description": product.description,
             "price": float(product.price),
             "image_url": product.image_url,
+            "category": product.category or 'all',
             "created_at": product.created_at.strftime("%Y-%m-%d %H:%M:%S")
         } for product in products
     ]), 200
@@ -62,6 +63,7 @@ def add_product():
     name = data.get('name')
     price = data.get('price')
     description = data.get('description')
+    category = data.get('category', 'all')  # รับหมวดหมู่จาก form
     if not name or not price:
         return jsonify({"msg": "Product name and price are required."}), 400
 
@@ -78,6 +80,7 @@ def add_product():
             description=description,
             price=float(price),
             image_url=image_url,
+            category=category,  # บันทึกหมวดหมู่
             seller=user
         )
         product.save()
@@ -89,6 +92,7 @@ def add_product():
                 "description": product.description,
                 "price": float(product.price),
                 "image_url": product.image_url,
+                "category": product.category or 'all',
                 "created_at": product.created_at.strftime("%Y-%m-%d %H:%M:%S")
             }
         }), 201
@@ -114,6 +118,7 @@ def get_product(product_id):
         "description": product.description,
         "price": float(product.price),
         "image_url": product.image_url,
+        "category": product.category or 'all',
         "created_at": product.created_at.strftime("%Y-%m-%d %H:%M:%S")
     })
 
@@ -138,6 +143,8 @@ def update_product(product_id):
         update_fields['description'] = data['description']
     if 'price' in data:
         update_fields['price'] = float(data['price'])
+    if 'category' in data:
+        update_fields['category'] = data['category']
 
     product.update(**update_fields)
     return jsonify({"msg": "Product updated successfully!"}), 200
@@ -194,3 +201,23 @@ def update_product_image(product_id):
         return jsonify({"msg": "Image updated successfully.", "image_url": new_image_url}), 200
     else:
         return jsonify({"msg": "Invalid file type."}), 400
+
+# 🔸 Get all available categories
+@seller.route('/categories', methods=['GET'])
+def get_categories():
+    """Return all available product categories"""
+    categories = [
+        {"id": "all", "name": "ทั้งหมด", "icon": "🛍️"},
+        {"id": "electronics", "name": "อิเล็กทรอนิกส์", "icon": "📱"},
+        {"id": "fashion", "name": "แฟชั่น", "icon": "👗"},
+        {"id": "gaming", "name": "เกมมิ่ง", "icon": "🎮"},
+        {"id": "beauty", "name": "ความงาม", "icon": "💄"},
+        {"id": "home", "name": "บ้าน & สวน", "icon": "🏠"},
+        {"id": "sports", "name": "กีฬา", "icon": "⚽"},
+        {"id": "food", "name": "อาหาร", "icon": "🍔"},
+        {"id": "books", "name": "หนังสือ", "icon": "📚"},
+        {"id": "toys", "name": "ของเล่น", "icon": "🧸"},
+        {"id": "pets", "name": "สัตว์เลี้ยง", "icon": "🐶"},
+        {"id": "automotive", "name": "ยานยนต์", "icon": "🚗"},
+    ]
+    return jsonify(categories), 200
