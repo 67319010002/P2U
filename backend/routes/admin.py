@@ -4,7 +4,7 @@ from werkzeug.security import check_password_hash
 from bson import ObjectId
 from functools import wraps
 
-from models import User, Product, Order, TokenRequest, Notification
+from models import User, Product, Order, TokenRequest, Notification, CoinRequest
 
 admin = Blueprint('admin', __name__)
 
@@ -383,4 +383,156 @@ def get_token_stats():
         "approved": approved_count,
         "rejected": rejected_count,
         "total_approved_tokens": total_approved_tokens
+    }), 200
+
+
+# ===================================================
+# ===== COIN REQUESTS MANAGEMENT (Admin) =====
+# ===================================================
+
+# -----------------------------
+# Get All Coin Requests (Admin)
+# -----------------------------
+@admin.route('/admin/coin-requests', methods=['GET'])
+@admin_required
+def get_coin_requests():
+    status_filter = request.args.get('status', 'all')
+    
+    if status_filter == 'all':
+        requests_list = CoinRequest.objects.order_by('-created_at')
+    else:
+        requests_list = CoinRequest.objects(status=status_filter).order_by('-created_at')
+    
+    result = []
+    for r in requests_list:
+        result.append({
+            "id": str(r.id),
+            "user": {
+                "id": str(r.user.id),
+                "username": r.user.username,
+                "email": r.user.email
+            } if r.user else None,
+            "amount": r.amount,
+            "status": r.status,
+            "payment_proof_url": r.payment_proof_url,
+            "admin_note": r.admin_note,
+            "created_at": r.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "processed_at": r.processed_at.strftime("%Y-%m-%d %H:%M:%S") if r.processed_at else None
+        })
+    
+    return jsonify({"requests": result}), 200
+
+
+# -----------------------------
+# Approve Coin Request (Admin)
+# -----------------------------
+@admin.route('/admin/coin-requests/<request_id>/approve', methods=['PUT'])
+@admin_required
+def approve_coin_request(request_id):
+    from datetime import datetime
+    
+    admin_id = get_jwt_identity()
+    admin_user = User.objects(id=ObjectId(admin_id)).first()
+    
+    data = request.get_json() or {}
+    admin_note = data.get('admin_note', '')
+    
+    try:
+        coin_request = CoinRequest.objects.get(id=ObjectId(request_id))
+    except:
+        return jsonify({"msg": "Coin request not found"}), 404
+    
+    if coin_request.status != 'pending':
+        return jsonify({"msg": "คำขอนี้ได้รับการดำเนินการแล้ว"}), 400
+    
+    # อัปเดตคำขอ
+    coin_request.status = 'approved'
+    coin_request.admin_note = admin_note
+    coin_request.approved_by = admin_user
+    coin_request.processed_at = datetime.utcnow()
+    coin_request.save()
+    
+    # เพิ่ม Coin ให้ผู้ใช้
+    user = coin_request.user
+    user.coin_balance = (user.coin_balance or 0) + coin_request.amount
+    user.save()
+    
+    # แจ้งเตือนผู้ใช้
+    Notification(
+        user=user,
+        title="✅ คำขอเติม Coin ได้รับการอนุมัติ",
+        message=f"คุณได้รับ {coin_request.amount} Coin แล้ว!",
+        type="system",
+        link="/coin-topup"
+    ).save()
+    
+    return jsonify({
+        "msg": f"อนุมัติ Coin {coin_request.amount} ให้ {user.username} สำเร็จ",
+        "new_balance": user.coin_balance
+    }), 200
+
+
+# -----------------------------
+# Reject Coin Request (Admin)
+# -----------------------------
+@admin.route('/admin/coin-requests/<request_id>/reject', methods=['PUT'])
+@admin_required
+def reject_coin_request(request_id):
+    from datetime import datetime
+    
+    admin_id = get_jwt_identity()
+    admin_user = User.objects(id=ObjectId(admin_id)).first()
+    
+    data = request.get_json() or {}
+    admin_note = data.get('admin_note', 'ไม่ผ่านการตรวจสอบ')
+    
+    try:
+        coin_request = CoinRequest.objects.get(id=ObjectId(request_id))
+    except:
+        return jsonify({"msg": "Coin request not found"}), 404
+    
+    if coin_request.status != 'pending':
+        return jsonify({"msg": "คำขอนี้ได้รับการดำเนินการแล้ว"}), 400
+    
+    # อัปเดตคำขอ
+    coin_request.status = 'rejected'
+    coin_request.admin_note = admin_note
+    coin_request.approved_by = admin_user
+    coin_request.processed_at = datetime.utcnow()
+    coin_request.save()
+    
+    # แจ้งเตือนผู้ใช้
+    user = coin_request.user
+    Notification(
+        user=user,
+        title="❌ คำขอเติม Coin ถูกปฏิเสธ",
+        message=f"คำขอ {coin_request.amount} Coin ถูกปฏิเสธ: {admin_note}",
+        type="system",
+        link="/coin-topup"
+    ).save()
+    
+    return jsonify({
+        "msg": f"ปฏิเสธคำขอของ {user.username} สำเร็จ"
+    }), 200
+
+
+# -----------------------------
+# Get Coin Stats (Admin)
+# -----------------------------
+@admin.route('/admin/coin-stats', methods=['GET'])
+@admin_required
+def get_coin_stats():
+    pending_count = CoinRequest.objects(status='pending').count()
+    approved_count = CoinRequest.objects(status='approved').count()
+    rejected_count = CoinRequest.objects(status='rejected').count()
+    
+    # คำนวณยอด Coin ที่อนุมัติทั้งหมด
+    approved_requests = CoinRequest.objects(status='approved')
+    total_approved_coins = sum(r.amount for r in approved_requests)
+    
+    return jsonify({
+        "pending": pending_count,
+        "approved": approved_count,
+        "rejected": rejected_count,
+        "total_approved_coins": total_approved_coins
     }), 200

@@ -294,6 +294,87 @@
           </table>
         </div>
       </div>
+
+      <!-- Coin Requests Table -->
+      <div v-if="activeTab === 'coins'" class="card overflow-hidden">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-white">คำขอเติม Coins</h2>
+          <div class="flex gap-2">
+            <span class="badge badge-warning">{{ coinStats.pending || 0 }} รอตรวจสอบ</span>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-dark-800/50">
+              <tr>
+                <th class="text-left p-4 text-dark-400 text-sm font-medium">ผู้ใช้</th>
+                <th class="text-left p-4 text-dark-400 text-sm font-medium">จำนวน Coins</th>
+                <th class="text-left p-4 text-dark-400 text-sm font-medium">หลักฐาน</th>
+                <th class="text-left p-4 text-dark-400 text-sm font-medium">สถานะ</th>
+                <th class="text-left p-4 text-dark-400 text-sm font-medium">วันที่</th>
+                <th class="text-right p-4 text-dark-400 text-sm font-medium">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="req in coinRequests" :key="req.id" class="border-b border-white/5 hover:bg-white/5">
+                <td class="p-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-white font-bold">
+                      {{ req.user?.username?.charAt(0).toUpperCase() }}
+                    </div>
+                    <div>
+                      <p class="text-white font-medium">{{ req.user?.username }}</p>
+                      <p class="text-dark-500 text-xs">{{ req.user?.email }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-4 text-yellow-400 font-bold text-lg">💰 {{ req.amount?.toLocaleString() }}</td>
+                <td class="p-4">
+                  <a 
+                    v-if="req.payment_proof_url" 
+                    :href="req.payment_proof_url" 
+                    target="_blank" 
+                    class="text-primary-400 hover:underline text-sm"
+                  >
+                    📎 ดูหลักฐาน
+                  </a>
+                  <span v-else class="text-dark-500 text-sm">-</span>
+                </td>
+                <td class="p-4">
+                  <span 
+                    class="badge"
+                    :class="{
+                      'bg-yellow-500/20 text-yellow-400': req.status === 'pending',
+                      'bg-green-500/20 text-green-400': req.status === 'approved',
+                      'bg-red-500/20 text-red-400': req.status === 'rejected'
+                    }"
+                  >
+                    {{ req.status === 'pending' ? '⏳ รอตรวจสอบ' : req.status === 'approved' ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธ' }}
+                  </span>
+                </td>
+                <td class="p-4 text-dark-400 text-sm">{{ req.created_at }}</td>
+                <td class="p-4 text-right">
+                  <div v-if="req.status === 'pending'" class="flex gap-2 justify-end">
+                    <button 
+                      @click="approveCoin(req)" 
+                      class="px-3 py-1.5 rounded-lg text-sm bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                    >
+                      ✅ อนุมัติ
+                    </button>
+                    <button 
+                      @click="rejectCoin(req)" 
+                      class="px-3 py-1.5 rounded-lg text-sm bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                    >
+                      ❌ ปฏิเสธ
+                    </button>
+                  </div>
+                  <span v-else class="text-dark-500 text-sm">{{ req.admin_note || 'ดำเนินการแล้ว' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -311,6 +392,8 @@ const products = ref([]);
 const orders = ref([]);
 const tokenRequests = ref([]);
 const tokenStats = ref({});
+const coinRequests = ref([]);
+const coinStats = ref({});
 const activeTab = ref('users');
 
 const tabs = [
@@ -318,6 +401,7 @@ const tabs = [
   { id: 'products', name: 'สินค้า', icon: '📦' },
   { id: 'orders', name: 'คำสั่งซื้อ', icon: '🛒' },
   { id: 'tokens', name: 'คำขอ Token', icon: '🪙' },
+  { id: 'coins', name: 'คำขอ Coins', icon: '💰' },
 ];
 
 const baseUrl = 'http://localhost:5000';
@@ -346,6 +430,8 @@ async function fetchData() {
     
     // Fetch token requests separately
     fetchTokenRequests();
+    // Fetch coin requests separately
+    fetchCoinRequests();
   } catch (err) {
     console.error('Failed to fetch admin data:', err);
     if (err.response?.status === 401 || err.response?.status === 403) {
@@ -472,6 +558,60 @@ onMounted(() => {
   }
   fetchData();
 });
+
+// ===== Coin Requests Functions =====
+async function fetchCoinRequests() {
+  const token = localStorage.getItem('admin_token');
+  if (!token) return;
+  
+  try {
+    const [requestsRes, statsRes] = await Promise.all([
+      axios.get(`${baseUrl}/api/admin/coin-requests`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }),
+      axios.get(`${baseUrl}/api/admin/coin-stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    ]);
+    coinRequests.value = requestsRes.data.requests || [];
+    coinStats.value = statsRes.data || {};
+  } catch (err) {
+    console.error('Failed to fetch coin requests:', err);
+  }
+}
+
+async function approveCoin(req) {
+  if (!confirm(`อนุมัติ ${req.amount.toLocaleString()} Coins ให้ ${req.user?.username}?`)) return;
+  
+  const token = localStorage.getItem('admin_token');
+  try {
+    await axios.put(`${baseUrl}/api/admin/coin-requests/${req.id}/approve`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    alert(`✅ อนุมัติ ${req.amount.toLocaleString()} Coins ให้ ${req.user?.username} สำเร็จ!`);
+    fetchCoinRequests();
+  } catch (err) {
+    alert(err.response?.data?.msg || 'อนุมัติไม่สำเร็จ');
+  }
+}
+
+async function rejectCoin(req) {
+  const reason = prompt('ระบุเหตุผลในการปฏิเสธ (ถ้ามี):', '');
+  if (reason === null) return;
+  
+  const token = localStorage.getItem('admin_token');
+  try {
+    await axios.put(`${baseUrl}/api/admin/coin-requests/${req.id}/reject`, {
+      admin_note: reason || 'ไม่ผ่านการตรวจสอบ'
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    alert(`❌ ปฏิเสธคำขอของ ${req.user?.username} แล้ว`);
+    fetchCoinRequests();
+  } catch (err) {
+    alert(err.response?.data?.msg || 'ปฏิเสธไม่สำเร็จ');
+  }
+}
 </script>
 
 <style scoped>

@@ -146,3 +146,74 @@ def coin_history():
     } for t in transactions]
 
     return jsonify({"status": "success", "history": data}), 200
+
+# -----------------------------
+# ✅ สร้างคำขอเติม Coin (รอ Admin อนุมัติ)
+# -----------------------------
+@coin_bp.route('/coin/request', methods=['POST'])
+@jwt_required()
+def create_coin_request():
+    """User creates a coin top-up request"""
+    from models import CoinRequest
+    from bson import ObjectId
+    
+    user_id = get_jwt_identity()
+    user = User.objects(id=ObjectId(user_id)).first()
+    
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    
+    data = request.get_json()
+    amount = data.get('amount')
+    payment_proof_url = data.get('payment_proof_url', '')
+    
+    if not amount or amount <= 0:
+        return jsonify({"msg": "กรุณาระบุจำนวน Coin ที่ถูกต้อง"}), 400
+    
+    # สร้างคำขอ
+    coin_request = CoinRequest(
+        user=user,
+        amount=amount,
+        payment_proof_url=payment_proof_url
+    )
+    coin_request.save()
+    
+    return jsonify({
+        "msg": "ส่งคำขอเติม Coin สำเร็จ รอการอนุมัติจาก Admin",
+        "request_id": str(coin_request.id),
+        "amount": amount,
+        "status": "pending"
+    }), 201
+
+# -----------------------------
+# ✅ ดูประวัติคำขอ Coin ของตัวเอง
+# -----------------------------
+@coin_bp.route('/coin/my-requests', methods=['GET'])
+@jwt_required()
+def get_my_coin_requests():
+    """Get user's coin request history"""
+    from models import CoinRequest
+    from bson import ObjectId
+    
+    user_id = get_jwt_identity()
+    user = User.objects(id=ObjectId(user_id)).first()
+    
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    
+    requests_list = CoinRequest.objects(user=user).order_by('-created_at')
+    
+    result = []
+    for r in requests_list:
+        result.append({
+            "id": str(r.id),
+            "amount": r.amount,
+            "status": r.status,
+            "payment_proof_url": r.payment_proof_url,
+            "admin_note": r.admin_note,
+            "created_at": r.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "processed_at": r.processed_at.strftime("%Y-%m-%d %H:%M:%S") if r.processed_at else None
+        })
+    
+    return jsonify({"requests": result}), 200
+

@@ -242,3 +242,15 @@ class TokenRequest(Document):
     created_at = DateTimeField(default=datetime.utcnow)
     processed_at = DateTimeField()
     meta = {'collection': 'token_requests', 'ordering': ['-created_at']}
+
+# -------- Coin Request Model (Admin Approval) --------
+class CoinRequest(Document):
+    user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
+    amount = IntField(required=True)  # จำนวน Coins ที่ต้องการ
+    payment_proof_url = StringField()  # หลักฐานการชำระเงิน
+    status = StringField(default='pending', choices=['pending', 'approved', 'rejected'])
+    admin_note = StringField()  # หมายเหตุจาก admin
+    approved_by = ReferenceField('User')  # Admin ที่อนุมัติ
+    created_at = DateTimeField(default=datetime.utcnow)
+    processed_at = DateTimeField()
+    meta = {'collection': 'coin_requests', 'ordering': ['-created_at']}
