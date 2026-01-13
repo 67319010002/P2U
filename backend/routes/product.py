@@ -7,6 +7,7 @@ from bson import ObjectId
 from mongoengine.errors import DoesNotExist, ValidationError
 
 from models import User, Product
+from mongoengine.queryset.visitor import Q
 
 product = Blueprint('product', __name__)
 UPLOAD_FOLDER = os.path.join('static', 'products')  # เก็บไฟล์ไว้ใน static/products
@@ -81,11 +82,21 @@ def create_product():
         return jsonify({"msg": "Price must be a valid number."}), 400
 
 # -----------------------------
-# ดึงสินค้าทั้งหมด
+# ดึงสินค้าทั้งหมด (รองรับการค้นหา)
 # -----------------------------
 @product.route('/products', methods=['GET'])
 def get_all_products():
-    products = Product.objects.order_by('-created_at')
+    search_query = request.args.get('q', '').strip()
+    
+    if search_query:
+        # Search in name and description (case-insensitive)
+        products = Product.objects(
+            Q(name__icontains=search_query) | 
+            Q(description__icontains=search_query)
+        ).order_by('-created_at')
+    else:
+        products = Product.objects.order_by('-created_at')
+    
     product_list = []
 
     for p in products:

@@ -48,9 +48,21 @@
 
       <ProductCategories @category-change="filterByCategory" />
 
+      <!-- Search Status -->
+      <div v-if="searchQuery" class="mb-4 p-4 glass rounded-xl flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🔍</span>
+          <span class="text-white">ผลการค้นหา: <strong class="text-primary-400">"{{ searchQuery }}"</strong></span>
+          <span class="text-dark-400 text-sm">({{ filteredProducts.length }} รายการ)</span>
+        </div>
+        <button @click="clearSearch" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-white rounded-lg text-sm transition-colors flex items-center gap-2">
+          <span>✕</span> ล้างการค้นหา
+        </button>
+      </div>
+
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-xl font-bold text-white">
-          🛍️ สินค้าทั้งหมด
+          🛍️ {{ searchQuery ? 'ผลการค้นหา' : 'สินค้าทั้งหมด' }}
           <span class="text-dark-400 text-sm font-normal ml-2">({{ filteredProducts.length }} รายการ)</span>
         </h2>
         <div class="flex gap-2">
@@ -60,7 +72,15 @@
         </div>
       </div>
 
-      <div v-if="filteredProducts.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      <!-- No Results -->
+      <div v-if="!filteredProducts.length && searchQuery" class="text-center py-16">
+        <div class="text-6xl mb-4">🔍</div>
+        <h3 class="text-xl font-bold text-white mb-2">ไม่พบสินค้า</h3>
+        <p class="text-dark-400 mb-6">ไม่พบสินค้าที่ตรงกับ "{{ searchQuery }}"</p>
+        <button @click="clearSearch" class="btn-primary">ดูสินค้าทั้งหมด</button>
+      </div>
+
+      <div v-else-if="filteredProducts.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         <div v-for="product in filteredProducts" :key="product.id" class="product-card cursor-pointer group" @click="openProduct(product)">
           <div class="aspect-square relative overflow-hidden">
             <img :src="product.image_url || defaultImage" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" @error="product.image_url = defaultImage" />
@@ -119,14 +139,17 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import axios from "axios";
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 const defaultImage = "/default-item.svg";
 const allProducts = ref([]);
 const selectedProduct = ref(null);
 const selectedCategory = ref('all');
 const sortBy = ref('latest');
+const searchQuery = ref('');
+
 
 // --- 🛒 ระบบตระกร้าแบบแยก User (Logic ใหม่ที่เสถียรขึ้น) ---
 
@@ -205,7 +228,8 @@ const filterByCategory = (cat) => { selectedCategory.value = cat; };
 
 const fetchProducts = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/products");
+    const params = searchQuery.value ? { q: searchQuery.value } : {};
+    const res = await axios.get("http://localhost:5000/api/products", { params });
     allProducts.value = (res.data || []).map((p) => ({
       id: p.id || p._id,
       name: p.name,
@@ -219,6 +243,16 @@ const fetchProducts = async () => {
     allProducts.value = [];
   }
 };
+
+const clearSearch = () => {
+  router.push('/dashboard');
+};
+
+// Watch for route query changes
+watch(() => route.query.q, (newQuery) => {
+  searchQuery.value = newQuery || '';
+  fetchProducts();
+}, { immediate: true });
 
 const openProduct = (product) => { selectedProduct.value = product; };
 const closeProduct = () => { selectedProduct.value = null; };
