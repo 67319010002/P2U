@@ -23,7 +23,7 @@
         <div>
           <label class="block text-sm font-medium text-dark-300 mb-2">ชื่อผู้ใช้</label>
           <div class="relative">
-            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-dark-400">👤</span>
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-dark-400"></span>
             <input 
               v-model="username" 
               type="text" 
@@ -38,7 +38,7 @@
         <div>
           <label class="block text-sm font-medium text-dark-300 mb-2">รหัสผ่าน</label>
           <div class="relative">
-            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-dark-400">🔒</span>
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-dark-400"></span>
             <input 
               v-model="password" 
               :type="showPassword ? 'text' : 'password'" 

@@ -79,12 +79,12 @@ def create_order():
             if not cart_item:
                 cart_item = CartItem.objects.filter(product=oid, user=user).first()
             
-            # ถ้าไม่เจอในตะกร้า แต่เป็น ID สินค้า ให้สร้างเป็นไอเท็มชั่วคราว
+            # ถ้าไม่เจอในตะกร้า แต่เป็น ID สินค้า ให้สร้างเป็นไอเท็มใหม่และ save ลง DB
             if not cart_item:
                 product = Product.objects.filter(id=oid).first()
                 if product:
                     cart_item = CartItem(user=user, product=product, quantity=1)
-                    # ยังไม่ save ลง CartItem table แต่จะเก็บไว้ใน List ออเดอร์
+                    cart_item.save()  # ต้อง save ก่อนถึงจะ reference ได้
             
             if cart_item and cart_item.product:
                 final_cart_items.append(cart_item)
