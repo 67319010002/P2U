@@ -59,16 +59,31 @@
             <NuxtLink to="/AddProduct" class="text-primary-400 text-sm hover:underline">+ เพิ่มสินค้า</NuxtLink>
           </div>
           <div class="divide-y divide-white/5">
-            <div v-for="product in products.slice(0, 5)" :key="product.id || product._id" class="p-4 flex items-center gap-3">
+            <div v-for="product in products.slice(0, 5)" :key="product.id || product._id" class="p-4 flex items-center gap-3 hover:bg-white/5 transition-colors group">
               <img :src="getImageUrl(product.image_url)" class="w-12 h-12 rounded-lg object-cover" @error="(e) => e.target.src = '/placeholder.png'" />
               <div class="flex-1 min-w-0">
                 <p class="text-white font-medium truncate">{{ product.name }}</p>
-                <p class="text-green-400 text-sm">฿{{ product.price?.toLocaleString() }}</p>
+                <div class="flex items-center gap-2">
+                  <p class="text-green-400 text-sm">฿{{ product.price?.toLocaleString() }}</p>
+                  <span v-if="product.category" class="text-xs text-dark-400 bg-white/5 px-2 py-0.5 rounded-full">{{ getCategoryIcon(product.category) }} {{ product.category }}</span>
+                </div>
+              </div>
+              <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <NuxtLink :to="`/edit-product/${product.id || product._id}`" class="w-8 h-8 bg-primary-500/20 hover:bg-primary-500 text-primary-400 hover:text-white rounded-lg flex items-center justify-center transition-all" title="แก้ไข">
+                  ✏️
+                </NuxtLink>
+                <button @click="deleteProduct(product.id || product._id)" class="w-8 h-8 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white rounded-lg flex items-center justify-center transition-all" title="ลบ">
+                  🗑️
+                </button>
               </div>
             </div>
             <div v-if="!products.length" class="p-8 text-center text-dark-400">ยังไม่มีสินค้า</div>
           </div>
+          <div v-if="products.length > 5" class="p-4 border-t border-white/10 text-center">
+            <NuxtLink to="/my-products" class="text-primary-400 text-sm hover:underline">ดูสินค้าทั้งหมด ({{ products.length }} รายการ) →</NuxtLink>
+          </div>
         </div>
+
 
         <div class="card overflow-hidden">
           <div class="p-4 border-b border-white/10">
@@ -222,6 +237,32 @@ function getLevelColor(level) {
   const colors = { S: 'text-yellow-400', A: 'text-green-400', B: 'text-primary-400', C: 'text-dark-400' };
   return colors[level] || 'text-dark-400';
 }
+
+function getCategoryIcon(category) {
+  const icons = {
+    electronics: '📱', fashion: '👗', gaming: '🎮', beauty: '💄',
+    home: '🏠', sports: '⚽', food: '🍔', books: '📚',
+    toys: '🧸', pets: '🐶', automotive: '🚗', all: '🛍️'
+  };
+  return icons[category] || '📦';
+}
+
+async function deleteProduct(productId) {
+  if (!confirm('❗ คุณต้องการลบสินค้านี้ใช่หรือไม่? การกระทำนี้ไม่สามารถยกเลิกได้')) return;
+  
+  const token = localStorage.getItem('token');
+  try {
+    await axios.delete(`${baseUrl}/api/seller/products/${productId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    alert('ลบสินค้าสำเร็จ! 🗑️');
+    await fetchData();
+  } catch (err) {
+    console.error('Delete error:', err);
+    alert('ไม่สามารถลบสินค้าได้');
+  }
+}
+
 
 function getStatusClass(status) {
   const classes = { 
