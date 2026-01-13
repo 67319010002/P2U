@@ -91,7 +91,7 @@ const fetchSellerProfile = async () => {
     return;
   }
   try {
-    const res = await axios.get(`${baseURL}/api/seller/profile`, {
+    const res = await axios.get(`${baseURL}/api/profile`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     sellerProfile.value = res.data;
