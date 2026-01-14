@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen ml-20">
-    <Navbar />
+    <!-- <Navbar /> -->
     <sidebar />
 
     <main class="p-6">
