@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen ml-20">
-    <!-- <Navbar /> -->
+    <!-- <Navbar /แก้> -->
+
     <sidebar />
 
     <main class="p-6">
