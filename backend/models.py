@@ -76,6 +76,9 @@ class User(Document):
     id_card_back_url = StringField()
     verification_date = DateTimeField()
 
+    # ===== Referral System =====
+    referral_code = StringField()  # รหัสแนะนำของผู้ใช้
+
     meta = {'collection': 'users'}
 
 # -------- Product Model --------
@@ -88,6 +91,7 @@ class Product(Document):
     video_url = StringField()
     view_360_images = ListField(StringField())
     category = StringField(default='all')
+    stock = IntField(default=0)  # จำนวนสินค้าในคลัง
     seller = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
     created_at = DateTimeField(default=datetime.utcnow)
     meta = {'collection': 'products'}
