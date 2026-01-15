@@ -359,7 +359,7 @@ const handleLogout = () => {
 const currentLanguage = ref('th')
 const t = (key) => {
   const trans = {
-    th: { username: 'ชื่อผู้ใช้', fullName: 'ชื่อเต็ม', email: 'อีเมล', phone: 'เบอร์โทร', seller: 'ผู้ขาย', registered: 'ลงทะเบียนแล้ว', notRegistered: 'ยังไม่ลงทะเบียน', addresses: 'ที่อยู่', addNewAddress: 'เพิ่มที่อยู่ใหม่', editAddress: 'แก้ไขที่อยู่', addAddress: 'เพิ่มที่อยู่', updateAddress: 'อัปเดตที่อยู่', cancel: 'ยกเลิก' },
+    th: { username: 'ชื่อผู้ใช้', fullName: 'ชื่อเต็ม', email: 'อีเมล', phone: 'เบอร์โทร', seller: 'สถานะผู้ใช้', registered: 'ผู้ขาย', notRegistered: 'ผู้ใช้ทั่วไป', addresses: 'ที่อยู่', addNewAddress: 'เพิ่มที่อยู่ใหม่', editAddress: 'แก้ไขที่อยู่', addAddress: 'เพิ่มที่อยู่', updateAddress: 'อัปเดตที่อยู่', cancel: 'ยกเลิก' },
     en: { username: 'Username', fullName: 'Full Name', email: 'Email', phone: 'Phone', seller: 'Seller', registered: 'Registered', notRegistered: 'Not Registered', addresses: 'Addresses', addNewAddress: 'Add New Address', editAddress: 'Edit Address', addAddress: 'Add Address', updateAddress: 'Update Address', cancel: 'Cancel' }
   }
   return trans[currentLanguage.value][key] || key

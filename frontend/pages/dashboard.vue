@@ -38,7 +38,7 @@
             </div>
           </div>
         </div>
-        
+        <!-- แบนเนอร์ -->
         <button @click="prevBanner" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-primary-500 rounded-full flex items-center justify-center text-white transition-colors"> ← </button>
         <button @click="nextBanner" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-primary-500 rounded-full flex items-center justify-center text-white transition-colors"> → </button>
         
@@ -207,7 +207,7 @@ const buyNow = (product) => {
 // --- 🖼️ ระบบ Banner & การดึงข้อมูล ---
 
 const banners = ref([
-  { image: "https://affiliate.priceza.com/wp-content/uploads/2020/11/11.11_HotDealHotItem_HeroBanner.jpg", title: "🎉 MEGA SALE 11.11", subtitle: "ลดสูงสุด 90% ทุกหมวดหมู่!" },
+  { image: "https://media.discordapp.net/attachments/1089887523020480544/1461399560713933054/P2U_kaiser_1.png?ex=696a69e6&is=69691866&hm=c8f4838915fb6ffac9c2cce2d582e023355652bd82b750fdbfeaac399e21b3c2&=&format=webp&quality=lossless&width=1679&height=839", title: "🎉 MEGA SALE 21.1", subtitle: "ลดสูงสุด 50% ทุกหมวดหมู่!" },
   { image: "https://affiliate.priceza.com/wp-content/uploads/2020/11/4.png", title: "💎 สินค้า Limited Edition", subtitle: "ของหายากราคาพิเศษ" },
   { image: "https://www.umipro.com/pub/media/wysiwyg/news-2024/NocNoc-8.8-_-__duragres_1440x365.jpg", title: "🔥 Flash Sale", subtitle: "เฉพาะวันนี้เท่านั้น!" },
 ]);
