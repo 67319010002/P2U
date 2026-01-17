@@ -1,119 +1,162 @@
 <template>
-  <nav v-if="!hideNavbar" class="glass sticky top-0 z-50 px-6 py-3 flex items-center shadow-lg">
-    <!-- Logo -->
-    <NuxtLink to="/dashboard" class="flex items-center gap-2 group">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-        <span class="text-2xl">👑</span>
-      </div>
-      <div class="font-display font-bold text-xl">
-        <span class="gradient-text">P2UKAISER</span>
-      </div>
-    </NuxtLink>
-
-    <!-- Search Bar -->
-    <div class="ml-8 flex-1 max-w-xl">
-      <div class="relative">
-        <input 
-          v-model="searchQuery" 
-          @keyup.enter="handleSearch" 
-          type="text" 
-          placeholder="ค้นหาสินค้า..."
-          class="w-full input-glass pl-12 pr-4 py-2.5 rounded-xl text-sm"
-        />
-        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <button 
-          @click="handleSearch" 
-          class="absolute right-2 top-1/2 -translate-y-1/2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
-        >
-          ค้นหา
-        </button>
-      </div>
+  <nav 
+    v-if="!hideNavbar" 
+    class="sticky top-0 z-50 h-20 w-full transition-all duration-300"
+  >
+    <div class="absolute inset-0 bg-[#09090b]/80 backdrop-blur-xl border-b border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+      <div class="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-pink-500/50 to-transparent opacity-50"></div>
     </div>
 
-    <!-- Right Side -->
-    <div class="ml-auto flex items-center gap-4">
-      <!-- Notifications -->
-      <NuxtLink v-if="user" to="/notifications" class="relative p-2 hover:bg-white/10 rounded-xl transition-colors">
-        <svg class="w-6 h-6 text-dark-300 hover:text-primary-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-        </svg>
-        <span v-if="notificationCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
-          {{ notificationCount > 9 ? '9+' : notificationCount }}
-        </span>
-      </NuxtLink>
-
-      <!-- Chat -->
-      <NuxtLink v-if="user" to="/chat" class="relative p-2 hover:bg-white/10 rounded-xl transition-colors">
-        <svg class="w-6 h-6 text-dark-300 hover:text-primary-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-        <span v-if="unreadMessages > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-accent-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-          {{ unreadMessages > 9 ? '9+' : unreadMessages }}
-        </span>
-      </NuxtLink>
-
-      <!-- Wishlist -->
-      <NuxtLink v-if="user" to="/wishlist" class="p-2 hover:bg-white/10 rounded-xl transition-colors">
-        <svg class="w-6 h-6 text-dark-300 hover:text-red-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-        </svg>
-      </NuxtLink>
-
-      <!-- Profile Dropdown -->
-      <div v-if="user" class="relative">
-        <button @click="toggleSettings" class="flex items-center gap-3 p-1.5 hover:bg-white/10 rounded-xl transition-colors">
-          <img 
-            :src="profileImageUrl" 
-            alt="Profile" 
-            class="w-9 h-9 rounded-xl object-cover border-2 border-primary-500/50"
-          />
-          <span class="text-sm font-medium text-white hidden md:block">{{ user.username }}</span>
-          <svg class="w-4 h-4 text-dark-400 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        <!-- Dropdown Menu -->
-        <Transition name="dropdown">
-          <div v-if="showSettings" class="absolute right-0 mt-2 w-56 glass rounded-xl shadow-xl overflow-hidden">
-            <div class="p-3 border-b border-white/10">
-              <p class="text-sm font-semibold text-white">{{ user.full_name || user.username }}</p>
-              <p class="text-xs text-dark-400">{{ user.email }}</p>
-            </div>
-            <div class="py-2">
-              <NuxtLink to="/profile" class="flex items-center gap-3 px-4 py-2.5 hover:bg-white/10 transition-colors">
-                <span class="text-lg">👤</span>
-                <span class="text-sm text-dark-200">โปรไฟล์</span>
-              </NuxtLink>
-              <NuxtLink to="/orders" class="flex items-center gap-3 px-4 py-2.5 hover:bg-white/10 transition-colors">
-                <span class="text-lg">📦</span>
-                <span class="text-sm text-dark-200">คำสั่งซื้อ</span>
-              </NuxtLink>
-              <NuxtLink v-if="user.is_seller" to="/seller-dashboard" class="flex items-center gap-3 px-4 py-2.5 hover:bg-white/10 transition-colors">
-                <span class="text-lg">📊</span>
-                <span class="text-sm text-dark-200">แดชบอร์ดผู้ขาย</span>
-              </NuxtLink>
-              <NuxtLink to="/about" class="flex items-center gap-3 px-4 py-2.5 hover:bg-white/10 transition-colors">
-                <span class="text-lg">ℹ️</span>
-                <span class="text-sm text-dark-200">เกี่ยวกับ</span>
-              </NuxtLink>
-            </div>
-            <div class="border-t border-white/10 py-2">
-              <button @click="handleLogout" class="flex items-center gap-3 px-4 py-2.5 w-full hover:bg-red-500/20 transition-colors text-red-400">
-                <span class="text-lg">🚪</span>
-                <span class="text-sm">ออกจากระบบ</span>
-              </button>
-            </div>
+    <div class="relative container mx-auto px-6 h-full flex items-center justify-between gap-8">
+      
+      <NuxtLink to="/dashboard" class="flex items-center gap-3 group shrink-0">
+        <div class="relative w-11 h-11">
+          <div class="absolute inset-0 bg-gradient-to-tr from-pink-600 to-purple-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-500"></div>
+          <div class="relative w-full h-full bg-[#09090b] border border-white/10 rounded-xl flex items-center justify-center transform group-hover:-rotate-6 transition-transform duration-300 ease-out">
+            <span class="text-2xl drop-shadow-lg filter group-hover:scale-110 transition-transform">👑</span>
           </div>
-        </Transition>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-display font-bold text-xl tracking-wide bg-gradient-to-r from-white via-pink-200 to-purple-200 bg-clip-text text-transparent group-hover:text-white transition-colors">
+            P2UKAISER
+          </span>
+          <span class="text-[10px] font-medium text-gray-500 tracking-[0.2em] uppercase group-hover:text-pink-400 transition-colors">
+            Premium Shop
+          </span>
+        </div>
+      </NuxtLink>
+
+      <div class="flex-1 max-w-2xl hidden md:block group/search">
+        <div class="relative w-full transition-all duration-300">
+          
+          <div class="absolute -inset-0.5 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 rounded-full opacity-20 group-focus-within/search:opacity-60 blur transition duration-500"></div>
+          
+          <div class="relative flex items-center bg-[#18181b] rounded-full border border-white/10 shadow-inner overflow-hidden group-focus-within/search:border-white/20">
+            
+            <div class="pl-4 text-gray-400 group-focus-within/search:text-pink-400 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
+            <input 
+              v-model="searchQuery" 
+              @keyup.enter="handleSearch" 
+              type="text" 
+              placeholder="ค้นหาสินค้า..."
+              class="w-full bg-transparent border-none text-white px-4 py-2.5 focus:ring-0 placeholder-gray-500 text-sm"
+            />
+            
+            <button 
+              @click="handleSearch" 
+              class="m-1 px-5 py-1.5 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs font-bold tracking-wide shadow-lg transform active:scale-95 transition-all duration-200 border border-white/10"
+            >
+              ค้นหา
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Login Button (Guest) -->
-      <NuxtLink v-else to="/login" class="btn-primary text-sm">
-        เข้าสู่ระบบ
-      </NuxtLink>
+      <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+        
+        <NuxtLink v-if="user" to="/notifications" class="relative group p-2.5 rounded-xl transition-all duration-300 hover:bg-white/5">
+          <div class="absolute inset-0 bg-pink-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-300"></div>
+          <svg class="relative w-6 h-6 text-gray-400 group-hover:text-pink-400 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span v-if="notificationCount > 0" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#09090b] z-10 animate-pulse"></span>
+        </NuxtLink>
+
+        <NuxtLink v-if="user" to="/chat" class="relative group p-2.5 rounded-xl transition-all duration-300 hover:bg-white/5">
+          <div class="absolute inset-0 bg-cyan-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-300"></div>
+          <svg class="relative w-6 h-6 text-gray-400 group-hover:text-cyan-400 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <span v-if="unreadMessages > 0" class="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-cyan-500 text-[10px] font-bold text-black rounded-full border-2 border-[#09090b]">
+            {{ unreadMessages > 9 ? '9+' : unreadMessages }}
+          </span>
+        </NuxtLink>
+
+        <NuxtLink v-if="user" to="/wishlist" class="relative group p-2.5 rounded-xl transition-all duration-300 hover:bg-white/5 hidden sm:block">
+          <div class="absolute inset-0 bg-red-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-300"></div>
+          <svg class="relative w-6 h-6 text-gray-400 group-hover:text-red-400 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </NuxtLink>
+
+        <div class="w-[1px] h-8 bg-white/10 mx-1 hidden sm:block"></div>
+
+        <div v-if="user" class="relative" ref="dropdownRef">
+          <button 
+            @click="toggleSettings" 
+            class="flex items-center gap-3 p-1 rounded-xl transition-all duration-300 hover:bg-white/5 border border-transparent hover:border-white/10"
+            :class="{ 'bg-white/5 border-white/10': showSettings }"
+          >
+            <div class="relative">
+              <div class="absolute -inset-0.5 bg-gradient-to-tr from-pink-500 to-purple-600 rounded-xl blur opacity-75"></div>
+              <img 
+                :src="profileImageUrl" 
+                alt="Profile" 
+                class="relative w-9 h-9 rounded-[10px] object-cover border-2 border-[#09090b]"
+              />
+            </div>
+            <div class="hidden lg:flex flex-col items-start mr-1">
+              <span class="text-sm font-bold text-white leading-none">{{ user.username }}</span>
+              <span class="text-[10px] text-gray-400 leading-none mt-1">Member</span>
+            </div>
+            <svg 
+              class="w-4 h-4 text-gray-400 transition-transform duration-300 hidden lg:block"
+              :class="{ 'rotate-180': showSettings }" 
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <Transition name="dropdown">
+            <div v-if="showSettings" class="absolute right-0 mt-3 w-64 bg-[#09090b]/90 backdrop-blur-xl rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] border border-white/10 overflow-hidden ring-1 ring-white/5 origin-top-right z-50">
+              
+              <div class="p-4 bg-gradient-to-br from-white/5 to-transparent border-b border-white/5">
+                <p class="text-sm font-bold text-white">{{ user.full_name || user.username }}</p>
+                <p class="text-xs text-gray-400 mt-0.5 truncate">{{ user.email }}</p>
+              </div>
+
+              <div class="p-2 space-y-1">
+                <NuxtLink to="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all group">
+                  <span class="p-1.5 rounded-lg bg-gray-800 text-gray-400 group-hover:bg-blue-500/20 group-hover:text-blue-400 transition-colors">👤</span>
+                  <span class="text-sm font-medium">โปรไฟล์</span>
+                </NuxtLink>
+
+                <NuxtLink to="/orders" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all group">
+                  <span class="p-1.5 rounded-lg bg-gray-800 text-gray-400 group-hover:bg-orange-500/20 group-hover:text-orange-400 transition-colors">📦</span>
+                  <span class="text-sm font-medium">คำสั่งซื้อของฉัน</span>
+                </NuxtLink>
+
+                <NuxtLink v-if="user.is_seller" to="/seller-dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all group">
+                  <span class="p-1.5 rounded-lg bg-gray-800 text-gray-400 group-hover:bg-purple-500/20 group-hover:text-purple-400 transition-colors">📊</span>
+                  <span class="text-sm font-medium">แดชบอร์ดผู้ขาย</span>
+                </NuxtLink>
+
+                <NuxtLink to="/about" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all group">
+                  <span class="p-1.5 rounded-lg bg-gray-800 text-gray-400 group-hover:bg-emerald-500/20 group-hover:text-emerald-400 transition-colors">ℹ️</span>
+                  <span class="text-sm font-medium">เกี่ยวกับเรา</span>
+                </NuxtLink>
+              </div>
+
+              <div class="p-2 border-t border-white/5 bg-red-500/5">
+                <button @click="handleLogout" class="flex items-center gap-3 px-3 py-2.5 w-full rounded-xl text-red-400 hover:bg-red-500/10 transition-all group">
+                  <span class="text-lg group-hover:scale-110 transition-transform">🚪</span>
+                  <span class="text-sm font-semibold">ออกจากระบบ</span>
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </div>
+
+        <NuxtLink v-else to="/login" class="px-6 py-2 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-sm font-bold shadow-lg shadow-purple-900/20 hover:shadow-purple-500/30 transition-all duration-300 transform hover:-translate-y-0.5">
+          เข้าสู่ระบบ
+        </NuxtLink>
+      </div>
     </div>
   </nav>
 </template>
@@ -123,6 +166,7 @@ import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 
+// ================= Logic (เหมือนเดิม) =================
 const route = useRoute();
 const router = useRouter();
 const user = ref(null);
@@ -130,6 +174,7 @@ const showSettings = ref(false);
 const searchQuery = ref("");
 const notificationCount = ref(0);
 const unreadMessages = ref(0);
+const dropdownRef = ref(null);
 
 const baseUrl = "http://localhost:5000";
 
@@ -198,9 +243,8 @@ const handleLogout = () => {
   window.dispatchEvent(new Event("user-updated"));
 };
 
-// Close dropdown when clicking outside
 const handleClickOutside = (e) => {
-  if (showSettings.value && !e.target.closest('.relative')) {
+  if (dropdownRef.value && !dropdownRef.value.contains(e.target)) {
     showSettings.value = false;
   }
 };
@@ -218,14 +262,18 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: all 0.2s ease;
+.dropdown-enter-active {
+  animation: dropdown-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-.dropdown-enter-from,
-.dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
+.dropdown-leave-active {
+  animation: dropdown-out 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes dropdown-in {
+  0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes dropdown-out {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
 }
 </style>

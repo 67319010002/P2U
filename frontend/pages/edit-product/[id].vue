@@ -1,103 +1,141 @@
 <template>
-  <div class="flex justify-center min-h-screen bg-gradient-to-br from-gray-900 to-black p-6">
-    <div class="bg-gray-800 p-8 rounded-xl shadow-xl w-full max-w-lg text-white">
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold">✏️ แก้ไขสินค้า</h1>
-        <NuxtLink to="/seller-dashboard" class="text-dark-400 hover:text-white transition-colors">
-          ← กลับ
-        </NuxtLink>
-      </div>
+  <div class="min-h-screen bg-[#0b0b0f] text-white font-sans selection:bg-pink-500/30 overflow-hidden relative">
+    
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[20%] right-[10%] w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] left-[20%] w-80 h-80 bg-pink-600/20 rounded-full blur-[100px] mix-blend-screen"></div>
+    </div>
 
-      <div v-if="loading" class="text-center py-12">
-        <div class="animate-spin text-4xl mb-4">⏳</div>
-        <p class="text-dark-400">กำลังโหลดข้อมูลสินค้า...</p>
-      </div>
+    <sidebar />
 
-      <form v-else @submit.prevent="submitProduct" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium mb-1">ชื่อสินค้า</label>
-          <input v-model="product.name" type="text" required class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/50 transition-all" placeholder="กรอกชื่อสินค้า" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-1">ราคา (บาท)</label>
-          <input v-model="product.price" type="number" required min="0" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/50 transition-all" placeholder="กรอกราคา" />
-        </div>
-
-        <!-- Category Selection -->
-        <div>
-          <label class="block text-sm font-medium mb-2">หมวดหมู่สินค้า</label>
-          <div class="grid grid-cols-3 gap-2">
-            <button
-              v-for="cat in categories"
-              :key="cat.id"
-              type="button"
-              @click="product.category = cat.id"
-              class="p-3 rounded-xl border-2 transition-all duration-200 text-center"
-              :class="product.category === cat.id 
-                ? 'border-primary-500 bg-primary-500/20 text-white shadow-lg shadow-primary-500/30' 
-                : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500'"
-            >
-              <span class="text-xl block mb-1">{{ cat.icon }}</span>
-              <span class="text-xs">{{ cat.name }}</span>
-            </button>
+    <div class="ml-20 flex justify-center items-center min-h-screen p-6 relative z-10">
+      
+      <div class="w-full max-w-2xl transform transition-all">
+        
+        <div class="mb-8 flex items-end justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+              <span class="bg-gradient-to-r from-yellow-400 to-orange-500 w-2 h-8 rounded-full"></span>
+              แก้ไขสินค้า
+            </h1>
+            <p class="text-gray-400 text-sm mt-2 ml-5">อัปเดตข้อมูลสินค้า รหัส: <span class="font-mono text-pink-400">#{{ productId }}</span></p>
           </div>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-1">รายละเอียดสินค้า</label>
-          <textarea v-model="product.description" rows="3" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/50 transition-all" placeholder="อธิบายรายละเอียดสินค้า..."></textarea>
-        </div>
-
-        <!-- Current Image -->
-        <div v-if="product.image_url">
-          <label class="block text-sm font-medium mb-2">รูปภาพปัจจุบัน</label>
-          <div class="relative inline-block">
-            <img :src="getImageUrl(product.image_url)" class="rounded-xl max-h-40 object-contain" />
-            <span class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">ปัจจุบัน</span>
-          </div>
-        </div>
-
-        <!-- Upload New Image -->
-        <div>
-          <label class="block text-sm font-medium mb-2">{{ product.image_url ? 'เปลี่ยนรูปภาพ (ถ้าต้องการ)' : 'รูปภาพสินค้า' }}</label>
-          <div 
-            class="relative border-2 border-dashed border-gray-600 rounded-xl p-6 text-center hover:border-primary-500 transition-colors cursor-pointer"
-            @click="$refs.fileInput.click()"
-          >
-            <input type="file" ref="fileInput" @change="handleFileUpload" accept="image/*" class="hidden" />
-            <div v-if="imagePreview" class="mb-3">
-              <img :src="imagePreview" class="max-h-40 mx-auto rounded-lg object-contain" />
-              <p class="text-xs text-green-400 mt-2">✓ รูปใหม่พร้อมอัพโหลด</p>
+          <NuxtLink to="/seller-dashboard" class="group flex items-center gap-2 text-gray-500 hover:text-white transition-colors px-4 py-2 rounded-full hover:bg-white/5">
+            <span class="text-xs font-medium">กลับ</span>
+            <div class="w-6 h-6 rounded-full border border-gray-600 group-hover:border-white flex items-center justify-center transition-all">
+               ←
             </div>
-            <div v-else class="text-gray-400">
-              <span class="text-4xl block mb-2">📷</span>
-              <p>คลิกเพื่อเลือกรูปภาพใหม่</p>
-              <p class="text-xs text-gray-500 mt-1">รองรับ PNG, JPG, GIF</p>
-            </div>
-          </div>
+          </NuxtLink>
         </div>
 
-        <div class="flex gap-3 pt-4">
-          <button 
-            type="submit" 
-            :disabled="isSubmitting"
-            class="flex-1 py-3 bg-gradient-to-r from-primary-500 to-pink-500 hover:from-primary-600 hover:to-pink-600 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span v-if="isSubmitting">กำลังบันทึก...</span>
-            <span v-else>💾 บันทึกการเปลี่ยนแปลง</span>
-          </button>
+        <div class="bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden min-h-[400px]">
           
-          <button 
-            type="button"
-            @click="confirmDelete"
-            :disabled="isDeleting"
-            class="px-6 py-3 bg-red-500/20 border border-red-500/50 hover:bg-red-500 text-red-400 hover:text-white rounded-xl font-semibold transition-all duration-200"
-          >
-            🗑️
-          </button>
+          <div v-if="loading" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/60 backdrop-blur-sm">
+            <div class="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-gray-300 animate-pulse">กำลังดึงข้อมูลสินค้า...</p>
+          </div>
+
+          <form v-else @submit.prevent="submitProduct" class="space-y-8 animate-fade-in-up">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2 col-span-2 md:col-span-1">
+                <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">ชื่อสินค้า</label>
+                <div class="relative group">
+                  <input v-model="product.name" type="text" required class="w-full pl-4 pr-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:bg-white/10 text-white placeholder-gray-600 transition-all outline-none focus:ring-4 focus:ring-pink-500/10" placeholder="ชื่อสินค้า" />
+                </div>
+              </div>
+
+              <div class="space-y-2 col-span-2 md:col-span-1">
+                <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">ราคา</label>
+                <div class="relative group">
+                  <span class="absolute left-4 top-3.5 text-gray-500 group-focus-within:text-green-400 transition-colors">฿</span>
+                  <input v-model="product.price" type="number" required min="0" class="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 focus:border-green-500/50 focus:bg-white/10 text-white placeholder-gray-600 transition-all outline-none focus:ring-4 focus:ring-green-500/10 font-mono" placeholder="0.00" />
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">หมวดหมู่</label>
+              <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                <button
+                  v-for="cat in categories"
+                  :key="cat.id"
+                  type="button"
+                  @click="product.category = cat.id"
+                  class="group relative p-3 rounded-2xl border transition-all duration-300 flex flex-col items-center justify-center gap-2 overflow-hidden"
+                  :class="product.category === cat.id 
+                    ? 'border-pink-500 bg-pink-500/20 text-white shadow-[0_0_15px_rgba(236,72,153,0.3)]' 
+                    : 'border-white/5 bg-white/5 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:text-gray-200'"
+                >
+                  <span class="text-2xl transform group-hover:scale-110 transition-transform">{{ cat.icon }}</span>
+                  <span class="text-[10px] font-medium">{{ cat.name }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">รายละเอียด</label>
+              <textarea v-model="product.description" rows="3" class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 focus:border-purple-500/50 focus:bg-white/10 text-white placeholder-gray-600 transition-all outline-none resize-none focus:ring-4 focus:ring-purple-500/10" placeholder="รายละเอียดสินค้า..."></textarea>
+            </div>
+
+            <div class="space-y-4">
+              <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">รูปภาพสินค้า</label>
+              
+              <div class="flex flex-col md:flex-row gap-6">
+                <div class="relative w-full border-2 border-dashed rounded-3xl p-1 transition-all group overflow-hidden cursor-pointer hover:border-pink-500/50 hover:bg-pink-500/5 border-white/10 bg-white/5"
+                     @click="$refs.fileInput.click()">
+                  
+                  <input type="file" ref="fileInput" @change="handleFileUpload" accept="image/*" class="hidden" />
+                  
+                  <div class="flex flex-col items-center justify-center py-6">
+                    <div v-if="imagePreview" class="relative w-full px-6">
+                      <img :src="imagePreview" class="h-40 w-full object-contain rounded-xl shadow-lg" />
+                      <div class="absolute top-0 right-8 bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">New ✨</div>
+                      <p class="text-center text-xs text-green-400 mt-3">พร้อมอัปโหลดรูปใหม่</p>
+                    </div>
+
+                    <div v-else-if="product.image_url" class="relative w-full px-6">
+                      <img :src="getImageUrl(product.image_url)" class="h-40 w-full object-contain rounded-xl opacity-80 group-hover:opacity-100 transition-opacity" />
+                      <div class="absolute top-0 right-8 bg-gray-700 text-gray-300 text-[10px] font-bold px-2 py-1 rounded-full border border-gray-600">Current</div>
+                      <p class="text-center text-xs text-gray-400 mt-3 group-hover:text-pink-400 transition-colors">คลิกเพื่อเปลี่ยนรูปภาพ</p>
+                    </div>
+
+                    <div v-else class="text-center py-4">
+                        <span class="text-4xl block mb-2 opacity-50">📷</span>
+                        <p class="text-sm text-gray-400">ยังไม่มีรูปภาพ</p>
+                        <p class="text-xs text-pink-400 mt-1">คลิกเพื่อเพิ่ม</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-6 border-t border-white/10 flex flex-col-reverse sm:flex-row items-center gap-4">
+               
+               <button 
+                type="button"
+                @click="confirmDelete"
+                :disabled="isDeleting"
+                class="w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all duration-300 flex items-center justify-center gap-2 group"
+               >
+                 <span v-if="isDeleting" class="animate-spin">⏳</span>
+                 <span v-else class="text-xl group-hover:rotate-12 transition-transform">🗑️</span>
+                 <span class="font-medium">ลบสินค้า</span>
+               </button>
+
+               <button 
+                type="submit" 
+                :disabled="isSubmitting"
+                class="w-full flex-1 py-3.5 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-500 hover:via-purple-500 hover:to-indigo-500 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_0_20px_rgba(236,72,153,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.5)] transform hover:-translate-y-0.5 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <span v-if="isSubmitting" class="animate-spin text-xl">⏳</span>
+                <span v-else class="text-lg">บันทึกการเปลี่ยนแปลง 💾</span>
+              </button>
+            </div>
+
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 </template>
@@ -140,7 +178,7 @@ const categories = ref([
 ]);
 
 const getImageUrl = (url) => {
-  if (!url) return '/placeholder.png';
+  if (!url) return 'https://via.placeholder.com/300?text=No+Image'; // Placeholder สวยๆ
   if (url.startsWith('http')) return url;
   return `${baseURL}${url.startsWith('/') ? '' : '/'}${url}`;
 };
@@ -177,7 +215,9 @@ const fetchProduct = async () => {
 const fetchCategories = async () => {
   try {
     const res = await axios.get(`${baseURL}/api/categories`);
-    categories.value = res.data.filter(cat => cat.id !== 'all');
+    if (res.data && res.data.length > 0) {
+       categories.value = res.data.filter(cat => cat.id !== 'all');
+    }
   } catch (err) {
     console.log("Using default categories");
   }
@@ -216,7 +256,8 @@ const submitProduct = async () => {
       });
     }
 
-    alert("อัพเดตสินค้าสำเร็จ! ✨");
+    // Success styling could be better with toast, but for now:
+    alert("อัปเดตสินค้าสำเร็จ! ✨");
     router.push("/seller-dashboard");
   } catch (err) {
     console.error("Failed to update product:", err);
@@ -227,7 +268,7 @@ const submitProduct = async () => {
 };
 
 const confirmDelete = async () => {
-  if (!confirm("❗ คุณต้องการลบสินค้านี้ใช่หรือไม่? การกระทำนี้ไม่สามารถยกเลิกได้")) {
+  if (!confirm("❗ คำเตือน: คุณต้องการลบสินค้านี้ใช่หรือไม่?")) {
     return;
   }
 
@@ -253,3 +294,37 @@ onMounted(() => {
   fetchCategories();
 });
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+</style>
