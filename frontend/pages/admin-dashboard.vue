@@ -232,6 +232,7 @@
           <h2 class="text-lg font-semibold text-white">คำขอเติม Token</h2>
           <div class="flex gap-2">
             <span class="badge badge-warning">{{ tokenStats.pending || 0 }} รอตรวจสอบ</span>
+            <span class="badge badge-success-outline">{{ tokenStats.approved || 0 }} อนุมัติแล้ว</span>
           </div>
         </div>
         <div class="overflow-x-auto">
@@ -240,6 +241,7 @@
               <tr>
                 <th class="text-left p-4 text-dark-400 text-sm font-medium">ผู้ใช้</th>
                 <th class="text-left p-4 text-dark-400 text-sm font-medium">จำนวน Token</th>
+                <th class="text-left p-4 text-dark-400 text-sm font-medium">สลิป</th>
                 <th class="text-left p-4 text-dark-400 text-sm font-medium">สถานะ</th>
                 <th class="text-left p-4 text-dark-400 text-sm font-medium">วันที่</th>
                 <th class="text-right p-4 text-dark-400 text-sm font-medium">การจัดการ</th>
@@ -258,7 +260,29 @@
                     </div>
                   </div>
                 </td>
-                <td class="p-4 text-primary-400 font-bold text-lg">🪙 {{ req.amount?.toLocaleString() }}</td>
+                <td class="p-4">
+                  <p class="text-primary-400 font-bold text-lg">🪙 {{ req.amount?.toLocaleString() }}</p>
+                  <!-- Show transaction ref if available -->
+                  <p v-if="req.transaction_ref" class="text-dark-500 text-xs mt-1">
+                    🧾 {{ req.transaction_ref }}
+                  </p>
+                </td>
+                <td class="p-4">
+                  <!-- Slip Image Preview -->
+                  <div v-if="req.payment_proof_url" class="relative">
+                    <img 
+                      :src="`http://localhost:5000${req.payment_proof_url}`" 
+                      alt="Slip" 
+                      class="h-16 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                      @click="showSlipModal(req)"
+                    />
+                    <!-- Auto-approved badge -->
+                    <span v-if="req.is_auto_approved" class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                      ⚡
+                    </span>
+                  </div>
+                  <span v-else class="text-dark-500 text-sm">ไม่มีสลิป</span>
+                </td>
                 <td class="p-4">
                   <span 
                     class="badge"
@@ -269,6 +293,10 @@
                     }"
                   >
                     {{ req.status === 'pending' ? '⏳ รอตรวจสอบ' : req.status === 'approved' ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธ' }}
+                  </span>
+                  <!-- Show auto-approved label -->
+                  <span v-if="req.is_auto_approved" class="block text-xs text-blue-400 mt-1">
+                    ⚡ อนุมัติอัตโนมัติ
                   </span>
                 </td>
                 <td class="p-4 text-dark-400 text-sm">{{ req.created_at }}</td>
@@ -294,6 +322,54 @@
           </table>
         </div>
       </div>
+
+      <!-- Slip Detail Modal -->
+      <div v-if="selectedSlip" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50" @click="selectedSlip = null">
+        <div class="max-w-2xl bg-dark-900 rounded-2xl p-6 m-4" @click.stop>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">รายละเอียดสลิป</h3>
+            <button @click="selectedSlip = null" class="text-dark-400 hover:text-white text-2xl">&times;</button>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Slip Image -->
+            <div>
+              <img 
+                :src="`http://localhost:5000${selectedSlip.payment_proof_url}`" 
+                alt="Slip" 
+                class="w-full rounded-xl"
+              />
+            </div>
+            
+            <!-- Slip Details -->
+            <div class="space-y-4">
+              <div class="glass-light rounded-xl p-4">
+                <p class="text-dark-400 text-sm">ผู้ใช้</p>
+                <p class="text-white font-bold">{{ selectedSlip.user?.username }}</p>
+              </div>
+              
+              <div class="glass-light rounded-xl p-4">
+                <p class="text-dark-400 text-sm">จำนวน Token</p>
+                <p class="text-primary-400 font-bold text-2xl">🪙 {{ selectedSlip.amount?.toLocaleString() }}</p>
+              </div>
+              
+              <div v-if="selectedSlip.transaction_ref" class="glass-light rounded-xl p-4">
+                <p class="text-dark-400 text-sm">เลขอ้างอิง</p>
+                <p class="text-white font-mono">{{ selectedSlip.transaction_ref }}</p>
+              </div>
+              
+              <div v-if="selectedSlip.sender_name" class="glass-light rounded-xl p-4">
+                <p class="text-dark-400 text-sm">ผู้โอน</p>
+                <p class="text-white">{{ selectedSlip.sender_name }}</p>
+              </div>
+              
+              <div v-if="selectedSlip.is_auto_approved" class="bg-blue-500/20 rounded-xl p-4">
+                <p class="text-blue-400 font-medium">⚡ อนุมัติอัตโนมัติโดย SlipOK</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -312,6 +388,7 @@ const orders = ref([]);
 const tokenRequests = ref([]);
 const tokenStats = ref({});
 const activeTab = ref('users');
+const selectedSlip = ref(null);
 
 const tabs = [
   { id: 'users', name: 'ผู้ใช้', icon: '👥' },
@@ -410,6 +487,10 @@ function handleLogout() {
   localStorage.removeItem('admin_token');
   localStorage.removeItem('admin_user');
   router.push('/admin-login');
+}
+
+function showSlipModal(req) {
+  selectedSlip.value = req;
 }
 
 async function fetchTokenRequests() {
