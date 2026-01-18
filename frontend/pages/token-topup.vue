@@ -19,6 +19,17 @@
           <p class="text-gray-400 mt-2 max-w-xl">
             เติม Token เพื่อใช้ในการประมูลสินค้าที่คุณต้องการ ยิ่งมีมาก ยิ่งมีโอกาสชนะการประมูลสูง
           </p>
+          
+          <!-- Token Balance Display -->
+          <div class="mt-6 inline-flex items-center gap-4 px-6 py-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20">
+            <div class="flex items-center justify-center w-14 h-14 rounded-xl bg-amber-500/20">
+              <span class="text-3xl">🪙</span>
+            </div>
+            <div>
+              <p class="text-xs text-amber-400/80 uppercase tracking-wider font-medium">Token คงเหลือ</p>
+              <p class="text-3xl font-bold text-amber-400">{{ tokenBalance.toLocaleString() }}</p>
+            </div>
+          </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
