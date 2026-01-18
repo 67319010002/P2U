@@ -166,13 +166,7 @@ const menuItems = computed(() => [
   { name: "ประมูล", icon: "🔨", route: "/auction" },
   { name: "เช็คอิน", icon: "📅", route: "/check-in" },
   { name: "ภารกิจ", icon: "🎯", route: "/missions" },
-  { name: "โปรไฟล์", icon: "👤", route: "/profile" },
-  { name: "คำสั่งซื้อ", icon: "📦", route: "/orders" },
-  { name: "รายการโปรด", icon: "❤️", route: "/wishlist" },
-  { name: "แจ้งเตือน", icon: "🔔", route: "/notifications" },
-  { name: "แชท", icon: "💬", route: "/chat" },
   ...(user.value?.is_seller ? [{ name: "แดชบอร์ดผู้ขาย", icon: "📊", route: "/seller-dashboard" }] : []),
-  { name: "เติมเหรียญ", icon: "💰", route: "/topup" },
   { name: "เติม Token", icon: "🪙", route: "/token-topup" },
 ]);
 
