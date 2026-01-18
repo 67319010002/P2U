@@ -281,6 +281,7 @@ const handleFileUpload = (event, type) => {
     reader.readAsDataURL(file);
   }
 };
+// แก้ไขในหน้า PartnerRegistration.vue เดิมของคุณ
 
 const handleEkycVerification = async () => {
   errorMsg.value = '';
@@ -302,7 +303,7 @@ const handleEkycVerification = async () => {
   formData.append('selfie_image', selfie.value);
 
   try {
-    // Replace with your actual endpoint
+    // ส่งข้อมูลไป Backend (Backend ควรบันทึก status = 'PENDING')
     await axios.post('http://localhost:5000/api/verify-ekyc', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -310,13 +311,16 @@ const handleEkycVerification = async () => {
       }
     });
 
-    successMsg.value = 'ส่งข้อมูลยืนยันตัวตนเรียบร้อย! โปรดรอการตรวจสอบ';
+    // ✅ แก้ไข: เปลี่ยนข้อความแจ้งเตือน
+    successMsg.value = 'ส่งเอกสารเรียบร้อย! กรุณารอแอดมินตรวจสอบภายใน 24 ชม.';
     
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    storedUser.is_seller_verified = true; 
-    localStorage.setItem('user', JSON.stringify(storedUser));
+    // ❌ ลบส่วนนี้ออก: เพราะเราต้องรอแอดมินกดอนุมัติก่อน ถึงจะเป็น true ได้
+    // const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    // storedUser.is_seller_verified = true; 
+    // localStorage.setItem('user', JSON.stringify(storedUser));
     
-    setTimeout(() => router.push('/profile'), 2000);
+    // Redirect กลับไปหน้า Profile เพื่อรอดูสถานะ
+    setTimeout(() => router.push('/profile'), 3000);
     
   } catch (err) {
     errorMsg.value = err.response?.data?.msg || 'การอัปโหลดล้มเหลว กรุณาลองใหม่';

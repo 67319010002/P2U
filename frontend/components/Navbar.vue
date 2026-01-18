@@ -166,7 +166,7 @@ import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 
-// ================= Logic (เหมือนเดิม) =================
+// ================= Logic =================
 const route = useRoute();
 const router = useRouter();
 const user = ref(null);
@@ -175,6 +175,9 @@ const searchQuery = ref("");
 const notificationCount = ref(0);
 const unreadMessages = ref(0);
 const dropdownRef = ref(null);
+
+// ตัวแปรสำหรับเก็บเวลา เพื่อทำ Cache Busting
+const imageVersion = ref(Date.now());
 
 const baseUrl = "http://localhost:5000";
 
@@ -191,27 +194,48 @@ const hideNavbar = computed(() => {
   return hiddenPages.includes(route.path);
 });
 
+// Logic รูปภาพพร้อม Cache Busting
 const profileImageUrl = computed(() => {
   if (!user.value || !user.value.profile_image_url) {
     return "/guest-profile.png";
   }
-  if (user.value.profile_image_url.startsWith("http")) {
-    return user.value.profile_image_url;
+  
+  let url = user.value.profile_image_url;
+  
+  if (!url.startsWith("http")) {
+    url = baseUrl + url;
   }
-  return baseUrl + user.value.profile_image_url;
+
+  // เติม ?v= ตามด้วยเวลา เพื่อ force ให้ browser โหลดรูปใหม่
+  return `${url}${url.includes('?') ? '&' : '?'}v=${imageVersion.value}`;
 });
 
-function loadUser() {
-  const storedUser = localStorage.getItem("user");
-  if (storedUser) {
-    try {
-      user.value = JSON.parse(storedUser);
-      fetchNotifications();
-    } catch {
+// [FIXED] ฟังก์ชัน loadUser ปรับให้รับ Event Argument
+function loadUser(event) {
+  // 1. ถ้ามีข้อมูลส่งมาทาง Event ให้ใช้ข้อมูลนั้นเลย (เร็วและชัวร์กว่า)
+  if (event && event.detail) {
+    user.value = event.detail;
+  } 
+  // 2. ถ้าไม่มี (เช่นโหลดหน้าเว็บครั้งแรก) ให้ดึงจาก LocalStorage
+  else {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        user.value = JSON.parse(storedUser);
+      } catch {
+        user.value = null;
+      }
+    } else {
       user.value = null;
     }
-  } else {
-    user.value = null;
+  }
+
+  // 3. สำคัญ: อัปเดต version เพื่อให้รูปภาพเปลี่ยนทันที
+  imageVersion.value = Date.now();
+  
+  // โหลดการแจ้งเตือน
+  if (user.value) {
+    fetchNotifications();
   }
 }
 
@@ -240,6 +264,7 @@ const handleLogout = () => {
   user.value = null;
   showSettings.value = false;
   router.push("/login");
+  // แจ้ง component อื่นว่า logout แล้ว
   window.dispatchEvent(new Event("user-updated"));
 };
 
@@ -250,8 +275,8 @@ const handleClickOutside = (e) => {
 };
 
 onMounted(() => {
-  loadUser();
-  window.addEventListener("user-updated", loadUser);
+  loadUser(); // โหลดครั้งแรก
+  window.addEventListener("user-updated", loadUser); // รอฟัง Event
   document.addEventListener("click", handleClickOutside);
 });
 

@@ -77,14 +77,18 @@
             v-for="tab in tabs" 
             :key="tab.id"
             @click="activeTab = tab.id"
-            class="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2"
+            class="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 relative"
             :class="activeTab === tab.id 
               ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg shadow-red-500/20' 
               : 'text-gray-400 hover:text-white hover:bg-white/5'"
           >
             <span>{{ tab.icon }}</span>
             {{ tab.name }}
-            <span v-if="tab.id === 'tokens' && tokenStats.pending > 0" class="ml-1 w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+            
+            <span v-if="tab.id === 'tokens' && tokenStats.pending > 0" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
+            <span v-if="tab.id === 'verifications' && verifications.length > 0" class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-pink-500 text-[10px] font-bold text-white animate-pulse">
+               {{ verifications.length }}
+            </span>
           </button>
         </div>
 
@@ -290,10 +294,101 @@
              </div>
           </div>
 
+          <div v-if="activeTab === 'verifications'">
+            <div class="p-6 border-b border-white/10 bg-white/5 flex justify-between items-center">
+              <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                🛡️ ตรวจสอบเอกสารผู้ขาย
+                <span v-if="verifications.length > 0" class="bg-pink-500/20 text-pink-300 border border-pink-500/30 px-2 py-0.5 rounded-full text-xs animate-pulse">
+                  {{ verifications.length }} waiting
+                </span>
+              </h2>
+            </div>
+            
+            <div class="p-6">
+              <div v-if="verifications.length === 0" class="text-center py-20 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                <span class="text-4xl block mb-2">✅</span>
+                <span class="text-gray-400">ไม่มีรายการค้างตรวจสอบ</span>
+              </div>
+
+              <div v-else class="grid grid-cols-1 gap-6">
+                <div v-for="req in verifications" :key="req.id" 
+                     class="bg-[#1a1a20] border border-white/10 rounded-2xl p-6 relative overflow-hidden group hover:border-pink-500/30 transition-all">
+                  
+                  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-4 border-b border-white/5">
+                    <div>
+                      <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        🏠 {{ req.shop_name }}
+                        <span class="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-500/30">รอตรวจสอบ</span>
+                      </h3>
+                      <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-400">
+                        <p>👤 ผู้สมัคร: <span class="text-white">{{ req.user_name }}</span></p>
+                        <p>📅 วันที่ส่ง: {{ new Date(req.submitted_at).toLocaleString('th-TH') }}</p>
+                      </div>
+                    </div>
+                    
+                    <div class="flex gap-3 mt-4 md:mt-0">
+                      <button @click="handleRejectSeller(req.id)" 
+                              class="px-4 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors text-sm font-semibold">
+                        ไม่อนุมัติ ❌
+                      </button>
+                      <button @click="handleApproveSeller(req.id)" 
+                              class="px-6 py-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-green-900/20 transition-all transform hover:scale-105 text-sm font-bold">
+                        อนุมัติ ✅
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-2">
+                      <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">🪪 ด้านหน้าบัตร</p>
+                      <div class="relative h-48 bg-black/50 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in hover:border-pink-500/50 transition-colors" @click="openImageModal(req.id_front_url)">
+                        <img :src="req.id_front_url" class="w-full h-full object-contain" />
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 transition-opacity">
+                          <span class="text-xs bg-black/60 px-2 py-1 rounded text-white">🔍 ขยาย</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="space-y-2">
+                      <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">🔙 ด้านหลังบัตร</p>
+                      <div class="relative h-48 bg-black/50 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in hover:border-purple-500/50 transition-colors" @click="openImageModal(req.id_back_url)">
+                        <img :src="req.id_back_url" class="w-full h-full object-contain" />
+                         <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 transition-opacity">
+                          <span class="text-xs bg-black/60 px-2 py-1 rounded text-white">🔍 ขยาย</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="space-y-2">
+                      <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">🤳 ภาพเซลฟี่</p>
+                      <div class="relative h-48 bg-black/50 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in hover:border-blue-500/50 transition-colors" @click="openImageModal(req.selfie_url)">
+                        <img :src="req.selfie_url" class="w-full h-full object-contain" />
+                         <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 transition-opacity">
+                          <span class="text-xs bg-black/60 px-2 py-1 rounded text-white">🔍 ขยาย</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
     </div>
+
+    <Transition name="fade">
+      <div v-if="showImageModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4" @click="showImageModal = false">
+        <div class="relative max-w-5xl w-full h-full flex items-center justify-center">
+          <img :src="currentZoomImage" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl border border-white/20 object-contain" @click.stop />
+          <button class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full w-10 h-10 flex items-center justify-center text-xl transition-all" @click="showImageModal = false">
+            ✕
+          </button>
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -303,31 +398,48 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 // ------------------------------------------
-// 🔑 สำคัญ: ใช้ Layout "admin" เพื่อไม่ให้ Navbar หน้าปกติโผล่มา
+// Layout Configuration
 // ------------------------------------------
 definePageMeta({
   layout: 'admin'
 });
 
 const router = useRouter();
+const baseUrl = 'http://localhost:5000';
+
+// ------------------------------------------
+// State Management
+// ------------------------------------------
 const adminUser = ref(null);
+const activeTab = ref('users');
 const stats = ref({});
+
+// Data Arrays
 const users = ref([]);
 const products = ref([]);
 const orders = ref([]);
 const tokenRequests = ref([]);
-const tokenStats = ref({});
-const activeTab = ref('users');
+const verifications = ref([]); // State สำหรับเก็บรายการ eKYC
 
+// Sub-stats
+const tokenStats = ref({});
+
+// UI States
+const showImageModal = ref(false);
+const currentZoomImage = ref('');
+
+// Tabs Configuration
 const tabs = [
   { id: 'users', name: 'Users', icon: '👥' },
   { id: 'products', name: 'Products', icon: '📦' },
   { id: 'orders', name: 'Orders', icon: '🛒' },
   { id: 'tokens', name: 'Tokens', icon: '🪙' },
+  { id: 'verifications', name: 'Verify Sellers', icon: '🛡️' }, // New Tab
 ];
 
-const baseUrl = 'http://localhost:5000';
-
+// ------------------------------------------
+// Data Fetching
+// ------------------------------------------
 async function fetchData() {
   const token = localStorage.getItem('admin_token');
   if (!token) {
@@ -338,6 +450,7 @@ async function fetchData() {
   const headers = { Authorization: `Bearer ${token}` };
 
   try {
+    // Parallel fetching for performance
     const [statsRes, usersRes, productsRes, ordersRes] = await Promise.all([
       axios.get(`${baseUrl}/api/admin/stats`, { headers }),
       axios.get(`${baseUrl}/api/admin/users`, { headers }),
@@ -350,8 +463,10 @@ async function fetchData() {
     products.value = productsRes.data;
     orders.value = ordersRes.data;
     
-    // Fetch token requests separately
-    fetchTokenRequests();
+    // Fetch specialized data
+    fetchTokenRequests(headers);
+    fetchVerifications(headers);
+    
   } catch (err) {
     console.error('Failed to fetch admin data:', err);
     if (err.response?.status === 401 || err.response?.status === 403) {
@@ -360,6 +475,34 @@ async function fetchData() {
   }
 }
 
+async function fetchTokenRequests(headers) {
+  try {
+    const [requestsRes, statsRes] = await Promise.all([
+      axios.get(`${baseUrl}/api/admin/token-requests`, { headers }),
+      axios.get(`${baseUrl}/api/admin/token-stats`, { headers })
+    ]);
+    tokenRequests.value = requestsRes.data.requests || [];
+    tokenStats.value = statsRes.data || {};
+  } catch (err) {
+    console.error('Failed to fetch token data', err);
+  }
+}
+
+// ✅ NEW: Fetch Pending Seller Verifications
+async function fetchVerifications(headers) {
+  try {
+    const res = await axios.get(`${baseUrl}/api/admin/verifications?status=PENDING`, { headers });
+    verifications.value = res.data;
+  } catch (err) {
+    console.error('Failed to fetch verifications:', err);
+    // Fallback/Mock Data if API is not ready yet
+    // verifications.value = [];
+  }
+}
+
+// ------------------------------------------
+// Actions: Users & Products
+// ------------------------------------------
 async function toggleBanUser(user) {
   const token = localStorage.getItem('admin_token');
   try {
@@ -374,12 +517,9 @@ async function toggleBanUser(user) {
 
 async function deleteUser(user) {
   if (!confirm(`ยืนยันการลบผู้ใช้ ${user.username}?`)) return;
-  
   const token = localStorage.getItem('admin_token');
   try {
-    await axios.delete(`${baseUrl}/api/admin/users/${user.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await axios.delete(`${baseUrl}/api/admin/users/${user.id}`, { headers: { Authorization: `Bearer ${token}` } });
     users.value = users.value.filter(u => u.id !== user.id);
   } catch (err) {
     console.error('Failed to delete user:', err);
@@ -388,18 +528,18 @@ async function deleteUser(user) {
 
 async function deleteProduct(product) {
   if (!confirm(`ยืนยันการลบสินค้า ${product.name}?`)) return;
-  
   const token = localStorage.getItem('admin_token');
   try {
-    await axios.delete(`${baseUrl}/api/admin/products/${product.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await axios.delete(`${baseUrl}/api/admin/products/${product.id}`, { headers: { Authorization: `Bearer ${token}` } });
     products.value = products.value.filter(p => p.id !== product.id);
   } catch (err) {
     console.error('Failed to delete product:', err);
   }
 }
 
+// ------------------------------------------
+// Actions: Orders
+// ------------------------------------------
 async function updateOrderStatus(order) {
   const token = localStorage.getItem('admin_token');
   try {
@@ -412,42 +552,18 @@ async function updateOrderStatus(order) {
   }
 }
 
-function handleLogout() {
-  localStorage.removeItem('admin_token');
-  localStorage.removeItem('admin_user');
-  router.push('/admin-login');
-}
-
-async function fetchTokenRequests() {
-  const token = localStorage.getItem('admin_token');
-  if (!token) return;
-  
-  try {
-    const [requestsRes, statsRes] = await Promise.all([
-      axios.get(`${baseUrl}/api/admin/token-requests`, {
-        headers: { Authorization: `Bearer ${token}` }
-      }),
-      axios.get(`${baseUrl}/api/admin/token-stats`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-    ]);
-    tokenRequests.value = requestsRes.data.requests || [];
-    tokenStats.value = statsRes.data || {};
-  } catch (err) {
-    console.error('Failed to fetch token requests:', err);
-  }
-}
-
+// ------------------------------------------
+// Actions: Token Requests
+// ------------------------------------------
 async function approveToken(req) {
   if (!confirm(`อนุมัติ ${req.amount.toLocaleString()} Token ให้ ${req.user?.username}?`)) return;
-  
   const token = localStorage.getItem('admin_token');
+  const headers = { Authorization: `Bearer ${token}` };
+  
   try {
-    await axios.put(`${baseUrl}/api/admin/token-requests/${req.id}/approve`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await axios.put(`${baseUrl}/api/admin/token-requests/${req.id}/approve`, {}, { headers });
     alert(`✅ อนุมัติสำเร็จ!`);
-    fetchTokenRequests();
+    fetchTokenRequests(headers);
   } catch (err) {
     alert(err.response?.data?.msg || 'อนุมัติไม่สำเร็จ');
   }
@@ -455,20 +571,74 @@ async function approveToken(req) {
 
 async function rejectToken(req) {
   const reason = prompt('ระบุเหตุผลในการปฏิเสธ (ถ้ามี):', '');
-  if (reason === null) return; // Cancelled
+  if (reason === null) return;
   
   const token = localStorage.getItem('admin_token');
+  const headers = { Authorization: `Bearer ${token}` };
+  
   try {
-    await axios.put(`${baseUrl}/api/admin/token-requests/${req.id}/reject`, {
-      admin_note: reason || 'ไม่ผ่านการตรวจสอบ'
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await axios.put(`${baseUrl}/api/admin/token-requests/${req.id}/reject`, { admin_note: reason || 'ไม่ผ่านการตรวจสอบ' }, { headers });
     alert(`❌ ปฏิเสธคำขอเรียบร้อยแล้ว`);
-    fetchTokenRequests();
+    fetchTokenRequests(headers);
   } catch (err) {
     alert(err.response?.data?.msg || 'ปฏิเสธไม่สำเร็จ');
   }
+}
+
+// ------------------------------------------
+// ✅ NEW Actions: Seller Verification
+// ------------------------------------------
+async function handleApproveSeller(id) {
+  if (!confirm('ยืนยันที่จะอนุมัติร้านค้านี้?')) return;
+  
+  const token = localStorage.getItem('admin_token');
+  const headers = { Authorization: `Bearer ${token}` };
+
+  try {
+    await axios.post(`${baseUrl}/api/admin/verify/${id}/approve`, {}, { headers });
+    
+    // UI Update: Remove from list
+    verifications.value = verifications.value.filter(req => req.id !== id);
+    // Update stats immediately if possible
+    stats.value.total_sellers = (stats.value.total_sellers || 0) + 1;
+    
+    alert('อนุมัติเรียบร้อย! ร้านค้าเปิดใช้งานได้แล้ว');
+  } catch (error) {
+    console.error(error);
+    alert('เกิดข้อผิดพลาดในการอนุมัติ');
+  }
+}
+
+async function handleRejectSeller(id) {
+  const reason = prompt('กรุณาระบุเหตุผลที่ไม่อนุมัติ:');
+  if (reason === null) return;
+
+  const token = localStorage.getItem('admin_token');
+  const headers = { Authorization: `Bearer ${token}` };
+
+  try {
+    await axios.post(`${baseUrl}/api/admin/verify/${id}/reject`, { reason }, { headers });
+    
+    verifications.value = verifications.value.filter(req => req.id !== id);
+    alert('ปฏิเสธคำขอเรียบร้อย');
+  } catch (error) {
+    console.error(error);
+    alert('เกิดข้อผิดพลาดในการปฏิเสธ');
+  }
+}
+
+const openImageModal = (url) => {
+  currentZoomImage.value = url;
+  showImageModal.value = true;
+};
+
+// ------------------------------------------
+// Lifecycle
+// ------------------------------------------
+function handleLogout() {
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_user');
+  router.push('/admin-login');
 }
 
 onMounted(() => {
@@ -505,6 +675,16 @@ onMounted(() => {
 }
 .animate-pulse-slow {
   animation: pulse-slow 8s infinite ease-in-out;
+}
+
+/* Modal Fade */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 /* Custom Scrollbar for tables */

@@ -35,13 +35,15 @@
             <div class="flex flex-col items-center text-center">
               <div class="relative w-32 h-32 mb-6 group-hover:scale-105 transition-transform duration-500">
                 <div class="absolute inset-0 bg-gradient-to-tr from-pink-500 to-purple-600 rounded-full blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                <img :src="getFullImageUrl(user.profile_image_url) || defaultProfile" alt="Profile"
-                  class="relative w-full h-full rounded-full border-4 border-[#121212] object-cover shadow-lg" />
+                
+                <img :src="userProfileImage" alt="Profile"
+                  class="relative w-full h-full rounded-full border-4 border-[#121212] object-cover shadow-lg bg-[#121212]" />
                 
                 <button @click="triggerFileInput"
-                  class="absolute bottom-1 right-1 bg-white text-pink-600 p-2 rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10">
+                  class="absolute bottom-1 right-1 bg-white text-pink-600 p-2 rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10 transform hover:scale-110 active:scale-95">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h6m2 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h10zM16 3l-1-1m0 0L9 8m7-6v6H9" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </button>
                 <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
@@ -165,15 +167,15 @@
                   <div class="bg-black/20 rounded-xl p-3 flex items-center justify-between">
                     <div class="flex -space-x-3 overflow-hidden pl-1">
                       <div v-for="(item, idx) in order.items.slice(0, 4)" :key="idx" class="relative hover:z-10 transition-all hover:scale-110">
-                         <img :src="getFullImageUrl(item.product?.image_url)" class="w-10 h-10 rounded-full object-cover border-2 border-[#1a1a1e]" @error="(e) => e.target.src = defaultImage" />
+                          <img :src="getFullImageUrl(item.product?.image_url)" class="w-10 h-10 rounded-full object-cover border-2 border-[#1a1a1e]" @error="(e) => e.target.src = defaultImage" />
                       </div>
                       <div v-if="order.items.length > 4" class="w-10 h-10 rounded-full bg-gray-800 border-2 border-[#1a1a1e] flex items-center justify-center text-[10px] text-gray-400 font-bold z-10">
                         +{{ order.items.length - 4 }}
                       </div>
                     </div>
                     <div class="text-right">
-                       <p class="text-[10px] text-gray-500">Total Amount</p>
-                       <p class="text-lg font-black text-pink-500">฿{{ order.total_price?.toLocaleString() }}</p>
+                        <p class="text-[10px] text-gray-500">Total Amount</p>
+                        <p class="text-lg font-black text-pink-500">฿{{ order.total_price?.toLocaleString() }}</p>
                     </div>
                   </div>
                 </div>
@@ -211,10 +213,10 @@
                 <div class="space-y-1">
                   <p class="font-medium text-gray-200 text-xs truncate">{{ item.name }}</p>
                   <div class="flex items-center justify-between">
-                     <p class="font-bold text-pink-400 text-sm">฿{{ item.price?.toLocaleString() }}</p>
-                     <button @click="addToCart(item)" class="text-[10px] bg-white/10 hover:bg-pink-600 hover:text-white px-2 py-1 rounded transition">
+                      <p class="font-bold text-pink-400 text-sm">฿{{ item.price?.toLocaleString() }}</p>
+                      <button @click="addToCart(item)" class="text-[10px] bg-white/10 hover:bg-pink-600 hover:text-white px-2 py-1 rounded transition">
                         🛒 Add
-                     </button>
+                      </button>
                   </div>
                 </div>
               </div>
@@ -234,15 +236,43 @@
         <p class="text-gray-500 text-xs">Loading Profile...</p>
       </div>
 
+      <div v-if="showCropper" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-[#18181b] rounded-2xl border border-white/10 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+          <div class="p-4 border-b border-white/10 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-white">Crop Profile Picture</h3>
+            <button @click="cancelCrop" class="text-gray-400 hover:text-white">✕</button>
+          </div>
+          
+          <div class="p-4 flex-1 bg-black flex items-center justify-center overflow-hidden">
+             <cropper
+              class="max-h-[50vh]"
+              :src="imageToCrop"
+              :stencil-props="{ aspectRatio: 1/1 }"
+              ref="cropperRef"
+            />
+          </div>
+
+          <div class="p-4 border-t border-white/10 bg-[#121212] flex justify-end gap-3">
+            <button @click="cancelCrop" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition">Cancel</button>
+            <button @click="saveCroppedImage" :disabled="isUploading" class="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white text-sm font-bold rounded-full hover:shadow-lg hover:shadow-pink-500/30 transition-all flex items-center gap-2">
+              <span v-if="isUploading" class="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></span>
+              {{ isUploading ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import sidebar from '~/components/sidebar.vue'
+import { Cropper } from 'vue-advanced-cropper'
+import 'vue-advanced-cropper/dist/style.css'
 
 const router = useRouter()
 const baseURL = 'http://localhost:5000'
@@ -253,16 +283,29 @@ const user = ref(null)
 const orders = ref([]) 
 const wishlistItems = ref([])
 const fileInput = ref(null)
-let selectedFile = null
+const imageTimestamp = ref(Date.now())
 
-// URL Formatter
+// Cropper State
+const showCropper = ref(false)
+const imageToCrop = ref(null)
+const cropperRef = ref(null)
+const isUploading = ref(false)
+
+// URL Formatter & Computed
 const getFullImageUrl = (path) => {
   if (!path) return null
   if (path.startsWith('http')) return path
   return `${baseURL}${path}`
 }
 
-// Logic: Wishlist (ดึงจาก API เหมือนหน้า Wishlist หลัก)
+const userProfileImage = computed(() => {
+  if (!user.value || !user.value.profile_image_url) return defaultProfile
+  // เพิ่ม timestamp เพื่อแก้ปัญหา Browser cache รูปเก่า
+  const url = getFullImageUrl(user.value.profile_image_url)
+  return `${url}${url.includes('?') ? '&' : '?'}t=${imageTimestamp.value}`
+})
+
+// Logic: Wishlist
 const fetchWishlist = async () => {
   const token = localStorage.getItem('token');
   if (!token) return;
@@ -276,7 +319,7 @@ const fetchWishlist = async () => {
       id: p.id || p._id,
       price: parseFloat(p.price) || 0,
       image_url: p.image_url
-    })).slice(0, 8); // แสดงแค่ 8 รายการในหน้า Profile
+    })).slice(0, 8);
   } catch (err) {
     console.error('Failed to fetch wishlist:', err);
   }
@@ -329,7 +372,6 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-// แก้ไขฟังก์ชันนี้ให้กรองเฉพาะสินค้าที่กำลังส่ง
 const fetchMyOrders = async () => {
   try {
     const token = localStorage.getItem('token')
@@ -339,15 +381,12 @@ const fetchMyOrders = async () => {
     })
     
     const allOrders = Array.isArray(res.data) ? res.data : []
-    
-    // กำหนดสถานะที่ถือว่า "กำลังจัดส่ง" (ชำระแล้วเตรียมส่ง หรือ กำลังส่งอยู่บนรถ)
     const shippingStatuses = ['processing', 'paid']
     
-    // กรองและเรียงลำดับจากใหม่สุดไปเก่าสุด
     orders.value = allOrders
       .filter(order => shippingStatuses.includes(order.status))
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 5) // แสดงหน้าละ 5 รายการที่กำลังส่ง
+      .slice(0, 5)
       
   } catch (err) { 
     console.error("Fetch orders failed:", err) 
@@ -366,6 +405,10 @@ const addOrUpdateAddress = async () => {
     const method = isEditing.value ? 'put' : 'post'
     const res = await axios({ method, url: endpoint, data: newAddress.value, headers: { Authorization: `Bearer ${token}` } })
     user.value.addresses = res.data.addresses
+    
+    // อัปเดตข้อมูลใน LocalStorage ด้วย
+    updateLocalStorageUser(user.value);
+    
     resetForm()
   } catch (err) { console.error(err) }
 }
@@ -380,6 +423,10 @@ const deleteAddress = async (i) => {
       const token = localStorage.getItem('token')
       const res = await axios.delete(`${baseURL}/api/profile/address/${i}`, { headers: { Authorization: `Bearer ${token}` } })
       user.value.addresses = res.data.addresses
+      
+      // อัปเดตข้อมูลใน LocalStorage ด้วย
+      updateLocalStorageUser(user.value);
+      
     } catch (err) { console.error(err) }
   }
 }
@@ -390,28 +437,75 @@ const resetForm = () => {
 }
 const cancelEdit = () => resetForm()
 
-// Logic: Profile Image
+// ================= Logic: Image Crop & Upload =================
 const triggerFileInput = () => fileInput.value.click()
+
 const onFileChange = (e) => {
   const file = e.target.files[0]
   if (!file) return
-  selectedFile = file
-  uploadConfirmed() 
+
+  if (imageToCrop.value) {
+    URL.revokeObjectURL(imageToCrop.value)
+  }
+  imageToCrop.value = URL.createObjectURL(file)
+  showCropper.value = true
+  e.target.value = ''
 }
-const uploadConfirmed = async () => {
-  if (!selectedFile) return
-  const formData = new FormData()
-  formData.append('profile_image', selectedFile)
-  try {
-    const token = localStorage.getItem('token')
-    const res = await axios.put(baseURL + '/api/profile/image', formData, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } })
-    user.value.profile_image_url = res.data.profile_image_url
-    window.dispatchEvent(new Event('user-updated'))
-  } catch (err) { console.error(err); } finally { selectedFile = null }
+
+const cancelCrop = () => {
+  showCropper.value = false
+  imageToCrop.value = null
+}
+
+const saveCroppedImage = () => {
+  const { canvas } = cropperRef.value.getResult()
+  if (!canvas) return
+
+  isUploading.value = true
+  
+  canvas.toBlob(async (blob) => {
+    const formData = new FormData()
+    formData.append('profile_image', blob, 'profile-cropped.png')
+
+    try {
+      const token = localStorage.getItem('token')
+      const res = await axios.put(baseURL + '/api/profile/image', formData, { 
+        headers: { 
+          Authorization: `Bearer ${token}`, 
+          'Content-Type': 'multipart/form-data' 
+        } 
+      })
+      
+      // 1. อัปเดต state ปัจจุบัน
+      user.value.profile_image_url = res.data.profile_image_url
+      imageTimestamp.value = Date.now() // Force refresh รูปในหน้านี้
+
+      // 2. อัปเดต LocalStorage และ Navbar
+      // เราต้อง merge ข้อมูลเดิมกับ URL ใหม่
+      const updatedUser = { ...user.value, profile_image_url: res.data.profile_image_url };
+      updateLocalStorageUser(updatedUser);
+
+      showCropper.value = false
+    } catch (err) { 
+      console.error(err); 
+      alert('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ')
+    } finally { 
+      isUploading.value = false 
+    }
+  }, 'image/png')
+}
+
+// ฟังก์ชัน helper สำหรับอัปเดต LocalStorage และส่ง Event ไปยัง Navbar
+const updateLocalStorageUser = (updatedUser) => {
+  localStorage.setItem('user', JSON.stringify(updatedUser));
+  // ส่ง custom event พร้อม data ไปยัง Navbar
+  window.dispatchEvent(new CustomEvent('user-updated', { detail: updatedUser }));
 }
 
 const handleLogout = () => {
-  localStorage.clear(); router.push('/login'); window.dispatchEvent(new Event('user-updated'))
+  localStorage.clear(); 
+  router.push('/login'); 
+  window.dispatchEvent(new Event('user-updated'))
 }
 
 // Translations
@@ -430,6 +524,9 @@ onMounted(async () => {
     if (!token) { router.push('/login'); return }
     const res = await axios.get(baseURL + '/api/profile', { headers: { Authorization: `Bearer ${token}` } })
     user.value = res.data
+    // Update local storage to ensure fresh data
+    localStorage.setItem('user', JSON.stringify(user.value));
+    
     fetchMyOrders()
     fetchWishlist()
   } catch (e) { console.error(e); router.push('/login') }
