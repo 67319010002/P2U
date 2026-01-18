@@ -1,230 +1,190 @@
 <template>
-  <div class="min-h-screen p-6">
-    <div class="max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
+  <div class="min-h-screen bg-[#0b0b0f] text-white font-sans selection:bg-red-500/30 relative overflow-x-hidden">
+    
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+       <div class="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-red-600/10 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow"></div>
+       <div class="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-orange-600/10 rounded-full blur-[100px] mix-blend-screen animate-pulse-slow" style="animation-delay: 2s;"></div>
+    </div>
+
+    <div class="relative z-10 max-w-7xl mx-auto p-6 lg:p-10">
+      
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 animate-fade-in-down">
         <div>
-          <h1 class="text-3xl font-bold text-white">Admin Dashboard</h1>
-          <p class="text-dark-400 mt-1">ยินดีต้อนรับ, {{ adminUser?.username }}</p>
-        </div>
-        <button @click="handleLogout" class="btn-glass text-red-400 hover:bg-red-500/20">
-          🚪 ออกจากระบบ
-        </button>
-      </div>
-
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="card p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-dark-400 text-sm">ผู้ใช้ทั้งหมด</p>
-              <p class="text-3xl font-bold text-white mt-1">{{ stats.total_users }}</p>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-primary-500/20 flex items-center justify-center text-2xl">
-              👥
-            </div>
-          </div>
+          <h1 class="text-3xl font-bold flex items-center gap-3">
+            <span class="w-2 h-8 bg-gradient-to-b from-red-500 to-orange-500 rounded-full"></span>
+            Admin Command Center
+          </h1>
+          <p class="text-gray-400 mt-2 ml-5 text-sm">
+            ยินดีต้อนรับ, <span class="text-white font-semibold">{{ adminUser?.username || 'Admin' }}</span>
+          </p>
         </div>
 
-        <div class="card p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-dark-400 text-sm">ผู้ขาย</p>
-              <p class="text-3xl font-bold text-white mt-1">{{ stats.total_sellers }}</p>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-accent-500/20 flex items-center justify-center text-2xl">
-              🏪
-            </div>
-          </div>
-        </div>
-
-        <div class="card p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-dark-400 text-sm">สินค้า</p>
-              <p class="text-3xl font-bold text-white mt-1">{{ stats.total_products }}</p>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-2xl">
-              📦
-            </div>
-          </div>
-        </div>
-
-        <div class="card p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-dark-400 text-sm">รายได้รวม</p>
-              <p class="text-3xl font-bold text-green-400 mt-1">฿{{ stats.total_revenue?.toLocaleString() }}</p>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center text-2xl">
-              💰
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tabs -->
-      <div class="flex gap-2 mb-6">
         <button 
-          v-for="tab in tabs" 
-          :key="tab.id"
-          @click="activeTab = tab.id"
-          class="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-          :class="activeTab === tab.id ? 'bg-primary-500 text-white' : 'glass text-dark-300 hover:text-white'"
+          @click="handleLogout" 
+          class="group flex items-center gap-2 px-5 py-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all duration-300 hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]"
         >
-          {{ tab.icon }} {{ tab.name }}
+          <span>🚪</span>
+          <span class="font-medium">ออกจากระบบ</span>
         </button>
       </div>
 
-      <!-- Users Table -->
-      <div v-if="activeTab === 'users'" class="card overflow-hidden">
-        <div class="p-4 border-b border-white/10">
-          <h2 class="text-lg font-semibold text-white">จัดการผู้ใช้</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 animate-fade-in-up">
+        <div class="bg-black/40 backdrop-blur-md border border-white/10 p-6 rounded-2xl hover:border-blue-500/50 transition-colors group">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-400 text-xs uppercase tracking-wider mb-1">ผู้ใช้ทั้งหมด</p>
+              <h3 class="text-3xl font-bold text-white group-hover:text-blue-400 transition-colors">{{ stats.total_users || 0 }}</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">👥</div>
+          </div>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-dark-800/50">
-              <tr>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">ผู้ใช้</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">อีเมล</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">บทบาท</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">สถานะ</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">Coins</th>
-                <th class="text-right p-4 text-dark-400 text-sm font-medium">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="user in users" :key="user.id" class="border-b border-white/5 hover:bg-white/5">
-                <td class="p-4">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-bold">
-                      {{ user.username.charAt(0).toUpperCase() }}
-                    </div>
-                    <div>
-                      <p class="text-white font-medium">{{ user.username }}</p>
-                      <p class="text-dark-500 text-xs">{{ user.full_name }}</p>
-                    </div>
-                  </div>
-                </td>
-                <td class="p-4 text-dark-300">{{ user.email }}</td>
-                <td class="p-4">
-                  <span :class="user.is_seller ? 'badge-accent' : 'badge-primary'" class="badge">
-                    {{ user.is_seller ? '🏪 ผู้ขาย' : '👤 ผู้ใช้' }}
-                  </span>
-                </td>
-                <td class="p-4">
-                  <span :class="user.is_active ? 'badge-success' : 'badge-error'" class="badge">
-                    {{ user.is_active ? '✓ ใช้งาน' : '✕ ระงับ' }}
-                  </span>
-                </td>
-                <td class="p-4 text-primary-400 font-medium">{{ user.coin_balance?.toLocaleString() }}</td>
-                <td class="p-4 text-right">
-                  <button 
-                    @click="toggleBanUser(user)" 
-                    :class="user.is_active ? 'text-yellow-400 hover:bg-yellow-500/20' : 'text-green-400 hover:bg-green-500/20'"
-                    class="px-3 py-1.5 rounded-lg text-sm transition-colors"
-                  >
-                    {{ user.is_active ? '⛔ ระงับ' : '✅ ปลดระงับ' }}
-                  </button>
-                  <button 
-                    @click="deleteUser(user)" 
-                    class="px-3 py-1.5 rounded-lg text-sm text-red-400 hover:bg-red-500/20 transition-colors ml-2"
-                  >
-                    🗑️ ลบ
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+
+        <div class="bg-black/40 backdrop-blur-md border border-white/10 p-6 rounded-2xl hover:border-purple-500/50 transition-colors group">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-400 text-xs uppercase tracking-wider mb-1">ผู้ขาย</p>
+              <h3 class="text-3xl font-bold text-white group-hover:text-purple-400 transition-colors">{{ stats.total_sellers || 0 }}</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🏪</div>
+          </div>
+        </div>
+
+        <div class="bg-black/40 backdrop-blur-md border border-white/10 p-6 rounded-2xl hover:border-pink-500/50 transition-colors group">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-400 text-xs uppercase tracking-wider mb-1">สินค้าทั้งหมด</p>
+              <h3 class="text-3xl font-bold text-white group-hover:text-pink-400 transition-colors">{{ stats.total_products || 0 }}</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📦</div>
+          </div>
+        </div>
+
+        <div class="bg-black/40 backdrop-blur-md border border-white/10 p-6 rounded-2xl hover:border-green-500/50 transition-colors group">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-400 text-xs uppercase tracking-wider mb-1">รายได้รวม</p>
+              <h3 class="text-3xl font-bold text-green-400 group-hover:text-green-300 transition-colors">฿{{ stats.total_revenue?.toLocaleString() || 0 }}</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">💰</div>
+          </div>
         </div>
       </div>
 
-      <!-- Products Table -->
-      <div v-if="activeTab === 'products'" class="card overflow-hidden">
-        <div class="p-4 border-b border-white/10">
-          <h2 class="text-lg font-semibold text-white">จัดการสินค้า</h2>
+      <div class="animate-fade-in-up" style="animation-delay: 0.1s;">
+        
+        <div class="flex flex-wrap gap-2 mb-6 p-1 bg-white/5 rounded-2xl w-fit backdrop-blur-sm border border-white/5">
+          <button 
+            v-for="tab in tabs" 
+            :key="tab.id"
+            @click="activeTab = tab.id"
+            class="px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2"
+            :class="activeTab === tab.id 
+              ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg shadow-red-500/20' 
+              : 'text-gray-400 hover:text-white hover:bg-white/5'"
+          >
+            <span>{{ tab.icon }}</span>
+            {{ tab.name }}
+            <span v-if="tab.id === 'tokens' && tokenStats.pending > 0" class="ml-1 w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+          </button>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-dark-800/50">
-              <tr>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">สินค้า</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">ราคา</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">ผู้ขาย</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">วันที่เพิ่ม</th>
-                <th class="text-right p-4 text-dark-400 text-sm font-medium">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="product in products" :key="product.id" class="border-b border-white/5 hover:bg-white/5">
-                <td class="p-4">
-                  <div class="flex items-center gap-3">
-                    <img :src="product.image_url || '/placeholder.png'" class="w-12 h-12 rounded-lg object-cover" />
-                    <p class="text-white font-medium">{{ product.name }}</p>
-                  </div>
-                </td>
-                <td class="p-4 text-green-400 font-medium">฿{{ product.price.toLocaleString() }}</td>
-                <td class="p-4 text-dark-300">{{ product.seller?.username }}</td>
-                <td class="p-4 text-dark-400 text-sm">{{ product.created_at }}</td>
-                <td class="p-4 text-right">
-                  <button 
-                    @click="deleteProduct(product)" 
-                    class="px-3 py-1.5 rounded-lg text-sm text-red-400 hover:bg-red-500/20 transition-colors"
-                  >
-                    🗑️ ลบ
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
 
-      <!-- Orders Table -->
-      <div v-if="activeTab === 'orders'" class="card overflow-hidden">
-        <div class="p-4 border-b border-white/10">
-          <h2 class="text-lg font-semibold text-white">คำสั่งซื้อทั้งหมด</h2>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-dark-800/50">
-              <tr>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">Order ID</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">ผู้สั่ง</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">ยอดรวม</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">สถานะ</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">วันที่</th>
-                <th class="text-right p-4 text-dark-400 text-sm font-medium">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="order in orders" :key="order.id" class="border-b border-white/5 hover:bg-white/5">
-                <td class="p-4 text-dark-300 font-mono text-sm">{{ order.id.slice(-8) }}</td>
-                <td class="p-4 text-white">{{ order.user?.username }}</td>
-                <td class="p-4 text-green-400 font-medium">฿{{ order.total_price.toLocaleString() }}</td>
-                <td class="p-4">
-                  <select 
-                    v-model="order.status" 
-                    @change="updateOrderStatus(order)"
-                    class="input-glass text-sm py-1 px-2"
-                  >
-                    <option value="pending">รอดำเนินการ</option>
-                    <option value="processing">กำลังดำเนินการ</option>
-                    <option value="completed">สำเร็จ</option>
-                    <option value="cancelled">ยกเลิก</option>
-                  </select>
-                </td>
-                <td class="p-4 text-dark-400 text-sm">{{ order.created_at }}</td>
-                <td class="p-4 text-right">
-                  <button class="px-3 py-1.5 rounded-lg text-sm text-primary-400 hover:bg-primary-500/20 transition-colors">
-                    👁️ ดูรายละเอียด
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+        <div class="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl min-h-[500px]">
+          
+          <div v-if="activeTab === 'users'">
+             <div class="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                   👥 รายชื่อผู้ใช้ในระบบ
+                   <span class="text-xs font-normal text-gray-400 bg-white/10 px-2 py-1 rounded-full">{{ users.length }} users</span>
+                </h2>
+             </div>
+             <div class="overflow-x-auto">
+                <table class="w-full">
+                   <thead class="bg-black/20 text-gray-400 text-xs uppercase tracking-wider font-semibold">
+                      <tr>
+                         <th class="text-left p-5">User Info</th>
+                         <th class="text-left p-5">Role</th>
+                         <th class="text-left p-5">Status</th>
+                         <th class="text-left p-5">Balance</th>
+                         <th class="text-right p-5">Actions</th>
+                      </tr>
+                   </thead>
+                   <tbody class="divide-y divide-white/5">
+                      <tr v-for="user in users" :key="user.id" class="hover:bg-white/5 transition-colors">
+                         <td class="p-5">
+                            <div class="flex items-center gap-4">
+                               <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center font-bold text-white shadow-inner border border-white/10">
+                                  {{ user.username.charAt(0).toUpperCase() }}
+                               </div>
+                               <div>
+                                  <div class="font-medium text-white">{{ user.username }}</div>
+                                  <div class="text-xs text-gray-500">{{ user.email }}</div>
+                               </div>
+                            </div>
+                         </td>
+                         <td class="p-5">
+                            <span :class="user.is_seller ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/30'" class="px-3 py-1 rounded-full text-xs border font-medium">
+                               {{ user.is_seller ? 'Seller' : 'Member' }}
+                            </span>
+                         </td>
+                         <td class="p-5">
+                            <span :class="user.is_active ? 'text-green-400' : 'text-red-400'" class="flex items-center gap-1.5 text-sm">
+                               <span class="w-1.5 h-1.5 rounded-full" :class="user.is_active ? 'bg-green-400' : 'bg-red-400'"></span>
+                               {{ user.is_active ? 'Active' : 'Banned' }}
+                            </span>
+                         </td>
+                         <td class="p-5 font-mono text-yellow-500">
+                            🪙 {{ user.coin_balance?.toLocaleString() }}
+                         </td>
+                         <td class="p-5 text-right space-x-2">
+                            <button @click="toggleBanUser(user)" :class="user.is_active ? 'text-yellow-500 hover:bg-yellow-500/10' : 'text-green-500 hover:bg-green-500/10'" class="p-2 rounded-lg transition-colors" :title="user.is_active ? 'Ban User' : 'Unban User'">
+                               {{ user.is_active ? '🚫' : '✅' }}
+                            </button>
+                            <button @click="deleteUser(user)" class="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors" title="Delete User">
+                               🗑️
+                            </button>
+                         </td>
+                      </tr>
+                   </tbody>
+                </table>
+             </div>
+          </div>
+
+          <div v-if="activeTab === 'products'">
+            <div class="p-6 border-b border-white/10 bg-white/5">
+                <h2 class="text-lg font-bold text-white">📦 คลังสินค้า</h2>
+             </div>
+             <div class="overflow-x-auto">
+                <table class="w-full">
+                   <thead class="bg-black/20 text-gray-400 text-xs uppercase tracking-wider font-semibold">
+                      <tr>
+                         <th class="text-left p-5">Product</th>
+                         <th class="text-left p-5">Price</th>
+                         <th class="text-left p-5">Seller</th>
+                         <th class="text-left p-5">Added Date</th>
+                         <th class="text-right p-5">Actions</th>
+                      </tr>
+                   </thead>
+                   <tbody class="divide-y divide-white/5">
+                      <tr v-for="product in products" :key="product.id" class="hover:bg-white/5 transition-colors">
+                         <td class="p-5">
+                            <div class="flex items-center gap-4">
+                               <img :src="product.image_url || '/placeholder.png'" class="w-10 h-10 rounded-lg object-cover bg-gray-800" />
+                               <span class="font-medium text-white">{{ product.name }}</span>
+                            </div>
+                         </td>
+                         <td class="p-5 font-mono text-green-400">฿{{ product.price.toLocaleString() }}</td>
+                         <td class="p-5 text-gray-400">{{ product.seller?.username }}</td>
+                         <td class="p-5 text-gray-500 text-sm">{{ new Date(product.created_at).toLocaleDateString() }}</td>
+                         <td class="p-5 text-right">
+                            <button @click="deleteProduct(product)" class="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-colors text-sm">
+                               ลบสินค้า
+                            </button>
+                         </td>
+                      </tr>
+                   </tbody>
+                </table>
+             </div>
+          </div>
 
       <!-- Token Requests Table -->
       <div v-if="activeTab === 'tokens'" class="card overflow-hidden">
@@ -370,6 +330,7 @@
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </template>
@@ -378,6 +339,14 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+
+// ------------------------------------------
+// 🔑 บรรทัดนี้สำคัญมาก! สั่งใช้ Layout "admin" 
+// เพื่อไม่ให้ Navbar ของหน้าปกติโผล่มา
+// ------------------------------------------
+definePageMeta({
+  layout: 'admin'
+});
 
 const router = useRouter();
 const adminUser = ref(null);
@@ -391,10 +360,10 @@ const activeTab = ref('users');
 const selectedSlip = ref(null);
 
 const tabs = [
-  { id: 'users', name: 'ผู้ใช้', icon: '👥' },
-  { id: 'products', name: 'สินค้า', icon: '📦' },
-  { id: 'orders', name: 'คำสั่งซื้อ', icon: '🛒' },
-  { id: 'tokens', name: 'คำขอ Token', icon: '🪙' },
+  { id: 'users', name: 'Users', icon: '👥' },
+  { id: 'products', name: 'Products', icon: '📦' },
+  { id: 'orders', name: 'Orders', icon: '🛒' },
+  { id: 'tokens', name: 'Tokens', icon: '🪙' },
 ];
 
 const baseUrl = 'http://localhost:5000';
@@ -521,7 +490,7 @@ async function approveToken(req) {
     await axios.put(`${baseUrl}/api/admin/token-requests/${req.id}/approve`, {}, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    alert(`✅ อนุมัติ ${req.amount.toLocaleString()} Token ให้ ${req.user?.username} สำเร็จ!`);
+    alert(`✅ อนุมัติสำเร็จ!`);
     fetchTokenRequests();
   } catch (err) {
     alert(err.response?.data?.msg || 'อนุมัติไม่สำเร็จ');
@@ -539,7 +508,7 @@ async function rejectToken(req) {
     }, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    alert(`❌ ปฏิเสธคำขอของ ${req.user?.username} แล้ว`);
+    alert(`❌ ปฏิเสธคำขอเรียบร้อยแล้ว`);
     fetchTokenRequests();
   } catch (err) {
     alert(err.response?.data?.msg || 'ปฏิเสธไม่สำเร็จ');
@@ -556,11 +525,45 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.badge-warning {
-  background-color: rgba(234, 179, 8, 0.2);
-  color: #facc15;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
+/* Animations */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-down {
+  animation: fadeInDown 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.1; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(1.1); }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 8s infinite ease-in-out;
+}
+
+/* Custom Scrollbar for tables */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 </style>

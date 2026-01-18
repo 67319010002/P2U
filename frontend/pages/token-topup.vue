@@ -1,7 +1,6 @@
 <template>
-  <div class="min-h-screen ml-20 p-6">
-    <Navbar />
-    <sidebar />
+  <div class="min-h-screen bg-[#0b0b0f] text-gray-100 font-sans selection:bg-amber-500/30 relative overflow-hidden">
+    <sidebar class="fixed left-0 top-0 h-full z-40" />
 
     <div class="max-w-5xl mx-auto">
       <!-- Header -->
@@ -14,18 +13,24 @@
         </div>
       </div>
 
-      <!-- Token Balance Card -->
-      <div class="card p-6 mb-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-dark-400 text-sm">Token คงเหลือ</p>
-            <p class="text-4xl font-bold text-primary-400 mt-1">{{ tokenBalance.toLocaleString() }}</p>
+    <div class="fixed top-20 right-0 w-[500px] h-[500px] bg-amber-600/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
+    <div class="fixed bottom-0 left-0 w-[600px] h-[600px] bg-yellow-900/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
+
+    <main class="ml-20 relative z-10 p-6 md:p-10 min-h-screen flex justify-center">
+      <div class="w-full max-w-6xl animate-in-fade">
+        
+        <header class="mb-10">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 mb-3">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <span class="text-[10px] font-bold text-amber-300 uppercase tracking-widest">Auction Currency</span>
           </div>
-          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-3xl">
-            🪙
-          </div>
-        </div>
-      </div>
+          <h1 class="text-4xl font-extrabold text-white flex items-center gap-3">
+            🪙 Token Management
+          </h1>
+          <p class="text-gray-400 mt-2 max-w-xl">
+            เติม Token เพื่อใช้ในการประมูลสินค้าที่คุณต้องการ ยิ่งมีมาก ยิ่งมีโอกาสชนะการประมูลสูง
+          </p>
+        </header>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- QR Code & Upload Section -->
@@ -120,8 +125,8 @@
                 </div>
               </div>
             </div>
+
           </div>
-        </div>
 
         <!-- Right Column: History -->
         <div class="card p-6">
@@ -142,9 +147,35 @@
                     'badge-success': req.status === 'approved',
                     'badge-error': req.status === 'rejected'
                   }"
+
                 >
-                  {{ statusLabels[req.status] }}
-                </span>
+                  <div class="flex justify-between items-start mb-2 relative z-10">
+                    <div>
+                      <span class="block text-lg font-bold text-white tracking-wide">
+                        {{ req.amount.toLocaleString() }} <span class="text-xs font-normal text-gray-500">Token</span>
+                      </span>
+                      <span class="text-[10px] text-gray-500 font-mono">{{ formatDate(req.created_at) }}</span>
+                    </div>
+                    <span 
+                      class="px-3 py-1 rounded-full text-xs font-bold border backdrop-blur-md"
+                      :class="getStatusBadgeClass(req.status)"
+                    >
+                      {{ statusLabels[req.status] }}
+                    </span>
+                  </div>
+
+                  <div v-if="req.admin_note" class="mt-3 pt-3 border-t border-white/5 flex gap-2 items-start">
+                    <span class="text-xs">💬</span>
+                    <p class="text-xs text-gray-400 italic leading-relaxed">"{{ req.admin_note }}"</p>
+                  </div>
+
+                  <div class="absolute -right-4 -top-4 w-20 h-20 blur-[40px] rounded-full opacity-20 pointer-events-none" :class="getStatusGlowColor(req.status)"></div>
+                </div>
+
+                <div v-if="!requests.length" class="h-64 flex flex-col items-center justify-center text-center opacity-50">
+                  <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-2xl mb-3 grayscale">📋</div>
+                  <p class="text-gray-400 text-sm">ยังไม่มีประวัติการทำรายการ</p>
+                </div>
               </div>
               <p class="text-dark-500 text-xs">{{ req.created_at }}</p>
               
@@ -183,6 +214,7 @@
         <img :src="`http://localhost:5000${slipModalUrl}`" alt="Slip" class="max-h-full rounded-xl" />
       </div>
     </div>
+
   </div>
 </template>
 
@@ -203,9 +235,9 @@ const slipModalUrl = ref(null);
 const baseUrl = 'http://localhost:5000';
 
 const statusLabels = {
-  pending: '⏳ รอตรวจสอบ',
-  approved: '✅ อนุมัติแล้ว',
-  rejected: '❌ ปฏิเสธ'
+  pending: 'รอตรวจสอบ',
+  approved: 'สำเร็จ',
+  rejected: 'ปฏิเสธ'
 };
 
 function handleQrError(e) {
@@ -293,6 +325,7 @@ async function verifySlip() {
 
 function showSlipModal(url) {
   slipModalUrl.value = url;
+
 }
 
 async function fetchTokenBalance() {
@@ -323,6 +356,40 @@ async function fetchRequests() {
   }
 }
 
+
+async function submitRequest() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('กรุณาเข้าสู่ระบบก่อน');
+    return;
+  }
+  
+  if (!requestAmount.value || requestAmount.value < 1) {
+    alert('กรุณาระบุจำนวน Token');
+    return;
+  }
+  
+  isLoading.value = true;
+  try {
+    await axios.post(`${baseUrl}/api/token/request`, {
+      amount: requestAmount.value
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    // Reset form & Refresh data
+    requestAmount.value = 100;
+    await fetchRequests();
+    
+    // Optional: Alert or Toast
+    alert('🎉 ส่งคำขอเรียบร้อยแล้ว');
+  } catch (err) {
+    alert(err.response?.data?.msg || 'ส่งคำขอไม่สำเร็จ');
+  } finally {
+    isLoading.value = false;
+  }
+}
+
 onMounted(() => {
   fetchTokenBalance();
   fetchRequests();
@@ -330,16 +397,27 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.badge-warning {
-  background-color: rgba(234, 179, 8, 0.2);
-  color: #facc15;
+/* Animations */
+.animate-in-fade {
+  animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.badge-success {
-  background-color: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
-.badge-error {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #f87171;
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 </style>

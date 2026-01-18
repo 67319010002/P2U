@@ -1,181 +1,240 @@
 <template>
-  <div class="p-6 md:pl-32 max-w-8xl mx-auto bg-black text-white mt-1 mb-1 mr-1 transition-all duration-300 min-h-screen">
+  <div class="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-pink-500/30 relative overflow-hidden">
     
-    <div class="md:w-full space-y-5"> 
-      <div class="flex items-center mb-6 relative">
-        <h1 class="text-3xl font-extrabold text-center">
-          My <span class="text-pink-600">Profile</span>
-        </h1>
-      </div>
-    </div>
+    <div class="fixed top-0 left-0 w-[500px] h-[500px] bg-pink-600/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
+    <div class="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-900/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
 
-    <div>
-      <sidebar />
-    </div>
+    <sidebar class="fixed left-0 top-0 h-full z-50" />
 
-    <div v-if="user" class="flex flex-col md:flex-row md:space-x-8 space-y-8 md:space-y-0">
-      <div class="md:w-1/3 space-y-5"> 
-        <div class="flex items-center space-x-6">
-          <div class="relative w-28 h-28 shrink-0">
-            <img :src="getFullImageUrl(user.profile_image_url) || defaultProfile" alt="Profile"
-              class="w-full h-full rounded-full border-4 border-pink-500 object-cover shadow-md" />
-            <button @click="triggerFileInput"
-              class="absolute bottom-0 right-0 bg-pink-600 hover:bg-pink-700 p-1.5 rounded-full shadow-md transition">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h6m2 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h10zM16 3l-1-1m0 0L9 8m7-6v6H9" />
-              </svg>
-            </button>
-            <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
-          </div>
-          <div class="space-y-2 text-sm">
-            <p><span class="font-semibold text-pink-400">{{ t('username') }}:</span> {{ user.username }}</p>
-            <p><span class="font-semibold text-pink-400">{{ t('fullName') }}:</span> {{ user.full_name }}</p>
-            <p><span class="font-semibold text-pink-400">{{ t('email') }}:</span> {{ user.email }}</p>
-            <p><span class="font-semibold text-pink-400">{{ t('phone') }}:</span> {{ user.phone_number }}</p>
-          </div>
+    <main class="ml-20 relative z-10 p-6 md:p-10 min-h-screen">
+      
+      <header class="mb-10 flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
+        <div>
+          <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight mb-2">
+            My <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">Profile</span>
+          </h1>
+          <p class="text-gray-400 text-sm">จัดการข้อมูลส่วนตัว สถานะคำสั่งซื้อ และรายการโปรดของคุณ</p>
         </div>
         
-        <div class="flex items-center space-x-2 mt-4 text-sm">
-          <span class="font-semibold text-pink-400">{{ t('seller') }}:</span>
-          <span>{{ user.is_seller ? t('registered') : t('notRegistered') }}</span>
-          <button v-if="user.is_seller" @click="router.push('/seller')"
-            class="px-2 py-1 bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold rounded-lg transition">
-            Go to Seller Page
-          </button>
-          <button v-else @click="router.push('/Registerseller')"
-            class="px-2 py-1 bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold rounded-lg transition">
-            Register as Seller
-          </button>
-        </div>
+        <button @click="handleLogout"
+          class="group flex items-center gap-2 px-5 py-2.5 bg-[#1a1a1a] hover:bg-red-500/10 border border-white/5 hover:border-red-500/50 rounded-full transition-all duration-300">
+          <span class="text-sm font-semibold text-gray-300 group-hover:text-red-400">Logout</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 group-hover:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
+      </header>
 
-        <div class="mt-6">
-          <button @click="router.push('/ai')"
-            class="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 rounded-lg transition">
-            ไปยังหน้า AI
-          </button>
-        </div>
-
-        <div class="w-full mt-8">
-          <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">{{ t('addresses') }}</h2>
-          <div v-if="user.addresses && user.addresses.length" class="space-y-4">
-            <div v-for="(addr, index) in user.addresses" :key="index"
-              class="bg-gray-800 rounded-lg p-4 shadow-inner relative border border-white/5">
-              <div class="flex items-center justify-between">
-                <h3 class="text-sm font-semibold mb-3 border-b border-gray-700 pb-2 text-pink-300">
-                  {{ addr.is_default ? 'Default Address' : 'Address ' + (index + 1) }}
-                </h3>
-                <span v-if="addr.is_default"
-                  class="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">Default</span>
-              </div>
-              <div class="text-xs space-y-1">
-                <p><span class="font-semibold text-pink-400">Name:</span> {{ addr.name }}</p>
-                <p><span class="font-semibold text-pink-400">Phone:</span> {{ addr.phone }}</p>
-                <p><span class="font-semibold text-pink-400">Address:</span> {{ addr.address_line }}, {{ addr.district }}, {{ addr.province }}, {{ addr.postal_code }}</p>
-              </div>
-              <div class="mt-2 flex gap-2">
-                <button @click="editAddress(index)" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[10px] rounded transition">{{ t('editAddress') }}</button>
-                <button @click="deleteAddress(index)" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-[10px] rounded transition">Delete</button>
-              </div>
-            </div>
-          </div>
-          <div class="mt-6 bg-gray-800 rounded-lg p-5 shadow-inner border border-white/5">
-            <h3 class="text-sm font-semibold mb-3 border-b border-gray-700 pb-2">{{ isEditing ? t('editAddress') : t('addNewAddress') }}</h3>
-            <form @submit.prevent="addOrUpdateAddress">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input v-model="newAddress.name" :placeholder="t('fullName')" type="text" class="bg-gray-700 text-white p-2 rounded w-full text-xs outline-none focus:ring-1 focus:ring-pink-500" required />
-                <input v-model="newAddress.phone" :placeholder="t('phone')" type="text" class="bg-gray-700 text-white p-2 rounded w-full text-xs outline-none focus:ring-1 focus:ring-pink-500" required />
-                <input v-model="newAddress.address_line" placeholder="Address Line" type="text" class="bg-gray-700 text-white p-2 rounded w-full text-xs outline-none focus:ring-1 focus:ring-pink-500 col-span-2" required />
-                <input v-model="newAddress.district" placeholder="District" type="text" class="bg-gray-700 text-white p-2 rounded w-full text-xs outline-none focus:ring-1 focus:ring-pink-500" required />
-                <input v-model="newAddress.province" placeholder="Province" type="text" class="bg-gray-700 text-white p-2 rounded w-full text-xs outline-none focus:ring-1 focus:ring-pink-500" required />
-                <input v-model="newAddress.postal_code" placeholder="Postal Code" type="text" class="bg-gray-700 text-white p-2 rounded w-full text-xs outline-none focus:ring-1 focus:ring-pink-500" required />
-              </div>
-              <div class="flex items-center mt-4">
-                <input v-model="newAddress.is_default" type="checkbox" id="is_default" class="mr-2 accent-pink-500" />
-                <label for="is_default" class="text-[10px]">Set as default address</label>
-              </div>
-              <button type="submit" class="mt-4 w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 rounded-lg text-xs transition shadow-md shadow-pink-600/20">{{ isEditing ? t('updateAddress') : t('addAddress') }}</button>
-              <button v-if="isEditing" @click="cancelEdit" type="button" class="mt-2 w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-lg text-xs transition">{{ t('cancel') }}</button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div class="md:w-2/3 space-y-6">
-        <div class="flex items-center justify-between border-b border-gray-700 pb-2">
-          <h2 class="text-xl font-semibold">🚚 รายการที่กำลังจัดส่ง ✨</h2>
-          <button @click="router.push('/orders')" class="text-pink-400 text-xs hover:underline">ดูประวัติทั้งหมด</button>
-        </div>
+      <div v-if="user" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        <div v-if="orders && orders.length > 0" class="grid grid-cols-1 gap-4">
-          <div v-for="order in orders" :key="order._id" @click="router.push('/orders')"
-            class="bg-gray-800/40 backdrop-blur-md rounded-2xl p-5 border border-white/5 hover:border-pink-500/30 transition-all cursor-pointer group shadow-lg">
-            <div class="flex justify-between items-start mb-4">
-              <div class="space-y-1">
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Order ID</p>
-                <p class="text-white font-mono text-xs group-hover:text-pink-300 transition-colors">#{{ order._id.slice(-8) }}</p>
+        <div class="lg:col-span-4 space-y-6">
+          
+          <div class="relative bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl overflow-hidden group">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500"></div>
+            
+            <div class="flex flex-col items-center text-center">
+              <div class="relative w-32 h-32 mb-6 group-hover:scale-105 transition-transform duration-500">
+                <div class="absolute inset-0 bg-gradient-to-tr from-pink-500 to-purple-600 rounded-full blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <img :src="getFullImageUrl(user.profile_image_url) || defaultProfile" alt="Profile"
+                  class="relative w-full h-full rounded-full border-4 border-[#121212] object-cover shadow-lg" />
+                
+                <button @click="triggerFileInput"
+                  class="absolute bottom-1 right-1 bg-white text-pink-600 p-2 rounded-full shadow-lg hover:bg-gray-100 transition-colors z-10">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h6m2 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h10zM16 3l-1-1m0 0L9 8m7-6v6H9" />
+                  </svg>
+                </button>
+                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
               </div>
-              <span :class="getStatusClass(order.status)" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight shadow-sm border">
-                 {{ getStatusLabel(order.status) }}
-              </span>
-            </div>
-            <div class="flex items-center gap-3 mb-4 overflow-x-auto no-scrollbar py-1">
-              <div v-for="(item, idx) in order.items" :key="idx" class="relative shrink-0">
-                <img :src="getFullImageUrl(item.product?.image_url)" class="w-14 h-14 rounded-xl object-cover border border-white/10 shadow-md" @error="(e) => e.target.src = 'https://via.placeholder.com/150?text=Product'" />
-                <span v-if="item.quantity > 1" class="absolute -top-2 -right-2 bg-pink-600 text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-gray-800">{{ item.quantity }}</span>
+
+              <h2 class="text-2xl font-bold text-white mb-1">{{ user.full_name }}</h2>
+              <p class="text-pink-500 font-medium mb-4">@{{ user.username }}</p>
+
+              <div class="w-full space-y-3 bg-white/5 rounded-xl p-4 text-sm border border-white/5 mb-6">
+                <div class="flex justify-between border-b border-white/5 pb-2">
+                  <span class="text-gray-500">{{ t('email') }}</span>
+                  <span class="text-gray-200 truncate max-w-[150px]">{{ user.email }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">{{ t('phone') }}</span>
+                  <span class="text-gray-200">{{ user.phone_number }}</span>
+                </div>
               </div>
-            </div>
-            <div class="flex items-center justify-between pt-4 border-t border-white/5">
-              <div class="text-gray-400 text-[10px] flex items-center gap-1"><span class="opacity-50">📅</span> {{ formatDate(order.created_at) }}</div>
-              <div class="text-right">
-                <p class="text-[9px] text-gray-500 uppercase mb-0.5">ยอดสุทธิ</p>
-                <p class="text-lg font-black text-pink-400">฿{{ order.total_price?.toLocaleString() }}</p>
+
+              <div class="w-full grid grid-cols-2 gap-3">
+                <button @click="user.is_seller ? router.push('/seller-dashboard') : router.push('/Registerseller')"
+                  class="py-2.5 rounded-xl text-xs font-bold transition-all border border-pink-500/30 hover:border-pink-500 bg-pink-500/10 text-pink-400 hover:bg-pink-500 hover:text-white">
+                  {{ user.is_seller ? 'จัดการร้านค้า' : 'สมัครเป็นผู้ขาย' }}
+                </button>
+                <button @click="router.push('/ai')"
+                  class="py-2.5 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-purple-600 to-pink-600 hover:to-pink-500 text-white shadow-lg shadow-purple-900/20">
+                  🤖 ระบบ AI
+                </button>
               </div>
             </div>
           </div>
-        </div>
-        <div v-else class="bg-gray-800/30 rounded-2xl p-12 text-center border border-dashed border-gray-700">
-          <p class="text-sm text-gray-400 italic">ไม่มีรายการที่กำลังจัดส่งในขณะนี้เพคะ</p>
-        </div>
 
-        <div class="flex items-center justify-between border-b border-gray-700 pb-2 mt-10">
-          <h2 class="text-xl font-semibold">❤️ รายการโปรด (Wishlist)</h2>
-          <button @click="router.push('/wishlist')" class="text-pink-400 text-xs hover:underline">จัดการทั้งหมด</button>
-        </div>
+          <div class="bg-[#121212]/80 backdrop-blur-md border border-white/5 rounded-[2rem] p-6 shadow-xl">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              📍 {{ t('addresses') }}
+            </h3>
 
-        <div v-if="wishlistItems.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div v-for="item in wishlistItems" :key="item.id"
-            class="bg-gray-800/50 p-3 rounded-xl border border-white/5 hover:border-pink-500/30 transition-all group relative">
-            
-            <button @click="removeFromWishlist(item)" class="absolute top-2 right-2 z-10 bg-black/50 p-1.5 rounded-full text-pink-500 hover:bg-pink-600 hover:text-white transition shadow-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.5 3c1.263 0 2.426.466 3.322 1.234a4.876 4.876 0 013.356-1.234c2.786 0 5.25 2.322 5.25 5.25 0 3.924-2.438 7.11-4.74 9.273a25.27 25.27 0 01-4.244 3.17 15.237 15.237 0 01-.383.219l-.022.012-.007.004-.003.001z" /></svg>
-            </button>
-
-            <div @click="router.push(`/wishlist`)" class="cursor-pointer">
-              <img :src="getFullImageUrl(item.image_url)" alt="product" class="w-full aspect-square object-cover rounded-lg shadow-md group-hover:scale-105 transition-transform duration-300" />
-              <div class="mt-2">
-                <p class="font-semibold text-white text-xs truncate">{{ item.name }}</p>
-                <p class="font-bold text-pink-400 text-sm">฿{{ item.price?.toLocaleString() }}</p>
+            <div v-if="user.addresses && user.addresses.length" class="space-y-3 max-h-60 overflow-y-auto custom-scrollbar mb-6 pr-1">
+              <div v-for="(addr, index) in user.addresses" :key="index"
+                class="bg-white/5 rounded-xl p-3 border border-white/5 hover:border-pink-500/30 transition-colors relative group">
+                <div class="flex justify-between items-start mb-1">
+                  <span class="text-xs font-bold text-gray-300">{{ addr.name }}</span>
+                  <span v-if="addr.is_default" class="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30">Default</span>
+                </div>
+                <p class="text-[11px] text-gray-500 leading-relaxed">
+                  {{ addr.address_line }} {{ addr.district }} {{ addr.province }} {{ addr.postal_code }}
+                </p>
+                <div class="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
+                   <button @click="editAddress(index)" class="text-[10px] text-blue-400 hover:underline">Edit</button>
+                   <button @click="deleteAddress(index)" class="text-[10px] text-red-400 hover:underline">Delete</button>
+                </div>
               </div>
             </div>
-            
-            <button @click="addToCart(item)" class="w-full mt-2 py-1.5 bg-pink-600 hover:bg-pink-700 text-[10px] font-bold rounded-lg transition-colors flex items-center justify-center gap-1">
-              <span>ใส่ตะกร้า</span> 🛒
-            </button>
+
+            <div class="pt-4 border-t border-white/10">
+              <p class="text-xs font-semibold text-gray-400 mb-3">{{ isEditing ? t('editAddress') : t('addNewAddress') }}</p>
+              <form @submit.prevent="addOrUpdateAddress" class="space-y-2">
+                <div class="grid grid-cols-2 gap-2">
+                  <input v-model="newAddress.name" :placeholder="t('fullName')" 
+                    class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
+                  <input v-model="newAddress.phone" :placeholder="t('phone')" 
+                    class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
+                </div>
+                <input v-model="newAddress.address_line" placeholder="Address / No. / Soi" 
+                  class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
+                <div class="grid grid-cols-3 gap-2">
+                   <input v-model="newAddress.district" placeholder="District" 
+                    class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
+                   <input v-model="newAddress.province" placeholder="Province" 
+                    class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
+                   <input v-model="newAddress.postal_code" placeholder="Zip" 
+                    class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
+                </div>
+                
+                <div class="flex items-center gap-2 mt-2">
+                  <input v-model="newAddress.is_default" type="checkbox" id="def" class="rounded border-gray-600 bg-gray-700 text-pink-500 focus:ring-pink-500/30" />
+                  <label for="def" class="text-xs text-gray-400">Set as Default</label>
+                </div>
+
+                <div class="flex gap-2 mt-3">
+                  <button type="submit" class="flex-1 py-2 bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-pink-900/20">
+                    {{ isEditing ? 'Update' : 'Add Address' }}
+                  </button>
+                  <button v-if="isEditing" @click="cancelEdit" type="button" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded-lg transition">Cancel</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
-        <div v-else class="text-gray-400 text-sm text-center py-12 bg-gray-800/30 rounded-2xl border border-dashed border-gray-700">
-            🥀 ยังไม่มีรายการที่ถูกใจเลยเพคะ
-        </div>
 
-        <div class="pt-10 border-t border-gray-800">
-           <button @click="handleLogout"
-            class="w-full md:w-48 bg-gray-800 hover:bg-red-600/80 text-white font-semibold py-2 rounded-lg transition-all mx-auto block text-sm border border-white/5">
-            Logout
-          </button>
+        <div class="lg:col-span-8 space-y-8">
+          
+          <div>
+             <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                🚚 <span class="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">สถานะการจัดส่ง</span>
+              </h2>
+              <button @click="router.push('/orders')" class="text-xs text-pink-400 hover:text-pink-300 transition-colors">ดูประวัติทั้งหมด →</button>
+            </div>
+
+            <div v-if="orders && orders.length > 0" class="grid grid-cols-1 gap-4">
+              <div v-for="order in orders" :key="order._id" @click="router.push('/orders')"
+                class="bg-[#1a1a1e] hover:bg-[#202025] rounded-2xl p-5 border border-white/5 hover:border-pink-500/50 transition-all cursor-pointer group shadow-lg relative overflow-hidden">
+                
+                <div class="absolute right-0 top-0 w-32 h-32 bg-pink-500/5 blur-[60px] rounded-full group-hover:bg-pink-500/10 transition-all"></div>
+
+                <div class="relative z-10">
+                  <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center text-lg">📦</div>
+                      <div>
+                        <p class="text-white font-bold text-sm">Order #{{ order._id.slice(-6) }}</p>
+                        <p class="text-xs text-gray-500">{{ formatDate(order.created_at) }}</p>
+                      </div>
+                    </div>
+                    <span :class="getStatusClass(order.status)" class="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border backdrop-blur-md shadow-sm">
+                      {{ getStatusLabel(order.status) }}
+                    </span>
+                  </div>
+
+                  <div class="bg-black/20 rounded-xl p-3 flex items-center justify-between">
+                    <div class="flex -space-x-3 overflow-hidden pl-1">
+                      <div v-for="(item, idx) in order.items.slice(0, 4)" :key="idx" class="relative hover:z-10 transition-all hover:scale-110">
+                         <img :src="getFullImageUrl(item.product?.image_url)" class="w-10 h-10 rounded-full object-cover border-2 border-[#1a1a1e]" @error="(e) => e.target.src = defaultImage" />
+                      </div>
+                      <div v-if="order.items.length > 4" class="w-10 h-10 rounded-full bg-gray-800 border-2 border-[#1a1a1e] flex items-center justify-center text-[10px] text-gray-400 font-bold z-10">
+                        +{{ order.items.length - 4 }}
+                      </div>
+                    </div>
+                    <div class="text-right">
+                       <p class="text-[10px] text-gray-500">Total Amount</p>
+                       <p class="text-lg font-black text-pink-500">฿{{ order.total_price?.toLocaleString() }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="bg-[#121212]/50 border border-white/5 border-dashed rounded-2xl p-10 text-center">
+              <div class="text-4xl mb-3 opacity-30">📪</div>
+              <p class="text-gray-500 text-sm">ไม่มีรายการที่กำลังจัดส่งในขณะนี้</p>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                ❤️ <span class="bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-rose-400">รายการโปรด</span>
+              </h2>
+              <button @click="router.push('/wishlist')" class="text-xs text-pink-400 hover:text-pink-300 transition-colors">จัดการทั้งหมด →</button>
+            </div>
+
+            <div v-if="wishlistItems.length > 0" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div v-for="item in wishlistItems" :key="item.id"
+                class="bg-[#1a1a1e] rounded-xl p-3 border border-white/5 hover:border-pink-500/30 transition-all group relative">
+                
+                <button @click.stop="removeFromWishlist(item)" class="absolute top-2 right-2 z-20 w-7 h-7 bg-black/60 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-white transition-all opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+
+                <div @click="router.push('/wishlist')" class="cursor-pointer overflow-hidden rounded-lg relative aspect-square mb-3">
+                  <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
+                  <img :src="getFullImageUrl(item.image_url)" alt="product" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                </div>
+
+                <div class="space-y-1">
+                  <p class="font-medium text-gray-200 text-xs truncate">{{ item.name }}</p>
+                  <div class="flex items-center justify-between">
+                     <p class="font-bold text-pink-400 text-sm">฿{{ item.price?.toLocaleString() }}</p>
+                     <button @click="addToCart(item)" class="text-[10px] bg-white/10 hover:bg-pink-600 hover:text-white px-2 py-1 rounded transition">
+                        🛒 Add
+                     </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-12 bg-[#121212]/50 rounded-2xl border border-white/5 border-dashed">
+               <p class="text-gray-500 text-sm">🥀 ยังไม่มีรายการที่ถูกใจ</p>
+               <button @click="router.push('/')" class="mt-4 text-xs text-pink-400 border border-pink-500/30 px-4 py-2 rounded-full hover:bg-pink-500/10 transition">ไปเลือกซื้อสินค้า</button>
+            </div>
+          </div>
+
         </div>
       </div>
-    </div>
-    <div v-if="!user" class="text-center text-gray-400 mt-20 animate-pulse">Loading Profile...</div>
+
+      <div v-if="!user" class="flex flex-col items-center justify-center min-h-[50vh] animate-pulse">
+        <div class="w-16 h-16 rounded-full bg-white/5 mb-4"></div>
+        <div class="h-4 w-32 bg-white/5 rounded mb-2"></div>
+        <p class="text-gray-500 text-xs">Loading Profile...</p>
+      </div>
+
+    </main>
   </div>
 </template>
 
@@ -217,7 +276,7 @@ const fetchWishlist = async () => {
       id: p.id || p._id,
       price: parseFloat(p.price) || 0,
       image_url: p.image_url
-    })).slice(0, 6); // แสดงแค่ 6 รายการในหน้า Profile
+    })).slice(0, 8); // แสดงแค่ 8 รายการในหน้า Profile
   } catch (err) {
     console.error('Failed to fetch wishlist:', err);
   }
@@ -250,20 +309,20 @@ const addToCart = (product) => {
 const getStatusLabel = (status) => {
   const labels = { 
     pending: 'รอตรวจสอบ', 
-    paid: 'เตรียมการจัดส่ง 📦', 
-    processing: 'สินค้ากำลังเดินทาง 🚚', 
-    completed: 'สำเร็จ ✅', 
-    cancelled: 'ยกเลิกแล้ว ❌' 
+    paid: 'เตรียมจัดส่ง', 
+    processing: 'กำลังขนส่ง', 
+    completed: 'สำเร็จ', 
+    cancelled: 'ยกเลิก' 
   };
   return labels[status] || status;
 }
 const getStatusClass = (status) => {
-  const base = "bg-opacity-10 "
-  if (status === 'pending') return base + "bg-yellow-500 text-yellow-500 border-yellow-500/20"
-  if (status === 'paid') return base + "bg-pink-500 text-pink-500 border-pink-500/20"
-  if (status === 'processing') return base + "bg-blue-500 text-blue-500 border-blue-500/20"
-  if (status === 'completed') return base + "bg-green-500 text-green-500 border-green-500/20"
-  return base + "bg-gray-500 text-gray-400 border-gray-500/20"
+  const base = ""
+  if (status === 'pending') return base + "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+  if (status === 'paid') return base + "bg-blue-500/10 text-blue-400 border-blue-500/20"
+  if (status === 'processing') return base + "bg-pink-500/10 text-pink-400 border-pink-500/20"
+  if (status === 'completed') return base + "bg-green-500/10 text-green-400 border-green-500/20"
+  return base + "bg-gray-500/10 text-gray-400 border-gray-500/20"
 }
 const formatDate = (dateStr) => {
   if (!dateStr) return "N/A"
@@ -359,7 +418,7 @@ const handleLogout = () => {
 const currentLanguage = ref('th')
 const t = (key) => {
   const trans = {
-    th: { username: 'ชื่อผู้ใช้', fullName: 'ชื่อเต็ม', email: 'อีเมล', phone: 'เบอร์โทร', seller: 'สถานะผู้ใช้', registered: 'ผู้ขาย', notRegistered: 'ผู้ใช้ทั่วไป', addresses: 'ที่อยู่', addNewAddress: 'เพิ่มที่อยู่ใหม่', editAddress: 'แก้ไขที่อยู่', addAddress: 'เพิ่มที่อยู่', updateAddress: 'อัปเดตที่อยู่', cancel: 'ยกเลิก' },
+    th: { username: 'ชื่อผู้ใช้', fullName: 'ชื่อเต็ม', email: 'อีเมล', phone: 'เบอร์โทร', seller: 'สถานะผู้ใช้', registered: 'ผู้ขาย', notRegistered: 'ผู้ใช้ทั่วไป', addresses: 'ที่อยู่จัดส่ง', addNewAddress: 'เพิ่มที่อยู่ใหม่', editAddress: 'แก้ไขที่อยู่', addAddress: 'เพิ่มที่อยู่', updateAddress: 'อัปเดตที่อยู่', cancel: 'ยกเลิก' },
     en: { username: 'Username', fullName: 'Full Name', email: 'Email', phone: 'Phone', seller: 'Seller', registered: 'Registered', notRegistered: 'Not Registered', addresses: 'Addresses', addNewAddress: 'Add New Address', editAddress: 'Edit Address', addAddress: 'Add Address', updateAddress: 'Update Address', cancel: 'Cancel' }
   }
   return trans[currentLanguage.value][key] || key
@@ -378,6 +437,18 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(236, 72, 153, 0.3);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(236, 72, 153, 0.6);
+}
 </style>

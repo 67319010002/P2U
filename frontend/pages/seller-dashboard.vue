@@ -1,6 +1,5 @@
 <template>
-  <div class="min-h-screen ml-20 p-6 text-white bg-dark-950">
-    <Navbar />
+  <div class="min-h-screen ml-20 p-6 text-white bg-[#0b0b0f]">
     <sidebar />
     
     <div class="max-w-6xl mx-auto">
@@ -9,7 +8,7 @@
           📊 แดชบอร์ดผู้ขาย
         </h1>
         <ClientOnly>
-          <p class="text-dark-400 mt-1">ยินดีต้อนรับ, {{ user?.shop_name || user?.username || 'ผู้ขาย' }}</p>
+          <p class="text-gray-400 mt-1">ยินดีต้อนรับ, {{ user?.shop_name || user?.username || 'ผู้ขาย' }}</p>
         </ClientOnly>
       </div>
 
@@ -17,7 +16,7 @@
         <div class="card p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-dark-400 text-sm">ยอดขายรวม</p>
+              <p class="text-gray-400 text-sm">ยอดขายรวม</p>
               <p class="text-3xl font-bold text-green-400 mt-1">฿{{ stats.total_sales?.toLocaleString() || 0 }}</p>
             </div>
             <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-2xl">💰</div>
@@ -26,16 +25,16 @@
         <div class="card p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-dark-400 text-sm">สินค้าทั้งหมด</p>
+              <p class="text-gray-400 text-sm">สินค้าทั้งหมด</p>
               <p class="text-3xl font-bold text-white mt-1">{{ stats.total_products || 0 }}</p>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-primary-500/20 flex items-center justify-center text-2xl">📦</div>
+            <div class="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center text-2xl">📦</div>
           </div>
         </div>
         <div class="card p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-dark-400 text-sm">คะแนนเฉลี่ย</p>
+              <p class="text-gray-400 text-sm">คะแนนเฉลี่ย</p>
               <p class="text-3xl font-bold text-yellow-400 mt-1">{{ stats.rating_avg?.toFixed(1) || 0 }} ⭐</p>
             </div>
             <div class="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center text-2xl">⭐</div>
@@ -44,10 +43,10 @@
         <div class="card p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-dark-400 text-sm">ระดับ AI</p>
+              <p class="text-gray-400 text-sm">ระดับ AI</p>
               <p class="text-3xl font-bold mt-1" :class="getLevelColor(stats.ai_level)">{{ stats.ai_level || 'C' }}</p>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-accent-500/20 flex items-center justify-center text-2xl">🏆</div>
+            <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-2xl">🏆</div>
           </div>
         </div>
       </div>
@@ -56,7 +55,7 @@
         <div class="card overflow-hidden">
           <div class="p-4 border-b border-white/10 flex items-center justify-between">
             <h2 class="font-semibold text-white">🛍️ สินค้าของฉัน</h2>
-            <NuxtLink to="/AddProduct" class="text-primary-400 text-sm hover:underline">+ เพิ่มสินค้า</NuxtLink>
+            <NuxtLink to="/AddProduct" class="text-pink-400 text-sm hover:underline">+ เพิ่มสินค้า</NuxtLink>
           </div>
           <div class="divide-y divide-white/5">
             <div v-for="product in products.slice(0, 5)" :key="product.id || product._id" class="p-4 flex items-center gap-3 hover:bg-white/5 transition-colors group">
@@ -65,11 +64,11 @@
                 <p class="text-white font-medium truncate">{{ product.name }}</p>
                 <div class="flex items-center gap-2">
                   <p class="text-green-400 text-sm">฿{{ product.price?.toLocaleString() }}</p>
-                  <span v-if="product.category" class="text-xs text-dark-400 bg-white/5 px-2 py-0.5 rounded-full">{{ getCategoryIcon(product.category) }} {{ product.category }}</span>
+                  <span v-if="product.category" class="text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded-full">{{ getCategoryIcon(product.category) }} {{ product.category }}</span>
                 </div>
               </div>
               <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <NuxtLink :to="`/edit-product/${product.id || product._id}`" class="w-8 h-8 bg-primary-500/20 hover:bg-primary-500 text-primary-400 hover:text-white rounded-lg flex items-center justify-center transition-all" title="แก้ไข">
+                <NuxtLink :to="`/edit-product/${product.id || product._id}`" class="w-8 h-8 bg-pink-500/20 hover:bg-pink-500 text-pink-400 hover:text-white rounded-lg flex items-center justify-center transition-all" title="แก้ไข">
                   ✏️
                 </NuxtLink>
                 <button @click="deleteProduct(product.id || product._id)" class="w-8 h-8 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white rounded-lg flex items-center justify-center transition-all" title="ลบ">
@@ -77,10 +76,10 @@
                 </button>
               </div>
             </div>
-            <div v-if="!products.length" class="p-8 text-center text-dark-400">ยังไม่มีสินค้า</div>
+            <div v-if="!products.length" class="p-8 text-center text-gray-400">ยังไม่มีสินค้า</div>
           </div>
           <div v-if="products.length > 5" class="p-4 border-t border-white/10 text-center">
-            <NuxtLink to="/my-products" class="text-primary-400 text-sm hover:underline">ดูสินค้าทั้งหมด ({{ products.length }} รายการ) →</NuxtLink>
+            <NuxtLink to="/my-products" class="text-pink-400 text-sm hover:underline">ดูสินค้าทั้งหมด ({{ products.length }} รายการ) →</NuxtLink>
           </div>
         </div>
 
@@ -93,29 +92,29 @@
             <div v-for="review in reviews.slice(0, 5)" :key="review.id" class="p-4">
               <div class="flex items-center gap-2 mb-2">
                 <span class="text-yellow-400">{{ '⭐'.repeat(review.rating) }}</span>
-                <span class="text-dark-400 text-sm">{{ review.user?.username }}</span>
+                <span class="text-gray-400 text-sm">{{ review.user?.username }}</span>
               </div>
-              <p class="text-dark-300 text-sm">{{ review.comment }}</p>
-              <p class="text-dark-500 text-xs mt-1">{{ review.product?.name }}</p>
+              <p class="text-gray-300 text-sm">{{ review.comment }}</p>
+              <p class="text-gray-500 text-xs mt-1">{{ review.product?.name }}</p>
             </div>
-            <div v-if="!reviews.length" class="p-8 text-center text-dark-400">ยังไม่มีรีวิว</div>
+            <div v-if="!reviews.length" class="p-8 text-center text-gray-400">ยังไม่มีรีวิว</div>
           </div>
         </div>
 
         <div class="card overflow-hidden lg:col-span-2">
           <div class="p-4 border-b border-white/10 flex justify-between items-center">
             <h2 class="font-semibold text-white">📦 ออเดอร์ล่าสุด</h2>
-            <span class="text-[10px] text-primary-400 animate-pulse">คลิกเพื่อดูรายละเอียด / จัดส่ง</span>
+            <span class="text-[10px] text-pink-400 animate-pulse">คลิกเพื่อดูรายละเอียด / จัดส่ง</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full">
-              <thead class="bg-dark-800/50">
+              <thead class="bg-gray-800/50">
                 <tr>
-                  <th class="text-left p-4 text-dark-400 text-sm font-medium">ผู้ซื้อ</th>
-                  <th class="text-left p-4 text-dark-400 text-sm font-medium">สินค้า</th>
-                  <th class="text-left p-4 text-dark-400 text-sm font-medium">ยอด</th>
-                  <th class="text-left p-4 text-dark-400 text-sm font-medium">สถานะ</th>
-                  <th class="text-left p-4 text-dark-400 text-sm font-medium">วันที่</th>
+                  <th class="text-left p-4 text-gray-400 text-sm font-medium">ผู้ซื้อ</th>
+                  <th class="text-left p-4 text-gray-400 text-sm font-medium">สินค้า</th>
+                  <th class="text-left p-4 text-gray-400 text-sm font-medium">ยอด</th>
+                  <th class="text-left p-4 text-gray-400 text-sm font-medium">สถานะ</th>
+                  <th class="text-left p-4 text-gray-400 text-sm font-medium">วันที่</th>
                 </tr>
               </thead>
               <tbody>
@@ -124,18 +123,18 @@
                     @click="selectedOrder = order"
                     class="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-all">
                   <td class="p-4 text-white font-medium">{{ order.user }}</td>
-                  <td class="p-4 text-dark-300 text-sm">{{ order.items_count }} รายการ</td>
+                  <td class="p-4 text-gray-300 text-sm">{{ order.items_count }} รายการ</td>
                   <td class="p-4 text-green-400 font-bold">฿{{ order.total.toLocaleString() }}</td>
                   <td class="p-4">
-                    <span :class="getStatusClass(order.status)" class="badge text-[10px]">
+                    <span :class="[getStatusClass(order.status), 'px-2 py-0.5 rounded-full font-bold border text-[10px]']">
                       {{ getStatusLabel(order.status) }}
                     </span>
                   </td>
-                  <td class="p-4 text-dark-400 text-sm">{{ order.created_at }}</td>
+                  <td class="p-4 text-gray-400 text-sm">{{ order.created_at }}</td>
                 </tr>
               </tbody>
             </table>
-            <div v-if="!recentOrders.length" class="p-8 text-center text-dark-400">ยังไม่มีออเดอร์</div>
+            <div v-if="!recentOrders.length" class="p-8 text-center text-gray-400">ยังไม่มีออเดอร์</div>
           </div>
         </div>
       </div>
@@ -147,37 +146,39 @@
           <div class="card border border-white/10 w-full max-w-lg overflow-hidden flex flex-col shadow-2xl animate-modal">
             <div class="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
               <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                📄 รายละเอียดออเดอร์ <span class="text-xs font-mono text-dark-400">#{{ selectedOrder.id.slice(-6) }}</span>
+                📄 รายละเอียดออเดอร์ <span class="text-xs font-mono text-gray-400">#{{ selectedOrder.id.slice(-6) }}</span>
               </h2>
-              <button @click="selectedOrder = null" class="text-dark-400 text-2xl hover:text-white transition-colors">&times;</button>
+              <button @click="selectedOrder = null" class="text-gray-400 text-2xl hover:text-white transition-colors">&times;</button>
             </div>
             
             <div class="p-6 overflow-y-auto space-y-6 max-h-[70vh]">
               <div class="flex justify-between items-end">
                 <div>
-                  <p class="text-[10px] text-dark-400 uppercase font-bold tracking-wider">ผู้ซื้อ</p>
+                  <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">ผู้ซื้อ</p>
                   <p class="text-white text-lg font-medium">{{ selectedOrder.user }}</p>
                 </div>
                 <div class="text-right">
-                  <p class="text-[10px] text-dark-400 uppercase font-bold tracking-wider">สถานะ</p>
-                  <span :class="getStatusClass(selectedOrder.status)" class="badge text-[10px]">{{ getStatusLabel(selectedOrder.status) }}</span>
+                  <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">สถานะ</p>
+                  <span :class="[getStatusClass(selectedOrder.status), 'px-2 py-0.5 rounded-full font-bold border text-[10px]']">
+                      {{ getStatusLabel(selectedOrder.status) }}
+                  </span>
                 </div>
               </div>
 
               <div class="space-y-3">
-                <p class="text-[10px] text-primary-400 uppercase font-bold tracking-wider">รายการสินค้าในร้านของคุณ</p>
+                <p class="text-[10px] text-pink-400 uppercase font-bold tracking-wider">รายการสินค้าในร้านของคุณ</p>
                 <div v-for="item in selectedOrder.rawItems" :key="item.product_id" class="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/5">
                   <img :src="getImageUrl(item.image)" class="w-12 h-12 rounded-xl object-cover shadow-lg" />
                   <div class="flex-1 min-w-0">
                     <p class="text-white text-sm font-bold truncate">{{ item.product_name }}</p>
-                    <p class="text-dark-400 text-xs">จำนวน: {{ item.quantity }} ชิ้น</p>
+                    <p class="text-gray-400 text-xs">จำนวน: {{ item.quantity }} ชิ้น</p>
                   </div>
                   <p class="text-white font-bold">฿{{ (item.price * item.quantity).toLocaleString() }}</p>
                 </div>
               </div>
 
               <div class="pt-4 border-t border-white/10 flex justify-between items-center">
-                <span class="text-dark-300">ยอดรวมของร้านคุณ</span>
+                <span class="text-gray-300">ยอดรวมของร้านคุณ</span>
                 <span class="text-2xl font-black text-green-400">฿{{ selectedOrder.total.toLocaleString() }}</span>
               </div>
             </div>
@@ -187,7 +188,7 @@
                 v-if="selectedOrder.status === 'paid'" 
                 :disabled="isUpdating"
                 @click="updateOrderStatus(selectedOrder.id, 'processing')"
-                class="w-full py-4 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-bold transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full py-4 rounded-2xl bg-pink-500 hover:bg-pink-600 text-white font-bold transition-all shadow-lg shadow-pink-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span v-if="isUpdating">⏳ กำลังดำเนินการ...</span>
                 <span v-else>🚚 ยืนยันการจัดส่งสินค้า ✨</span>
@@ -213,7 +214,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
 const user = ref(null);
-const isUpdating = ref(false); // ✅ เพิ่มสถานะการโหลด
+const isUpdating = ref(false);
 const stats = ref({
   total_sales: 0,
   total_products: 0,
@@ -234,8 +235,8 @@ function getImageUrl(url) {
 }
 
 function getLevelColor(level) {
-  const colors = { S: 'text-yellow-400', A: 'text-green-400', B: 'text-primary-400', C: 'text-dark-400' };
-  return colors[level] || 'text-dark-400';
+  const colors = { S: 'text-yellow-400', A: 'text-green-400', B: 'text-pink-400', C: 'text-gray-400' };
+  return colors[level] || 'text-gray-400';
 }
 
 function getCategoryIcon(category) {
@@ -263,11 +264,10 @@ async function deleteProduct(productId) {
   }
 }
 
-
 function getStatusClass(status) {
   const classes = { 
     pending: 'bg-amber-500/10 text-amber-500 border border-amber-500/20', 
-    paid: 'bg-primary-500/10 text-primary-400 border border-primary-500/20', 
+    paid: 'bg-pink-500/10 text-pink-400 border border-pink-500/20', 
     processing: 'bg-blue-500/10 text-blue-400 border border-blue-500/20', 
     completed: 'bg-green-500/10 text-green-400 border border-green-500/20', 
     cancelled: 'bg-red-500/10 text-red-500 border border-red-500/20' 
@@ -280,7 +280,6 @@ function getStatusLabel(status) {
   return labels[status] || status;
 }
 
-// ✅ อัปเดตฟังก์ชันให้เสถียรขึ้น
 async function updateOrderStatus(orderId, newStatus) {
   if (isUpdating.value) return;
   const token = localStorage.getItem('token');
@@ -317,7 +316,7 @@ async function fetchOrders() {
 
     const ordersData = res.data.orders || [];
     recentOrders.value = ordersData.map(order => ({
-      id: order.id || order._id, // ✅ รองรับทั้ง id และ _id
+      id: order.id || order._id, 
       user: order.buyer?.username || 'ไม่ทราบชื่อ',
       items_count: order.items_count || (order.items ? order.items.length : 0),
       total: order.total_price || 0,
@@ -369,17 +368,13 @@ onMounted(fetchData);
 </script>
 
 <style scoped>
-@reference "tailwindcss";
+/* เลิกใช้ @apply ใน style block แล้วใช้ Standard CSS หรือย้ายไปที่ Template แทน */
 
 .card {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
   border-radius: 1.5rem;
   border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.badge { 
-  @apply px-2 py-0.5 rounded-full font-bold border; 
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
