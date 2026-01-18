@@ -45,6 +45,9 @@
             <div v-if="coinBalance !== null" class="mt-1 inline-flex items-center px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20">
               <span class="text-xs font-medium text-amber-400">🪙 {{ coinBalance.toLocaleString() }}</span>
             </div>
+            <div v-if="tokenBalance !== null" class="mt-1 inline-flex items-center px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20">
+              <span class="text-xs font-medium text-yellow-400">💰 {{ tokenBalance.toLocaleString() }} Token</span>
+            </div>
           </div>
         </div>
       </div>
@@ -146,6 +149,7 @@ const expand = ref(false);
 const user = ref(null);
 const profileImageUrlLoaded = ref(false);
 const coinBalance = ref(null);
+const tokenBalance = ref(null);
 
 const baseUrl = "http://localhost:5000";
 
@@ -191,7 +195,7 @@ async function fetchUserProfile() {
   if (storedUser) {
     user.value = JSON.parse(storedUser);
     
-    // Fetch coin balance
+    // Fetch coin balance and token balance
     const token = localStorage.getItem("token");
     if (token) {
       try {
@@ -201,6 +205,16 @@ async function fetchUserProfile() {
         coinBalance.value = res.data.coin_balance || 0;
       } catch (e) {
         console.error("Failed to fetch profile:", e);
+      }
+      
+      // Fetch token balance
+      try {
+        const tokenRes = await axios.get(`${baseUrl}/api/token/balance`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        tokenBalance.value = tokenRes.data.token_balance || 0;
+      } catch (e) {
+        console.error("Failed to fetch token balance:", e);
       }
     }
   } else {

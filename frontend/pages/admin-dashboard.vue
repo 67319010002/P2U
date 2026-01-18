@@ -232,7 +232,7 @@
           <div v-if="activeTab === 'tokens'">
              <div class="p-6 border-b border-white/10 bg-white/5 flex justify-between items-center">
                 <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                   🪙 คำขอเติม Coin
+                   🪙 คำขอเติม Token
                 </h2>
                 <div v-if="tokenStats.pending > 0" class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-xs font-medium animate-pulse">
                    {{ tokenStats.pending }} รอการตรวจสอบ
@@ -244,6 +244,7 @@
                       <tr>
                          <th class="text-left p-5">User</th>
                          <th class="text-left p-5">Amount</th>
+                         <th class="text-left p-5">สลิป</th>
                          <th class="text-left p-5">Status</th>
                          <th class="text-left p-5">Date</th>
                          <th class="text-right p-5">Action</th>
@@ -258,11 +259,28 @@
                                </div>
                                <div>
                                   <div class="text-white text-sm">{{ req.user?.username }}</div>
+                                  <div v-if="req.sender_name" class="text-xs text-gray-500">ผู้โอน: {{ req.sender_name }}</div>
                                </div>
                             </div>
                          </td>
-                         <td class="p-5 font-mono text-xl text-yellow-400 font-bold">
-                            +{{ req.amount?.toLocaleString() }}
+                         <td class="p-5">
+                            <div class="font-mono text-xl text-yellow-400 font-bold">
+                               +{{ req.amount?.toLocaleString() }}
+                            </div>
+                            <div v-if="req.is_auto_approved" class="mt-1">
+                               <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">⚡ อัตโนมัติ</span>
+                            </div>
+                         </td>
+                         <td class="p-5">
+                            <div v-if="req.payment_proof_url" 
+                                 class="relative w-16 h-16 rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-yellow-500/50 transition-colors group"
+                                 @click="openImageModal(getImageUrl(req.payment_proof_url))">
+                               <img :src="getImageUrl(req.payment_proof_url)" class="w-full h-full object-cover" />
+                               <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/50 transition-opacity">
+                                  <span class="text-xs text-white">🔍</span>
+                               </div>
+                            </div>
+                            <span v-else class="text-xs text-gray-500">ไม่มีสลิป</span>
                          </td>
                          <td class="p-5">
                             <span 
@@ -273,10 +291,13 @@
                                   'bg-red-500/10 text-red-400 border-red-500/20': req.status === 'rejected'
                                }"
                             >
-                               {{ req.status === 'pending' ? 'WAITING' : req.status.toUpperCase() }}
+                               {{ req.status === 'pending' ? 'รอตรวจสอบ' : req.status === 'approved' ? 'สำเร็จ' : 'ปฏิเสธ' }}
                             </span>
+                            <div v-if="req.transaction_ref" class="mt-1 text-[10px] text-gray-500 font-mono">
+                               Ref: {{ req.transaction_ref }}
+                            </div>
                          </td>
-                         <td class="p-5 text-gray-500 text-sm">{{ new Date(req.created_at).toLocaleDateString() }}</td>
+                         <td class="p-5 text-gray-500 text-sm">{{ new Date(req.created_at).toLocaleDateString('th-TH') }}</td>
                          <td class="p-5 text-right">
                             <div v-if="req.status === 'pending'" class="flex gap-2 justify-end">
                                <button @click="approveToken(req)" class="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500 hover:text-white transition-all border border-green-500/20" title="Approve">
@@ -286,7 +307,9 @@
                                   ✕ ปฏิเสธ
                                </button>
                             </div>
-                            <span v-else class="text-xs text-gray-500 italic">Completed</span>
+                            <div v-else class="text-xs text-gray-500">
+                               <span v-if="req.admin_note" class="block italic">{{ req.admin_note }}</span>
+                            </div>
                          </td>
                       </tr>
                    </tbody>
