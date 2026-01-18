@@ -2,6 +2,17 @@
   <div class="min-h-screen bg-[#0b0b0f] text-gray-100 font-sans selection:bg-amber-500/30 relative overflow-hidden">
     <sidebar class="fixed left-0 top-0 h-full z-40" />
 
+    <div class="max-w-5xl mx-auto">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+            🪙 เติม Token
+          </h1>
+          <p class="text-dark-400 mt-1">เติม Token เพื่อใช้ในการประมูลสินค้า</p>
+        </div>
+      </div>
+
     <div class="fixed top-20 right-0 w-[500px] h-[500px] bg-amber-600/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
     <div class="fixed bottom-0 left-0 w-[600px] h-[600px] bg-yellow-900/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
 
@@ -21,112 +32,122 @@
           </p>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          <div class="lg:col-span-7 space-y-6">
-            
-            <div class="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#1e1e24] to-[#121215] border border-amber-500/20 p-8 shadow-2xl group">
-              <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/20 blur-[50px] rounded-full group-hover:bg-amber-500/30 transition-all duration-500"></div>
-              
-              <div class="relative z-10 flex items-center justify-between">
-                <div>
-                  <p class="text-amber-500/80 font-bold text-sm uppercase tracking-wider mb-2">My Balance</p>
-                  <div class="flex items-baseline gap-2">
-                    <span class="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-100 to-amber-400 tracking-tighter">
-                      {{ tokenBalance.toLocaleString() }}
-                    </span>
-                    <span class="text-xl text-gray-500 font-medium">Tokens</span>
-                  </div>
-                </div>
-                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500/20 to-transparent border border-amber-500/30 flex items-center justify-center text-4xl shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-                  🪙
-                </div>
-              </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- QR Code & Upload Section -->
+        <div class="space-y-6">
+          <!-- PromptPay QR Code -->
+          <div class="card p-6">
+            <h2 class="text-xl font-semibold text-white mb-4">📱 สแกน QR Code เพื่อชำระเงิน</h2>
+            <div class="bg-white rounded-2xl p-4 mx-auto w-fit">
+              <img 
+                src="/promptpay-qr.png" 
+                alt="PromptPay QR Code" 
+                class="w-64 h-64 object-contain"
+                @error="handleQrError"
+              />
             </div>
-
-            <div class="bg-[#121215]/60 backdrop-blur-xl border border-white/5 rounded-[2rem] p-8 shadow-lg">
-              <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                📝 ส่งคำขอเติม Token
-              </h2>
-              
-              <div class="space-y-6">
-                <div>
-                  <label class="block text-gray-400 text-sm font-semibold mb-2 ml-1">จำนวน Token ที่ต้องการ</label>
-                  <div class="relative">
-                    <input 
-                      v-model.number="requestAmount" 
-                      type="number" 
-                      min="1"
-                      class="w-full bg-[#0b0b0f] border border-white/10 rounded-2xl py-4 pl-5 pr-4 text-2xl font-bold text-white placeholder-gray-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-all"
-                      placeholder="0"
-                    />
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none opacity-50">
-                      <span class="text-xs text-gray-500">TOKENS</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-4 gap-3">
-                  <button 
-                    v-for="amount in [100, 500, 1000, 5000]" 
-                    :key="amount"
-                    @click="requestAmount = amount"
-                    class="py-2.5 rounded-xl text-sm font-bold transition-all border"
-                    :class="requestAmount === amount 
-                      ? 'bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20' 
-                      : 'bg-transparent text-gray-400 border-white/10 hover:bg-white/5 hover:border-white/20'"
-                  >
-                    +{{ amount.toLocaleString() }}
-                  </button>
-                </div>
-
-                <div class="bg-white/5 rounded-2xl p-5 border border-white/5 flex items-center justify-between">
-                  <div>
-                    <span class="text-gray-400 text-sm block">ราคาที่ต้องชำระ</span>
-                    <span class="text-[10px] text-gray-600">*อัตราแลกเปลี่ยน 1:1</span>
-                  </div>
-                  <div class="text-right">
-                    <span class="text-2xl font-bold text-green-400">฿{{ requestAmount?.toLocaleString() || 0 }}</span>
-                    <span class="text-gray-500 text-xs ml-1">THB</span>
-                  </div>
-                </div>
-
-                <button 
-                  @click="submitRequest"
-                  :disabled="!requestAmount || requestAmount < 1 || isLoading"
-                  class="w-full py-4 rounded-2xl font-bold text-lg shadow-lg shadow-amber-900/20 transition-all duration-300 relative overflow-hidden group"
-                  :class="isLoading || !requestAmount 
-                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-amber-500 to-yellow-600 text-black hover:scale-[1.02] active:scale-95'"
-                >
-                  <span class="relative z-10 flex items-center justify-center gap-2">
-                    {{ isLoading ? '⏳ กำลังประมวลผล...' : '📤 ยืนยันคำขอเติม Token' }}
-                  </span>
-                  <div v-if="!isLoading" class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                </button>
-                
-                <p class="text-gray-500 text-xs text-center mt-2">
-                  * หลังส่งคำขอ Admin จะตรวจสอบและอนุมัติภายใน 24 ชม.
-                </p>
-              </div>
+            <div class="mt-4 text-center">
+              <p class="text-white font-semibold">นาย ศิระณัฐ ศรีบุระ</p>
+              <p class="text-dark-400 text-sm">พร้อมเพย์: xxx-xxx-5414</p>
+              <p class="text-dark-500 text-xs mt-2">💡 อัตรา 1 Token = 1 บาท</p>
             </div>
           </div>
 
-          <div class="lg:col-span-5 h-full">
-            <div class="bg-[#121215]/60 backdrop-blur-xl border border-white/5 rounded-[2rem] p-6 shadow-lg h-full flex flex-col">
-              <div class="flex items-center justify-between mb-6 px-2">
-                <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                  📜 ประวัติคำขอ
-                </h2>
-                <span class="text-xs text-gray-500 bg-white/5 px-2 py-1 rounded-md">{{ requests.length }} รายการ</span>
+          <!-- Slip Upload -->
+          <div class="card p-6">
+            <h2 class="text-xl font-semibold text-white mb-4">📤 อัปโหลดสลิปการโอนเงิน</h2>
+            
+            <!-- Drag & Drop Zone -->
+            <div 
+              class="border-2 border-dashed border-dark-600 rounded-2xl p-8 text-center cursor-pointer transition-all hover:border-primary-500 hover:bg-dark-800/50"
+              :class="{ 'border-primary-500 bg-primary-500/10': isDragging }"
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop.prevent="handleDrop"
+              @click="$refs.fileInput.click()"
+            >
+              <input 
+                ref="fileInput"
+                type="file" 
+                accept="image/*"
+                class="hidden"
+                @change="handleFileSelect"
+              />
+              
+              <div v-if="!slipPreview">
+                <div class="text-5xl mb-3">📎</div>
+                <p class="text-dark-300 font-medium">ลากไฟล์มาวางที่นี่</p>
+                <p class="text-dark-500 text-sm mt-1">หรือคลิกเพื่อเลือกไฟล์</p>
+                <p class="text-dark-600 text-xs mt-2">รองรับ: JPG, PNG, WEBP</p>
               </div>
               
-              <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3 max-h-[600px]">
-                <div 
-                  v-for="req in requests" 
-                  :key="req.id"
-                  class="group p-4 rounded-2xl border transition-all hover:bg-white/5 relative overflow-hidden"
-                  :class="getStatusBorderColor(req.status)"
+              <div v-else class="relative">
+                <img :src="slipPreview" alt="Slip Preview" class="max-h-64 mx-auto rounded-xl" />
+                <button 
+                  @click.stop="clearSlip"
+                  class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <!-- Verify Button -->
+            <button 
+              @click="verifySlip"
+              :disabled="!slipFile || isVerifying"
+              class="btn-primary w-full py-4 text-lg font-bold mt-4 disabled:opacity-50"
+            >
+              <span v-if="isVerifying" class="flex items-center justify-center gap-2">
+                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังตรวจสอบสลิป...
+              </span>
+              <span v-else>🔍 ตรวจสอบสลิปและเติม Token</span>
+            </button>
+
+            <!-- Verification Result -->
+            <div v-if="verifyResult" class="mt-4 rounded-xl p-4" :class="verifyResult.success ? 'bg-green-500/20' : 'bg-red-500/20'">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl">{{ verifyResult.success ? '✅' : '❌' }}</span>
+                <div>
+                  <p class="font-bold" :class="verifyResult.success ? 'text-green-400' : 'text-red-400'">
+                    {{ verifyResult.msg }}
+                  </p>
+                  <div v-if="verifyResult.success" class="text-dark-300 text-sm mt-2">
+                    <p>💰 ยอดเงิน: {{ verifyResult.amount?.toLocaleString() }} บาท</p>
+                    <p>🧾 เลขอ้างอิง: {{ verifyResult.transaction_ref }}</p>
+                    <p>👤 ผู้โอน: {{ verifyResult.sender_name }}</p>
+                    <p class="text-primary-400 font-bold mt-2">Token ใหม่: {{ verifyResult.new_balance?.toLocaleString() }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        <!-- Right Column: History -->
+        <div class="card p-6">
+          <h2 class="text-xl font-semibold text-white mb-6">📜 ประวัติการเติม Token</h2>
+          
+          <div v-if="requests.length" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+            <div 
+              v-for="req in requests" 
+              :key="req.id"
+              class="glass-light rounded-xl p-4"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-white font-bold">{{ req.amount.toLocaleString() }} Token</span>
+                <span 
+                  class="badge"
+                  :class="{
+                    'badge-warning': req.status === 'pending',
+                    'badge-success': req.status === 'approved',
+                    'badge-error': req.status === 'rejected'
+                  }"
+
                 >
                   <div class="flex justify-between items-start mb-2 relative z-10">
                     <div>
@@ -156,12 +177,44 @@
                   <p class="text-gray-400 text-sm">ยังไม่มีประวัติการทำรายการ</p>
                 </div>
               </div>
+              <p class="text-dark-500 text-xs">{{ req.created_at }}</p>
+              
+              <!-- Show slip preview if available -->
+              <div v-if="req.payment_proof_url" class="mt-2">
+                <img 
+                  :src="`http://localhost:5000${req.payment_proof_url}`" 
+                  alt="Slip" 
+                  class="h-20 rounded-lg cursor-pointer hover:opacity-80"
+                  @click="showSlipModal(req.payment_proof_url)"
+                />
+              </div>
+              
+              <!-- Auto-approved badge -->
+              <span v-if="req.is_auto_approved" class="inline-block mt-2 text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full">
+                ⚡ อนุมัติอัตโนมัติ
+              </span>
+              
+              <p v-if="req.admin_note" class="text-dark-400 text-sm mt-2 italic">
+                💬 {{ req.admin_note }}
+              </p>
             </div>
           </div>
 
+          <div v-else class="text-center py-8">
+            <div class="w-16 h-16 rounded-full bg-dark-800 mx-auto mb-3 flex items-center justify-center text-3xl">📋</div>
+            <p class="text-dark-400">ยังไม่มีประวัติการเติม Token</p>
+          </div>
         </div>
       </div>
-    </main>
+    </div>
+
+    <!-- Slip Modal -->
+    <div v-if="slipModalUrl" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50" @click="slipModalUrl = null">
+      <div class="max-w-2xl max-h-[90vh] p-4">
+        <img :src="`http://localhost:5000${slipModalUrl}`" alt="Slip" class="max-h-full rounded-xl" />
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -170,9 +223,14 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
 const tokenBalance = ref(0);
-const requestAmount = ref(100);
 const requests = ref([]);
-const isLoading = ref(false);
+const isVerifying = ref(false);
+
+const slipFile = ref(null);
+const slipPreview = ref(null);
+const isDragging = ref(false);
+const verifyResult = ref(null);
+const slipModalUrl = ref(null);
 
 const baseUrl = 'http://localhost:5000';
 
@@ -182,41 +240,92 @@ const statusLabels = {
   rejected: 'ปฏิเสธ'
 };
 
-// CSS Classes Helpers
-const getStatusBadgeClass = (status) => {
-  const classes = {
-    pending: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-    approved: 'bg-green-500/10 text-green-400 border-green-500/20',
-    rejected: 'bg-red-500/10 text-red-400 border-red-500/20'
-  };
-  return classes[status] || 'bg-gray-500/10 text-gray-400';
-};
+function handleQrError(e) {
+  // If QR image fails to load, use placeholder
+  e.target.src = 'https://via.placeholder.com/256x256?text=QR+Code';
+}
 
-const getStatusBorderColor = (status) => {
-  const classes = {
-    pending: 'bg-white/5 border-white/5 hover:border-yellow-500/30',
-    approved: 'bg-[#0f1812]/50 border-green-900/30 hover:border-green-500/30',
-    rejected: 'bg-[#180f0f]/50 border-red-900/30 hover:border-red-500/30'
-  };
-  return classes[status] || 'border-white/5';
-};
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (file) {
+    processFile(file);
+  }
+}
 
-const getStatusGlowColor = (status) => {
-  const classes = {
-    pending: 'bg-yellow-500',
-    approved: 'bg-green-500',
-    rejected: 'bg-red-500'
-  };
-  return classes[status] || 'bg-gray-500';
-};
+function handleDrop(event) {
+  isDragging.value = false;
+  const file = event.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    processFile(file);
+  }
+}
 
-function formatDate(dateStr) {
-  if(!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('th-TH', {
-    year: '2-digit', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
+function processFile(file) {
+  slipFile.value = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    slipPreview.value = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  verifyResult.value = null;
+}
+
+function clearSlip() {
+  slipFile.value = null;
+  slipPreview.value = null;
+  verifyResult.value = null;
+}
+
+async function verifySlip() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('กรุณาเข้าสู่ระบบก่อน');
+    return;
+  }
+  
+  if (!slipFile.value) {
+    alert('กรุณาเลือกไฟล์สลิป');
+    return;
+  }
+  
+  isVerifying.value = true;
+  verifyResult.value = null;
+  
+  try {
+    const formData = new FormData();
+    formData.append('slip', slipFile.value);
+    
+    const res = await axios.post(`${baseUrl}/api/token/verify-slip`, formData, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    verifyResult.value = res.data;
+    
+    if (res.data.success) {
+      // Refresh data
+      fetchTokenBalance();
+      fetchRequests();
+      // Clear slip after success
+      setTimeout(() => {
+        clearSlip();
+      }, 5000);
+    }
+  } catch (err) {
+    verifyResult.value = {
+      success: false,
+      msg: err.response?.data?.msg || 'เกิดข้อผิดพลาดในการตรวจสอบสลิป'
+    };
+  } finally {
+    isVerifying.value = false;
+  }
+}
+
+function showSlipModal(url) {
+  slipModalUrl.value = url;
+
 }
 
 async function fetchTokenBalance() {
@@ -246,6 +355,7 @@ async function fetchRequests() {
     console.error('Failed to fetch requests:', err);
   }
 }
+
 
 async function submitRequest() {
   const token = localStorage.getItem('token');

@@ -245,4 +245,12 @@ class TokenRequest(Document):
     approved_by = ReferenceField('User')  # Admin ที่อนุมัติ
     created_at = DateTimeField(default=datetime.utcnow)
     processed_at = DateTimeField()
+    
+    # ===== SlipOK Verification Fields =====
+    slip_verify_data = StringField()  # JSON data จาก SlipOK API
+    transaction_ref = StringField()  # เลขอ้างอิงธุรกรรมจากสลิป
+    verified_amount = IntField()  # ยอดเงินที่ตรวจสอบได้จากสลิป
+    sender_name = StringField()  # ชื่อผู้โอน
+    is_auto_approved = BooleanField(default=False)  # เป็น auto-approve หรือไม่
+    
     meta = {'collection': 'token_requests', 'ordering': ['-created_at']}
