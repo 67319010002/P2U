@@ -185,148 +185,184 @@
                 </table>
              </div>
           </div>
-
-      <!-- Token Requests Table -->
-      <div v-if="activeTab === 'tokens'" class="card overflow-hidden">
-        <div class="p-4 border-b border-white/10 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-white">คำขอเติม Token</h2>
-          <div class="flex gap-2">
-            <span class="badge badge-warning">{{ tokenStats.pending || 0 }} รอตรวจสอบ</span>
-            <span class="badge badge-success-outline">{{ tokenStats.approved || 0 }} อนุมัติแล้ว</span>
+          
+          <div v-if="activeTab === 'orders'">
+            <div class="p-6 border-b border-white/10 bg-white/5">
+                <h2 class="text-lg font-bold text-white">🛒 รายการสั่งซื้อ</h2>
+            </div>
+            <div class="overflow-x-auto">
+               <table class="w-full">
+                  <thead class="bg-black/20 text-gray-400 text-xs uppercase tracking-wider font-semibold">
+                     <tr>
+                        <th class="text-left p-5">Order ID</th>
+                        <th class="text-left p-5">Customer</th>
+                        <th class="text-left p-5">Total</th>
+                        <th class="text-left p-5">Status</th>
+                        <th class="text-left p-5">Date</th>
+                     </tr>
+                  </thead>
+                  <tbody class="divide-y divide-white/5">
+                     <tr v-for="order in orders" :key="order.id" class="hover:bg-white/5 transition-colors">
+                        <td class="p-5 font-mono text-gray-400 text-sm">#{{ order.id.slice(0,8) }}...</td>
+                        <td class="p-5 text-white">{{ order.user?.username }}</td>
+                        <td class="p-5 font-mono text-green-400">฿{{ order.total_price.toLocaleString() }}</td>
+                        <td class="p-5">
+                           <select 
+                              v-model="order.status" 
+                              @change="updateOrderStatus(order)"
+                              class="bg-black/30 text-sm text-white border border-white/10 rounded-lg px-2 py-1 focus:border-red-500 outline-none cursor-pointer"
+                           >
+                              <option value="pending">🟡 รอตรวจสอบ</option>
+                              <option value="processing">🔵 กำลังดำเนินการ</option>
+                              <option value="completed">🟢 สำเร็จ</option>
+                              <option value="cancelled">🔴 ยกเลิก</option>
+                           </select>
+                        </td>
+                        <td class="p-5 text-gray-500 text-sm">{{ new Date(order.created_at).toLocaleDateString() }}</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
           </div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-dark-800/50">
-              <tr>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">ผู้ใช้</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">จำนวน Token</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">สลิป</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">สถานะ</th>
-                <th class="text-left p-4 text-dark-400 text-sm font-medium">วันที่</th>
-                <th class="text-right p-4 text-dark-400 text-sm font-medium">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="req in tokenRequests" :key="req.id" class="border-b border-white/5 hover:bg-white/5">
-                <td class="p-4">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-white font-bold">
-                      {{ req.user?.username?.charAt(0).toUpperCase() }}
-                    </div>
-                    <div>
-                      <p class="text-white font-medium">{{ req.user?.username }}</p>
-                      <p class="text-dark-500 text-xs">{{ req.user?.email }}</p>
-                    </div>
-                  </div>
-                </td>
-                <td class="p-4">
-                  <p class="text-primary-400 font-bold text-lg">🪙 {{ req.amount?.toLocaleString() }}</p>
-                  <!-- Show transaction ref if available -->
-                  <p v-if="req.transaction_ref" class="text-dark-500 text-xs mt-1">
-                    🧾 {{ req.transaction_ref }}
-                  </p>
-                </td>
-                <td class="p-4">
-                  <!-- Slip Image Preview -->
-                  <div v-if="req.payment_proof_url" class="relative">
-                    <img 
-                      :src="`http://localhost:5000${req.payment_proof_url}`" 
-                      alt="Slip" 
-                      class="h-16 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                      @click="showSlipModal(req)"
-                    />
-                    <!-- Auto-approved badge -->
-                    <span v-if="req.is_auto_approved" class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                      ⚡
-                    </span>
-                  </div>
-                  <span v-else class="text-dark-500 text-sm">ไม่มีสลิป</span>
-                </td>
-                <td class="p-4">
-                  <span 
-                    class="badge"
-                    :class="{
-                      'bg-yellow-500/20 text-yellow-400': req.status === 'pending',
-                      'bg-green-500/20 text-green-400': req.status === 'approved',
-                      'bg-red-500/20 text-red-400': req.status === 'rejected'
-                    }"
-                  >
-                    {{ req.status === 'pending' ? '⏳ รอตรวจสอบ' : req.status === 'approved' ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธ' }}
-                  </span>
-                  <!-- Show auto-approved label -->
-                  <span v-if="req.is_auto_approved" class="block text-xs text-blue-400 mt-1">
-                    ⚡ อนุมัติอัตโนมัติ
-                  </span>
-                </td>
-                <td class="p-4 text-dark-400 text-sm">{{ req.created_at }}</td>
-                <td class="p-4 text-right">
-                  <div v-if="req.status === 'pending'" class="flex gap-2 justify-end">
-                    <button 
-                      @click="approveToken(req)" 
-                      class="px-3 py-1.5 rounded-lg text-sm bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
-                    >
-                      ✅ อนุมัติ
-                    </button>
-                    <button 
-                      @click="rejectToken(req)" 
-                      class="px-3 py-1.5 rounded-lg text-sm bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-                    >
-                      ❌ ปฏิเสธ
-                    </button>
-                  </div>
-                  <span v-else class="text-dark-500 text-sm">{{ req.admin_note || 'ดำเนินการแล้ว' }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+
+          <div v-if="activeTab === 'tokens'" class="w-full">
+            <div class="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <h2 class="text-lg font-bold text-white flex items-center gap-2">🪙 คำขอเติม Token</h2>
+              <div class="flex gap-2 text-xs">
+                <span class="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full border border-yellow-500/30">
+                  {{ tokenStats.pending || 0 }} รอตรวจสอบ
+                </span>
+                <span class="bg-green-500/20 text-green-400 px-3 py-1 rounded-full border border-green-500/30">
+                  {{ tokenStats.approved || 0 }} อนุมัติแล้ว
+                </span>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-black/20 text-gray-400 text-xs uppercase tracking-wider font-semibold">
+                  <tr>
+                    <th class="text-left p-5">ผู้ใช้</th>
+                    <th class="text-left p-5">จำนวน Token</th>
+                    <th class="text-left p-5">สลิป</th>
+                    <th class="text-left p-5">สถานะ</th>
+                    <th class="text-left p-5">วันที่</th>
+                    <th class="text-right p-5">การจัดการ</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                  <tr v-for="req in tokenRequests" :key="req.id" class="hover:bg-white/5 transition-colors">
+                    <td class="p-5">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-yellow-600 to-amber-600 flex items-center justify-center text-xs font-bold text-white">
+                           {{ req.user?.username?.charAt(0).toUpperCase() }}
+                        </div>
+                        <div>
+                          <p class="text-white text-sm font-medium">{{ req.user?.username }}</p>
+                          <p class="text-gray-500 text-xs">{{ req.user?.email }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="p-5">
+                      <p class="text-yellow-400 font-bold text-base font-mono">🪙 {{ req.amount?.toLocaleString() }}</p>
+                      <p v-if="req.transaction_ref" class="text-gray-500 text-xs mt-1 font-mono">
+                        REF: {{ req.transaction_ref }}
+                      </p>
+                    </td>
+                    <td class="p-5">
+                      <div v-if="req.payment_proof_url" class="relative group w-fit">
+                        <img 
+                          :src="`http://localhost:5000${req.payment_proof_url}`" 
+                          alt="Slip" 
+                          class="h-12 w-12 object-cover rounded-lg cursor-pointer border border-white/10 group-hover:border-white/30 transition-all"
+                          @click="showSlipModal(req)"
+                        />
+                        <div v-if="req.is_auto_approved" class="absolute -top-2 -right-2 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full shadow-lg">
+                          AUTO
+                        </div>
+                      </div>
+                      <span v-else class="text-gray-500 text-xs italic">ไม่มีสลิป</span>
+                    </td>
+                    <td class="p-5">
+                      <span 
+                        class="px-2 py-1 rounded-md text-xs font-medium border block w-fit"
+                        :class="{
+                          'bg-yellow-500/10 text-yellow-400 border-yellow-500/20': req.status === 'pending',
+                          'bg-green-500/10 text-green-400 border-green-500/20': req.status === 'approved',
+                          'bg-red-500/10 text-red-400 border-red-500/20': req.status === 'rejected'
+                        }"
+                      >
+                        {{ req.status === 'pending' ? 'รอตรวจสอบ' : req.status === 'approved' ? 'อนุมัติแล้ว' : 'ปฏิเสธ' }}
+                      </span>
+                    </td>
+                    <td class="p-5 text-gray-500 text-sm">{{ new Date(req.created_at).toLocaleDateString() }}</td>
+                    <td class="p-5 text-right">
+                      <div v-if="req.status === 'pending'" class="flex gap-2 justify-end">
+                        <button @click="approveToken(req)" class="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500 hover:text-white border border-green-500/20 transition-all text-sm" title="อนุมัติ">
+                          ✓
+                        </button>
+                        <button @click="rejectToken(req)" class="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all text-sm" title="ปฏิเสธ">
+                          ✕
+                        </button>
+                      </div>
+                      <span v-else class="text-xs text-gray-500 italic">{{ req.admin_note || 'เรียบร้อย' }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      <!-- Slip Detail Modal -->
-      <div v-if="selectedSlip" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50" @click="selectedSlip = null">
-        <div class="max-w-2xl bg-dark-900 rounded-2xl p-6 m-4" @click.stop>
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xl font-bold text-white">รายละเอียดสลิป</h3>
-            <button @click="selectedSlip = null" class="text-dark-400 hover:text-white text-2xl">&times;</button>
+      <div v-if="selectedSlip" class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click="selectedSlip = null">
+        <div class="max-w-xl w-full bg-[#1a1a1f] border border-white/10 rounded-2xl overflow-hidden shadow-2xl animate-fade-in-up" @click.stop>
+          <div class="p-5 border-b border-white/10 flex items-center justify-between bg-white/5">
+            <h3 class="text-lg font-bold text-white">🧾 รายละเอียดสลิป</h3>
+            <button @click="selectedSlip = null" class="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Slip Image -->
-            <div>
-              <img 
-                :src="`http://localhost:5000${selectedSlip.payment_proof_url}`" 
-                alt="Slip" 
-                class="w-full rounded-xl"
-              />
+          <div class="p-6">
+            <div class="flex flex-col md:flex-row gap-6">
+              <div class="w-full md:w-1/2 bg-black rounded-xl overflow-hidden border border-white/10 flex items-center justify-center">
+                <img 
+                  :src="`http://localhost:5000${selectedSlip.payment_proof_url}`" 
+                  alt="Slip Full" 
+                  class="w-full h-auto max-h-[400px] object-contain"
+                />
+              </div>
+              
+              <div class="w-full md:w-1/2 space-y-4">
+                <div class="bg-white/5 rounded-xl p-3 border border-white/5">
+                  <p class="text-gray-500 text-xs uppercase mb-1">ผู้ใช้</p>
+                  <p class="text-white font-medium">{{ selectedSlip.user?.username }}</p>
+                </div>
+                
+                <div class="bg-white/5 rounded-xl p-3 border border-white/5">
+                  <p class="text-gray-500 text-xs uppercase mb-1">จำนวน Token</p>
+                  <p class="text-yellow-400 font-bold text-xl font-mono">🪙 {{ selectedSlip.amount?.toLocaleString() }}</p>
+                </div>
+                
+                <div v-if="selectedSlip.transaction_ref" class="bg-white/5 rounded-xl p-3 border border-white/5">
+                  <p class="text-gray-500 text-xs uppercase mb-1">เลขอ้างอิง (Ref)</p>
+                  <p class="text-white font-mono text-sm break-all">{{ selectedSlip.transaction_ref }}</p>
+                </div>
+                
+                <div v-if="selectedSlip.sender_name" class="bg-white/5 rounded-xl p-3 border border-white/5">
+                  <p class="text-gray-500 text-xs uppercase mb-1">ชื่อผู้โอน</p>
+                  <p class="text-white text-sm">{{ selectedSlip.sender_name }}</p>
+                </div>
+                
+                <div v-if="selectedSlip.is_auto_approved" class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 flex items-center gap-2">
+                  <span class="text-blue-400">⚡</span>
+                  <p class="text-blue-400 text-xs">ตรวจสอบอัตโนมัติโดย SlipOK</p>
+                </div>
+              </div>
             </div>
-            
-            <!-- Slip Details -->
-            <div class="space-y-4">
-              <div class="glass-light rounded-xl p-4">
-                <p class="text-dark-400 text-sm">ผู้ใช้</p>
-                <p class="text-white font-bold">{{ selectedSlip.user?.username }}</p>
-              </div>
-              
-              <div class="glass-light rounded-xl p-4">
-                <p class="text-dark-400 text-sm">จำนวน Token</p>
-                <p class="text-primary-400 font-bold text-2xl">🪙 {{ selectedSlip.amount?.toLocaleString() }}</p>
-              </div>
-              
-              <div v-if="selectedSlip.transaction_ref" class="glass-light rounded-xl p-4">
-                <p class="text-dark-400 text-sm">เลขอ้างอิง</p>
-                <p class="text-white font-mono">{{ selectedSlip.transaction_ref }}</p>
-              </div>
-              
-              <div v-if="selectedSlip.sender_name" class="glass-light rounded-xl p-4">
-                <p class="text-dark-400 text-sm">ผู้โอน</p>
-                <p class="text-white">{{ selectedSlip.sender_name }}</p>
-              </div>
-              
-              <div v-if="selectedSlip.is_auto_approved" class="bg-blue-500/20 rounded-xl p-4">
-                <p class="text-blue-400 font-medium">⚡ อนุมัติอัตโนมัติโดย SlipOK</p>
-              </div>
-            </div>
+          </div>
+          
+          <div class="p-4 bg-black/20 border-t border-white/10 flex justify-end gap-3">
+             <button @click="selectedSlip = null" class="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">ปิดหน้าต่าง</button>
           </div>
         </div>
       </div>
@@ -341,8 +377,8 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 // ------------------------------------------
-// 🔑 บรรทัดนี้สำคัญมาก! สั่งใช้ Layout "admin" 
-// เพื่อไม่ให้ Navbar ของหน้าปกติโผล่มา
+// ⚠️ สำคัญมาก: คำสั่งนี้จะปิด Navbar
+// แต่ต้องมีไฟล์ layouts/admin.vue ด้วยนะครับ
 // ------------------------------------------
 definePageMeta({
   layout: 'admin'
@@ -368,6 +404,7 @@ const tabs = [
 
 const baseUrl = 'http://localhost:5000';
 
+// Fetch Data logic
 async function fetchData() {
   const token = localStorage.getItem('admin_token');
   if (!token) {
@@ -390,7 +427,6 @@ async function fetchData() {
     products.value = productsRes.data;
     orders.value = ordersRes.data;
     
-    // Fetch token requests separately
     fetchTokenRequests();
   } catch (err) {
     console.error('Failed to fetch admin data:', err);
@@ -400,6 +436,27 @@ async function fetchData() {
   }
 }
 
+async function fetchTokenRequests() {
+  const token = localStorage.getItem('admin_token');
+  if (!token) return;
+  
+  try {
+    const [requestsRes, statsRes] = await Promise.all([
+      axios.get(`${baseUrl}/api/admin/token-requests`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }),
+      axios.get(`${baseUrl}/api/admin/token-stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    ]);
+    tokenRequests.value = requestsRes.data.requests || [];
+    tokenStats.value = statsRes.data || {};
+  } catch (err) {
+    console.error('Failed to fetch token requests:', err);
+  }
+}
+
+// Action Handlers
 async function toggleBanUser(user) {
   const token = localStorage.getItem('admin_token');
   try {
@@ -414,7 +471,6 @@ async function toggleBanUser(user) {
 
 async function deleteUser(user) {
   if (!confirm(`ยืนยันการลบผู้ใช้ ${user.username}?`)) return;
-  
   const token = localStorage.getItem('admin_token');
   try {
     await axios.delete(`${baseUrl}/api/admin/users/${user.id}`, {
@@ -428,7 +484,6 @@ async function deleteUser(user) {
 
 async function deleteProduct(product) {
   if (!confirm(`ยืนยันการลบสินค้า ${product.name}?`)) return;
-  
   const token = localStorage.getItem('admin_token');
   try {
     await axios.delete(`${baseUrl}/api/admin/products/${product.id}`, {
@@ -452,39 +507,8 @@ async function updateOrderStatus(order) {
   }
 }
 
-function handleLogout() {
-  localStorage.removeItem('admin_token');
-  localStorage.removeItem('admin_user');
-  router.push('/admin-login');
-}
-
-function showSlipModal(req) {
-  selectedSlip.value = req;
-}
-
-async function fetchTokenRequests() {
-  const token = localStorage.getItem('admin_token');
-  if (!token) return;
-  
-  try {
-    const [requestsRes, statsRes] = await Promise.all([
-      axios.get(`${baseUrl}/api/admin/token-requests`, {
-        headers: { Authorization: `Bearer ${token}` }
-      }),
-      axios.get(`${baseUrl}/api/admin/token-stats`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-    ]);
-    tokenRequests.value = requestsRes.data.requests || [];
-    tokenStats.value = statsRes.data || {};
-  } catch (err) {
-    console.error('Failed to fetch token requests:', err);
-  }
-}
-
 async function approveToken(req) {
   if (!confirm(`อนุมัติ ${req.amount.toLocaleString()} Token ให้ ${req.user?.username}?`)) return;
-  
   const token = localStorage.getItem('admin_token');
   try {
     await axios.put(`${baseUrl}/api/admin/token-requests/${req.id}/approve`, {}, {
@@ -499,8 +523,7 @@ async function approveToken(req) {
 
 async function rejectToken(req) {
   const reason = prompt('ระบุเหตุผลในการปฏิเสธ (ถ้ามี):', '');
-  if (reason === null) return; // Cancelled
-  
+  if (reason === null) return;
   const token = localStorage.getItem('admin_token');
   try {
     await axios.put(`${baseUrl}/api/admin/token-requests/${req.id}/reject`, {
@@ -513,6 +536,16 @@ async function rejectToken(req) {
   } catch (err) {
     alert(err.response?.data?.msg || 'ปฏิเสธไม่สำเร็จ');
   }
+}
+
+function handleLogout() {
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_user');
+  router.push('/admin-login');
+}
+
+function showSlipModal(req) {
+  selectedSlip.value = req;
 }
 
 onMounted(() => {
