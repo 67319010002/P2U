@@ -34,7 +34,7 @@ def create_app():
     # รองรับทั้ง GET, POST, PUT, DELETE และ OPTIONS (Preflight)
     CORS(
         app,
-        resources={r"/*": {"origins": ["http://localhost:3000", "http://localhost:3001"]}},
+        resources={r"/*": {"origins": ["http://localhost:3000"]}},
         supports_credentials=True,
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization"]
