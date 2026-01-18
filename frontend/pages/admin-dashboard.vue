@@ -86,8 +86,8 @@
             {{ tab.name }}
             
             <span v-if="tab.id === 'tokens' && tokenStats.pending > 0" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
-            <span v-if="tab.id === 'verifications' && verifications.length > 0" class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-pink-500 text-[10px] font-bold text-white animate-pulse">
-               {{ verifications.length }}
+            <span v-if="tab.id === 'verifications' && pendingVerificationsCount > 0" class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-pink-500 text-[10px] font-bold text-white animate-pulse">
+               {{ pendingVerificationsCount }}
             </span>
           </button>
         </div>
@@ -172,7 +172,7 @@
                       <tr v-for="product in products" :key="product.id" class="hover:bg-white/5 transition-colors">
                          <td class="p-5">
                             <div class="flex items-center gap-4">
-                               <img :src="product.image_url || '/placeholder.png'" class="w-10 h-10 rounded-lg object-cover bg-gray-800" />
+                               <img :src="getImageUrl(product.image_url)" class="w-10 h-10 rounded-lg object-cover bg-gray-800" />
                                <span class="font-medium text-white">{{ product.name }}</span>
                             </div>
                          </td>
@@ -296,18 +296,32 @@
 
           <div v-if="activeTab === 'verifications'">
             <div class="p-6 border-b border-white/10 bg-white/5 flex justify-between items-center">
-              <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                🛡️ ตรวจสอบเอกสารผู้ขาย
-                <span v-if="verifications.length > 0" class="bg-pink-500/20 text-pink-300 border border-pink-500/30 px-2 py-0.5 rounded-full text-xs animate-pulse">
-                  {{ verifications.length }} waiting
-                </span>
-              </h2>
+              <div class="flex items-center gap-6">
+                 <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                   🛡️ ตรวจสอบเอกสารผู้ขาย
+                 </h2>
+                 
+                 <div class="flex gap-2 bg-black/40 p-1 rounded-lg">
+                    <button @click="setVerificationFilter('PENDING')" 
+                            class="px-4 py-1.5 rounded-md text-xs font-bold transition-all"
+                            :class="verificationFilter === 'PENDING' ? 'bg-pink-600 text-white shadow' : 'text-gray-400 hover:text-white'">
+                       ⏳ รอตรวจสอบ <span v-if="pendingVerificationsCount > 0">({{ pendingVerificationsCount }})</span>
+                    </button>
+                    <button @click="setVerificationFilter('HISTORY')" 
+                            class="px-4 py-1.5 rounded-md text-xs font-bold transition-all"
+                            :class="verificationFilter === 'HISTORY' ? 'bg-gray-700 text-white shadow' : 'text-gray-400 hover:text-white'">
+                       📜 ประวัติการอนุมัติ
+                    </button>
+                 </div>
+              </div>
             </div>
             
             <div class="p-6">
               <div v-if="verifications.length === 0" class="text-center py-20 bg-white/5 rounded-2xl border border-dashed border-white/10">
                 <span class="text-4xl block mb-2">✅</span>
-                <span class="text-gray-400">ไม่มีรายการค้างตรวจสอบ</span>
+                <span class="text-gray-400">
+                    {{ verificationFilter === 'PENDING' ? 'ไม่มีรายการค้างตรวจสอบ' : 'ยังไม่มีประวัติการอนุมัติ' }}
+                </span>
               </div>
 
               <div v-else class="grid grid-cols-1 gap-6">
@@ -318,15 +332,14 @@
                     <div>
                       <h3 class="text-xl font-bold text-white flex items-center gap-2">
                         🏠 {{ req.shop_name }}
-                        <span class="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-500/30">รอตรวจสอบ</span>
+                        <span v-if="req.status === 'PENDING'" class="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-500/30">รอตรวจสอบ</span>
+                        <span v-else-if="req.status === 'APPROVED'" class="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full border border-green-500/30">อนุมัติแล้ว ✅</span>
+                        <span v-else-if="req.status === 'REJECTED'" class="text-xs bg-red-500/20 text-red-300 px-2 py-0.5 rounded-full border border-red-500/30">ถูกปฏิเสธ ❌</span>
                       </h3>
-                      <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-400">
-                        <p>👤 ผู้สมัคร: <span class="text-white">{{ req.user_name }}</span></p>
-                        <p>📅 วันที่ส่ง: {{ new Date(req.submitted_at).toLocaleString('th-TH') }}</p>
-                      </div>
+                      <p class="text-sm text-gray-500 mt-1">Submission ID: <span class="font-mono text-gray-400">#{{ req.id }}</span></p>
                     </div>
                     
-                    <div class="flex gap-3 mt-4 md:mt-0">
+                    <div v-if="req.status === 'PENDING'" class="flex gap-3 mt-4 md:mt-0">
                       <button @click="handleRejectSeller(req.id)" 
                               class="px-4 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors text-sm font-semibold">
                         ไม่อนุมัติ ❌
@@ -336,31 +349,82 @@
                         อนุมัติ ✅
                       </button>
                     </div>
+                    
+                    <div v-else class="text-right mt-2 md:mt-0">
+                        <p class="text-xs text-gray-500">ดำเนินการเมื่อ</p>
+                        <p class="text-sm text-white font-mono">{{ new Date(req.processed_at || req.submitted_at).toLocaleString('th-TH') }}</p>
+                    </div>
+                  </div>
+
+                  <div v-if="req.status === 'REJECTED'" class="bg-red-900/20 border border-red-500/30 p-4 rounded-xl mb-6">
+                     <p class="text-red-300 text-sm font-bold">⚠️ เหตุผลที่ปฏิเสธ:</p>
+                     <p class="text-gray-300 text-sm mt-1">{{ req.rejection_reason || 'ไม่ระบุ' }}</p>
+                  </div>
+
+                  <div class="bg-black/20 rounded-xl p-5 border border-white/5 mb-6">
+                    <h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-4 border-l-2 border-pink-500 pl-2">ข้อมูลส่วนตัวผู้สมัคร</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                        <div>
+                            <p class="text-gray-500 text-xs mb-1">ชื่อ-นามสกุล (ตามบัตร)</p>
+                            <p class="text-white font-medium text-lg">{{ req.real_name || '-' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs mb-1">เลขบัตรประชาชน</p>
+                            <p class="text-white font-mono tracking-wider">{{ req.id_card_number || '-' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs mb-1">บัญชีผู้ใช้ (Username)</p>
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-[10px] text-white">
+                                    {{ req.user_name?.charAt(0).toUpperCase() }}
+                                </div>
+                                <span class="text-gray-300">{{ req.user_name }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs mb-1">เบอร์โทรศัพท์</p>
+                            <p class="text-gray-300">{{ req.phone_number || '-' }}</p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <p class="text-gray-500 text-xs mb-1">ที่อยู่</p>
+                            <p class="text-gray-300 bg-white/5 p-2 rounded-lg text-sm leading-relaxed border border-white/5">
+                                {{ req.address || '-' }}
+                            </p>
+                        </div>
+                         <div class="md:col-span-2 flex items-center gap-2 text-xs text-gray-500 mt-2">
+                            <span>📅 ส่งเมื่อ: {{ new Date(req.submitted_at).toLocaleString('th-TH') }}</span>
+                         </div>
+                    </div>
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="space-y-2">
                       <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">🪪 ด้านหน้าบัตร</p>
-                      <div class="relative h-48 bg-black/50 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in hover:border-pink-500/50 transition-colors" @click="openImageModal(req.id_front_url)">
-                        <img :src="req.id_front_url" class="w-full h-full object-contain" />
+                      <div class="relative h-48 bg-black/50 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in hover:border-pink-500/50 transition-colors" 
+                           @click="openImageModal(getImageUrl(req.id_front_url))">
+                        <img :src="getImageUrl(req.id_front_url)" class="w-full h-full object-contain" />
                         <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 transition-opacity">
                           <span class="text-xs bg-black/60 px-2 py-1 rounded text-white">🔍 ขยาย</span>
                         </div>
                       </div>
                     </div>
+                    
                     <div class="space-y-2">
                       <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">🔙 ด้านหลังบัตร</p>
-                      <div class="relative h-48 bg-black/50 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in hover:border-purple-500/50 transition-colors" @click="openImageModal(req.id_back_url)">
-                        <img :src="req.id_back_url" class="w-full h-full object-contain" />
+                      <div class="relative h-48 bg-black/50 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in hover:border-purple-500/50 transition-colors" 
+                           @click="openImageModal(getImageUrl(req.id_back_url))">
+                        <img :src="getImageUrl(req.id_back_url)" class="w-full h-full object-contain" />
                          <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 transition-opacity">
                           <span class="text-xs bg-black/60 px-2 py-1 rounded text-white">🔍 ขยาย</span>
                         </div>
                       </div>
                     </div>
+                    
                     <div class="space-y-2">
                       <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">🤳 ภาพเซลฟี่</p>
-                      <div class="relative h-48 bg-black/50 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in hover:border-blue-500/50 transition-colors" @click="openImageModal(req.selfie_url)">
-                        <img :src="req.selfie_url" class="w-full h-full object-contain" />
+                      <div class="relative h-48 bg-black/50 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in hover:border-blue-500/50 transition-colors" 
+                           @click="openImageModal(getImageUrl(req.selfie_url))">
+                        <img :src="getImageUrl(req.selfie_url)" class="w-full h-full object-contain" />
                          <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 transition-opacity">
                           <span class="text-xs bg-black/60 px-2 py-1 rounded text-white">🔍 ขยาย</span>
                         </div>
@@ -419,7 +483,11 @@ const users = ref([]);
 const products = ref([]);
 const orders = ref([]);
 const tokenRequests = ref([]);
-const verifications = ref([]); // State สำหรับเก็บรายการ eKYC
+const verifications = ref([]); 
+
+// Filter for Verifications
+const verificationFilter = ref('PENDING'); // 'PENDING' or 'HISTORY'
+const pendingVerificationsCount = ref(0); // เก็บจำนวนที่รอตรวจสอบ
 
 // Sub-stats
 const tokenStats = ref({});
@@ -434,8 +502,17 @@ const tabs = [
   { id: 'products', name: 'Products', icon: '📦' },
   { id: 'orders', name: 'Orders', icon: '🛒' },
   { id: 'tokens', name: 'Tokens', icon: '🪙' },
-  { id: 'verifications', name: 'Verify Sellers', icon: '🛡️' }, // New Tab
+  { id: 'verifications', name: 'Verify Sellers', icon: '🛡️' }, 
 ];
+
+// ------------------------------------------
+// Helper Function
+// ------------------------------------------
+const getImageUrl = (path) => {
+  if (!path) return '/placeholder.png'; // รูปสำรองถ้าไม่มีข้อมูล
+  if (path.startsWith('http')) return path; // ถ้าเป็น Full URL อยู่แล้วให้ใช้เลย
+  return `${baseUrl}${path}`; // ถ้าเป็น path ย่อ ให้ต่อด้วย http://localhost:5000
+};
 
 // ------------------------------------------
 // Data Fetching
@@ -488,16 +565,34 @@ async function fetchTokenRequests(headers) {
   }
 }
 
-// ✅ NEW: Fetch Pending Seller Verifications
+// Fetch Verifications based on current filter
 async function fetchVerifications(headers) {
   try {
-    const res = await axios.get(`${baseUrl}/api/admin/verifications?status=PENDING`, { headers });
-    verifications.value = res.data;
+    // 1. Fetch Pending Count (always update this)
+    const pendingRes = await axios.get(`${baseUrl}/api/admin/verifications?status=PENDING`, { headers });
+    pendingVerificationsCount.value = pendingRes.data.length;
+
+    // 2. Fetch Data based on filter
+    // ถ้า Filter เป็น PENDING ก็ใช้ข้อมูลที่ดึงมาแล้วได้เลย ไม่ต้องยิงซ้ำ
+    if (verificationFilter.value === 'PENDING') {
+       verifications.value = pendingRes.data;
+    } else {
+       // ถ้าเป็น HISTORY ให้ดึงใหม่
+       const historyRes = await axios.get(`${baseUrl}/api/admin/verifications?status=HISTORY`, { headers });
+       verifications.value = historyRes.data;
+    }
+
   } catch (err) {
     console.error('Failed to fetch verifications:', err);
-    // Fallback/Mock Data if API is not ready yet
-    // verifications.value = [];
   }
+}
+
+// Toggle Filter Function
+async function setVerificationFilter(filter) {
+    verificationFilter.value = filter;
+    const token = localStorage.getItem('admin_token');
+    const headers = { Authorization: `Bearer ${token}` };
+    await fetchVerifications(headers);
 }
 
 // ------------------------------------------
@@ -586,7 +681,7 @@ async function rejectToken(req) {
 }
 
 // ------------------------------------------
-// ✅ NEW Actions: Seller Verification
+// Actions: Seller Verification
 // ------------------------------------------
 async function handleApproveSeller(id) {
   if (!confirm('ยืนยันที่จะอนุมัติร้านค้านี้?')) return;
@@ -597,8 +692,8 @@ async function handleApproveSeller(id) {
   try {
     await axios.post(`${baseUrl}/api/admin/verify/${id}/approve`, {}, { headers });
     
-    // UI Update: Remove from list
-    verifications.value = verifications.value.filter(req => req.id !== id);
+    // Refresh List
+    await fetchVerifications(headers);
     // Update stats immediately if possible
     stats.value.total_sellers = (stats.value.total_sellers || 0) + 1;
     
@@ -619,7 +714,8 @@ async function handleRejectSeller(id) {
   try {
     await axios.post(`${baseUrl}/api/admin/verify/${id}/reject`, { reason }, { headers });
     
-    verifications.value = verifications.value.filter(req => req.id !== id);
+    // Refresh List
+    await fetchVerifications(headers);
     alert('ปฏิเสธคำขอเรียบร้อย');
   } catch (error) {
     console.error(error);

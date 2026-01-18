@@ -16,13 +16,47 @@ from email.message import EmailMessage
 # ✅ เพิ่ม import ที่จำเป็นสำหรับ JWT
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 
-from models import User, Address
+# ✅ Import Models
+from models import User, Address, CartItem, Product
 
 auth = Blueprint('auth', __name__)
 UPLOAD_FOLDER = 'static/uploads'
 
 
-# Function to send email
+# -----------------------------
+# 🛠 Helper Function: Save Image
+# -----------------------------
+def save_image(file, subfolder="misc"):
+    """ฟังก์ชันช่วยบันทึกรูปภาพและคืนค่า URL"""
+    if file:
+        # ✅ รองรับไฟล์รูปภาพพื้นฐานและ webp
+        ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+        
+        filename = secure_filename(file.filename)
+        # 🔍 Debug Log
+        print(f"DEBUG: Processing image upload: {filename}")
+
+        ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+        
+        if ext not in ALLOWED_EXTENSIONS:
+            print(f"ERROR: Invalid file extension '{ext}'")
+            raise ValueError(f"Invalid file type: .{ext} (Allowed: {', '.join(ALLOWED_EXTENSIONS)})")
+
+        # สร้าง Path: static/uploads/subfolder
+        folder_path = os.path.join(UPLOAD_FOLDER, subfolder)
+        os.makedirs(folder_path, exist_ok=True)
+
+        new_filename = f"{uuid.uuid4().hex}.{ext}"
+        save_path = os.path.join(folder_path, new_filename)
+        file.save(save_path)
+        
+        return f"/{UPLOAD_FOLDER}/{subfolder}/{new_filename}"
+    return None
+
+
+# -----------------------------
+# 📧 Function to send email
+# -----------------------------
 def send_verification_email(recipient_email, verification_code):
     try:
         sender_email = current_app.config['MAIL_USERNAME']
@@ -69,18 +103,12 @@ def register():
     if User.objects(email=email).first():
         return jsonify({"msg": "Email already exists"}), 400
 
+    # ใช้ Helper function บันทึกรูปโปรไฟล์
     if profile_image:
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-        filename = secure_filename(profile_image.filename)
-        ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
-        if ext not in ALLOWED_EXTENSIONS:
-            return jsonify({"msg": "Invalid image file type"}), 400
-
-        new_filename = f"{uuid.uuid4().hex}.{ext}"
-        save_path = os.path.join(UPLOAD_FOLDER, new_filename)
-        profile_image.save(save_path)
-        profile_image_url = f"/{UPLOAD_FOLDER}/{new_filename}"
+        try:
+            profile_image_url = save_image(profile_image, subfolder="profiles") or ""
+        except ValueError as e:
+            return jsonify({"msg": str(e)}), 400
 
     verification_code = ''.join(random.choices('0123456789', k=6))
     expiration_time = datetime.utcnow() + timedelta(minutes=15)
@@ -106,6 +134,7 @@ def register():
     send_verification_email(user.email, verification_code)
     
     return jsonify({"msg": "User registered successfully. Please check your email for the verification code."}), 201
+
 
 # -----------------------------
 # ✅ Verify Code
@@ -134,6 +163,7 @@ def verify_email_code():
         return jsonify({"msg": "Email verified successfully"}), 200
     else:
         return jsonify({"msg": "Invalid or expired verification code"}), 400
+
 
 # -----------------------------
 # ✅ Resend Code
@@ -164,6 +194,7 @@ def resend_verification_code():
 
     return jsonify({"msg": "A new verification code has been sent to your email."}), 200
 
+
 # -----------------------------
 # ✅ Login
 # -----------------------------
@@ -184,14 +215,12 @@ def login():
     if not user or not check_password_hash(user.password, password):
         return jsonify({"msg": "Invalid credentials"}), 401
     
-    # ✅ ส่วนที่แก้ไข: เพิ่มการตรวจสอบสถานะการยืนยันอีเมลกลับมา
     if not user.is_email_verified:
         return jsonify({"msg": "Please verify your email before logging in"}), 403
 
     if not user.is_active:
         return jsonify({"msg": "Account is inactive"}), 403
     
-    # ต้องมีการกำหนดค่า JWT_SECRET_KEY ใน config.py
     token = create_access_token(identity=str(user.id))
     return jsonify({
         "access_token": token,
@@ -202,13 +231,105 @@ def login():
             "full_name": user.full_name,
             "profile_image_url": user.profile_image_url or "",
             "is_seller": user.is_seller,
-            "is_email_verified": user.is_email_verified, # ✅ เพิ่ม field นี้เข้าไปใน response
+            "is_email_verified": user.is_email_verified,
             "shop_name": user.shop_name if user.is_seller else None
         }
     }), 200
 
+
 # -----------------------------
-# ✅ Register as Seller
+# ✅ Register Seller Application (With eKYC Images) - FIXED 🔧
+# -----------------------------
+@auth.route('/register-seller-application', methods=['POST'])
+@jwt_required()
+def register_seller_application():
+    user_id = get_jwt_identity()
+    user = User.objects(id=ObjectId(user_id)).first()
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    # ตรวจสอบอีเมลก่อนสมัคร
+    if not user.is_email_verified:
+        return jsonify({"msg": "Please verify your email before registering as a seller"}), 403
+    
+    # ตรวจสอบว่าเคยสมัครไปแล้วหรือยัง (เพื่อไม่ให้ส่งซ้ำ)
+    if user.verification_status in ['PENDING', 'APPROVED']:
+        return jsonify({"msg": "คุณได้ส่งคำขอสมัครร้านค้าไปแล้ว หรือเป็นร้านค้าอยู่แล้ว"}), 400
+
+    # รับข้อมูล Text (FormData)
+    shop_name = request.form.get('shop_name')
+    phone_number = request.form.get('phone_number')
+    id_card_number = request.form.get('id_card_number') # ✅ เพิ่มบรรทัดนี้: รับเลขบัตร ปชช.
+    
+    address_line = request.form.get('address_line')
+    district = request.form.get('district')
+    province = request.form.get('province')
+    postal_code = request.form.get('postal_code')
+
+    # รับไฟล์รูปภาพ
+    id_front = request.files.get('id_front_image')
+    id_back = request.files.get('id_back_image')
+    selfie = request.files.get('selfie_image')
+
+    # Debug: ดูข้อมูลที่รับมา
+    print(f"DEBUG: Seller Reg - Shop: {shop_name}, ID: {id_card_number}, Files: Front={id_front}, Back={id_back}, Selfie={selfie}")
+
+    # ✅ เพิ่ม id_card_number ในการตรวจสอบ
+    if not all([shop_name, phone_number, id_card_number, address_line, district, province, postal_code, id_front, id_back, selfie]):
+        return jsonify({"msg": "กรุณากรอกข้อมูลและอัปโหลดรูปภาพให้ครบถ้วน"}), 400
+
+    try:
+        # บันทึกรูป eKYC
+        id_front_url = save_image(id_front, subfolder="ekyc")
+        id_back_url = save_image(id_back, subfolder="ekyc")
+        selfie_url = save_image(selfie, subfolder="ekyc")
+
+        # อัปเดตข้อมูล User
+        user.shop_name = shop_name
+        user.phone_number = phone_number
+        user.id_card_number = id_card_number # ✅ เพิ่มบรรทัดนี้: บันทึกลง DB
+        
+        # บันทึก URL รูปภาพลงฐานข้อมูล
+        user.id_card_front_url = id_front_url
+        user.id_card_back_url = id_back_url
+        user.selfie_with_card_url = selfie_url
+        
+        # สร้าง Address ใหม่สำหรับร้านค้า
+        new_address = Address(
+            name=shop_name,
+            phone=phone_number,
+            address_line=address_line,
+            district=district,
+            province=province,
+            postal_code=postal_code,
+            is_default=True
+        )
+        user.addresses.append(new_address)
+
+        # ----------------------------------------------------
+        # 🔥 ตั้งสถานะเป็น PENDING และ is_seller=False
+        # ----------------------------------------------------
+        user.verification_status = 'PENDING'    # เพื่อให้ Admin เห็นใน Dashboard
+        user.verification_date = datetime.utcnow() # เก็บเวลาที่ส่งเรื่อง
+        user.is_seller = False                  # ยังไม่ให้เป็นผู้ขายจนกว่า Admin จะกดอนุมัติ
+
+        user.save()
+
+        return jsonify({"msg": "ส่งใบสมัครเรียบร้อยแล้ว กรุณารอแอดมินตรวจสอบ"}), 200
+
+    except ValueError as e:
+        # ✅ จับ Error เรื่องไฟล์โดยเฉพาะ และส่ง 400 (Bad Request)
+        print(f"File Upload Error: {e}")
+        return jsonify({"msg": str(e)}), 400
+
+    except Exception as e:
+        print(f"Error registering seller: {e}")
+        return jsonify({"msg": f"เกิดข้อผิดพลาด: {str(e)}"}), 500
+
+
+# -----------------------------
+# ✅ Register as Seller (Old JSON Version - Optional)
 # -----------------------------
 @auth.route('/register-seller', methods=['POST'])
 @jwt_required()
@@ -219,7 +340,6 @@ def register_seller():
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    # Check if the email is verified before allowing seller registration
     if not user.is_email_verified:
         return jsonify({"msg": "Please verify your email before registering as a seller"}), 403
 
@@ -252,7 +372,6 @@ def register_seller():
     try:
         user.is_seller = True
         user.shop_name = shop_name
-        
         user.phone_number = phone_number
         user.addresses.append(new_address)
         user.save()
@@ -287,6 +406,7 @@ def profile():
         "is_seller": user.is_seller,
         "shop_name": user.shop_name if user.is_seller else None,
         "is_email_verified": user.is_email_verified,
+        "verification_status": user.verification_status, # ส่งสถานะกลับไปด้วยเพื่อแสดงผลที่หน้า Profile
         "addresses": [
             {
                 "name": addr.name,
@@ -299,6 +419,7 @@ def profile():
             } for addr in user.addresses
         ]
     }), 200
+
 
 # -----------------------------
 # ✅ Update Profile Image
@@ -319,21 +440,13 @@ def update_profile_image():
     if not profile_image:
         return jsonify({"msg": "No image file provided"}), 400
 
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-    filename = secure_filename(profile_image.filename)
-    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
-    if ext not in ALLOWED_EXTENSIONS:
-        return jsonify({"msg": "Invalid image file type"}), 400
-
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    new_filename = f"{uuid.uuid4().hex}.{ext}"
-    save_path = os.path.join(UPLOAD_FOLDER, new_filename)
-    profile_image.save(save_path)
-
-    user.profile_image_url = f"/{UPLOAD_FOLDER}/{new_filename}"
-    user.save()
-
-    return jsonify({"profile_image_url": user.profile_image_url}), 200
+    try:
+        url = save_image(profile_image, subfolder="profiles")
+        user.profile_image_url = url
+        user.save()
+        return jsonify({"profile_image_url": user.profile_image_url}), 200
+    except ValueError as e:
+        return jsonify({"msg": str(e)}), 400
 
 
 # -----------------------------
@@ -351,7 +464,6 @@ def get_wishlist():
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    from models import Product
     wishlist_items = []
     for product_ref in user.wishlist:
         try:
@@ -392,13 +504,11 @@ def add_to_wishlist(product_id):
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    from models import Product
     try:
         product = Product.objects.get(id=ObjectId(product_id))
     except:
         return jsonify({"msg": "Product not found"}), 404
 
-    # Check if already in wishlist
     if product in user.wishlist:
         return jsonify({"msg": "Product already in wishlist"}), 400
 
@@ -423,7 +533,6 @@ def remove_from_wishlist(product_id):
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    from models import Product
     try:
         product = Product.objects.get(id=ObjectId(product_id))
     except:
@@ -453,7 +562,6 @@ def check_wishlist(product_id):
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    from models import Product
     try:
         product = Product.objects.get(id=ObjectId(product_id))
         in_wishlist = product in user.wishlist
@@ -462,21 +570,20 @@ def check_wishlist(product_id):
 
     return jsonify({"in_wishlist": in_wishlist}), 200
 
+
 # -----------------------------
-# ✅ Get Cart (ดึงตะกร้าของฉัน)
+# ✅ Get Cart
 # -----------------------------
 @auth.route('/cart', methods=['GET'])
 @jwt_required()
 def get_cart():
     user_id = get_jwt_identity()
-    # ดึง CartItem ทั้งหมดที่เป็นของ User คนนี้
-    # ใช้ .select_related() เพื่อดึงข้อมูลสินค้า (Product) มาทีเดียวเลย
     cart_items = CartItem.objects(user=ObjectId(user_id)).select_related()
     
     result = []
     for item in cart_items:
         p = item.product
-        if p: # เช็คเผื่อสินค้าโดนลบไปแล้ว
+        if p:
             result.append({
                 "cart_item_id": str(item.id),
                 "id": str(p.id),
@@ -492,23 +599,21 @@ def get_cart():
             
     return jsonify({"cart": result}), 200
 
+
 # -----------------------------
-# ✅ Add to Cart (เพิ่ม/อัปเดตจำนวน)
+# ✅ Add to Cart
 # -----------------------------
 @auth.route('/cart/add/<product_id>', methods=['POST'])
 @jwt_required()
 def add_to_cart(product_id):
     user_id = get_jwt_identity()
     
-    # ตรวจสอบว่ามีสินค้านี้ในตะกร้าของ User คนนี้หรือยัง
     cart_item = CartItem.objects(user=ObjectId(user_id), product=ObjectId(product_id)).first()
     
     if cart_item:
-        # ถ้ามีแล้ว ให้บวกจำนวนเพิ่มไป 1
         cart_item.quantity = float(cart_item.quantity) + 1
         cart_item.save()
     else:
-        # ถ้ายังไม่มี ให้สร้างใหม่
         new_item = CartItem(
             user=ObjectId(user_id),
             product=ObjectId(product_id),

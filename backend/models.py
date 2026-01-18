@@ -34,9 +34,13 @@ class User(Document):
     phone_number = StringField()
     addresses = ListField(EmbeddedDocumentField(Address))
 
+    # ===== Seller Info =====
     is_seller = BooleanField(default=False)
     is_admin = BooleanField(default=False)
     shop_name = StringField()
+    
+    # ✅ เพิ่ม Field นี้เพื่อเก็บเลขบัตรประชาชน
+    id_card_number = StringField()
     
     is_active = BooleanField(default=True)
     is_email_verified = BooleanField(default=False)
@@ -48,7 +52,7 @@ class User(Document):
 
     # ===== ระบบ Coin =====
     coin_balance = IntField(default=0)
-    token_balance = IntField(default=0)  # เพิ่ม field นี้เพื่อให้ตรงกับ DB
+    token_balance = IntField(default=0)
     topup_transactions = ListField(EmbeddedDocumentField(TopupTransaction))
 
     # ===== ฟิลด์สำหรับ AI Ranking =====
@@ -67,17 +71,24 @@ class User(Document):
     last_check_in = DateTimeField()
     total_spent = FloatField(default=0.0)
 
-    # ===== Identity Verification =====
+    # ===== Identity Verification (eKYC) =====
     is_phone_verified = BooleanField(default=False)
     phone_verification_code = StringField()
     phone_verification_expiry = DateTimeField()
-    is_id_verified = BooleanField(default=False)
+    
+    # สถานะการยืนยันตัวตน (UNVERIFIED, PENDING, APPROVED, REJECTED)
+    verification_status = StringField(default='UNVERIFIED', choices=['UNVERIFIED', 'PENDING', 'APPROVED', 'REJECTED'])
+    is_id_verified = BooleanField(default=False) 
+    
     id_card_front_url = StringField()
     id_card_back_url = StringField()
+    selfie_with_card_url = StringField()
+    
     verification_date = DateTimeField()
+    rejection_reason = StringField() 
 
     # ===== Referral System =====
-    referral_code = StringField()  # รหัสแนะนำของผู้ใช้
+    referral_code = StringField()
 
     meta = {'collection': 'users'}
 
@@ -91,7 +102,7 @@ class Product(Document):
     video_url = StringField()
     view_360_images = ListField(StringField())
     category = StringField(default='all')
-    stock = IntField(default=0)  # จำนวนสินค้าในคลัง
+    stock = IntField(default=0)
     seller = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
     created_at = DateTimeField(default=datetime.utcnow)
     meta = {'collection': 'products'}
@@ -109,7 +120,6 @@ class Order(Document):
     user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
     items = ListField(ReferenceField('CartItem'))
     total_price = DecimalField(required=True, min_value=0)
-    # ✅ เพิ่ม choices เพื่อป้องกันการเก็บค่าสถานะที่ผิดพลาด
     status = StringField(default='pending', choices=['pending', 'paid', 'processing', 'completed', 'cancelled'])
     created_at = DateTimeField(default=datetime.utcnow)
     meta = {'collection': 'orders'}
@@ -128,7 +138,6 @@ class Notification(Document):
     user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
     title = StringField(required=True)
     message = StringField(required=True)
-    # ✅ แก้ไข: เพิ่ม 'order_update' เข้าไปใน choices เพื่อแก้ปัญหา ValidationError
     type = StringField(default='info', choices=['info', 'order', 'order_update', 'review', 'promo', 'system'])
     is_read = BooleanField(default=False)
     link = StringField()
@@ -238,19 +247,19 @@ class PriceStatistics(Document):
 # -------- Token Request Model (Admin Approval) --------
 class TokenRequest(Document):
     user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
-    amount = IntField(required=True)  # จำนวน Token ที่ต้องการ
-    payment_proof_url = StringField()  # หลักฐานการชำระเงิน (optional)
+    amount = IntField(required=True)
+    payment_proof_url = StringField()
     status = StringField(default='pending', choices=['pending', 'approved', 'rejected'])
-    admin_note = StringField()  # หมายเหตุจาก admin
-    approved_by = ReferenceField('User')  # Admin ที่อนุมัติ
+    admin_note = StringField()
+    approved_by = ReferenceField('User')
     created_at = DateTimeField(default=datetime.utcnow)
     processed_at = DateTimeField()
     
     # ===== SlipOK Verification Fields =====
-    slip_verify_data = StringField()  # JSON data จาก SlipOK API
-    transaction_ref = StringField()  # เลขอ้างอิงธุรกรรมจากสลิป
-    verified_amount = IntField()  # ยอดเงินที่ตรวจสอบได้จากสลิป
-    sender_name = StringField()  # ชื่อผู้โอน
-    is_auto_approved = BooleanField(default=False)  # เป็น auto-approve หรือไม่
+    slip_verify_data = StringField()
+    transaction_ref = StringField()
+    verified_amount = IntField()
+    sender_name = StringField()
+    is_auto_approved = BooleanField(default=False)
     
     meta = {'collection': 'token_requests', 'ordering': ['-created_at']}

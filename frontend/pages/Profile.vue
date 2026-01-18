@@ -64,15 +64,22 @@
               </div>
 
               <div class="w-full grid grid-cols-2 gap-3">
-                <button @click="user.is_seller ? router.push('/seller-dashboard') : router.push('/Registerseller')"
-                  class="py-2.5 rounded-xl text-xs font-bold transition-all border border-pink-500/30 hover:border-pink-500 bg-pink-500/10 text-pink-400 hover:bg-pink-500 hover:text-white">
-                  {{ user.is_seller ? 'จัดการร้านค้า' : 'สมัครเป็นผู้ขาย' }}
+                <button @click="handleSellerAction"
+                  :class="sellerButtonClass"
+                  class="py-2.5 rounded-xl text-xs font-bold transition-all border shadow-lg flex items-center justify-center gap-1">
+                  {{ sellerButtonText }}
                 </button>
+                
                 <button @click="router.push('/ai')"
                   class="py-2.5 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-purple-600 to-pink-600 hover:to-pink-500 text-white shadow-lg shadow-purple-900/20">
                   🤖 ระบบ AI
                 </button>
               </div>
+              
+              <div v-if="user.verification_status === 'REJECTED'" class="mt-3 text-[10px] text-red-400 bg-red-500/10 p-2 rounded-lg border border-red-500/20 w-full">
+                 ⚠️ การสมัครครั้งก่อนถูกปฏิเสธ กรุณาสมัครใหม่
+              </div>
+
             </div>
           </div>
 
@@ -111,11 +118,11 @@
                   class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
                 <div class="grid grid-cols-3 gap-2">
                    <input v-model="newAddress.district" placeholder="District" 
-                    class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
+                   class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
                    <input v-model="newAddress.province" placeholder="Province" 
-                    class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
+                   class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
                    <input v-model="newAddress.postal_code" placeholder="Zip" 
-                    class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
+                   class="bg-[#0b0b0f] border border-gray-700 text-white p-2.5 rounded-lg text-xs outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all w-full" required />
                 </div>
                 
                 <div class="flex items-center gap-2 mt-2">
@@ -300,10 +307,43 @@ const getFullImageUrl = (path) => {
 
 const userProfileImage = computed(() => {
   if (!user.value || !user.value.profile_image_url) return defaultProfile
-  // เพิ่ม timestamp เพื่อแก้ปัญหา Browser cache รูปเก่า
   const url = getFullImageUrl(user.value.profile_image_url)
   return `${url}${url.includes('?') ? '&' : '?'}t=${imageTimestamp.value}`
 })
+
+// ✅ Logic: ปุ่มผู้ขาย (คำนวณ Text และ Class ตาม Status)
+const sellerButtonText = computed(() => {
+  if (user.value?.is_seller) return 'จัดการร้านค้า';
+  if (user.value?.verification_status === 'PENDING') return '⏳ รอตรวจสอบ';
+  if (user.value?.verification_status === 'REJECTED') return '❌ สมัครใหม่';
+  return 'สมัครเป็นผู้ขาย';
+});
+
+const sellerButtonClass = computed(() => {
+  if (user.value?.is_seller) {
+    return 'border-pink-500/30 hover:border-pink-500 bg-pink-500/10 text-pink-400 hover:bg-pink-500 hover:text-white';
+  }
+  if (user.value?.verification_status === 'PENDING') {
+    return 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400 cursor-not-allowed';
+  }
+  if (user.value?.verification_status === 'REJECTED') {
+    return 'border-red-500/30 hover:border-red-500 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white';
+  }
+  // Default (สมัครใหม่)
+  return 'border-pink-500/30 hover:border-pink-500 bg-pink-500/10 text-pink-400 hover:bg-pink-500 hover:text-white';
+});
+
+const handleSellerAction = () => {
+  if (user.value?.is_seller) {
+    router.push('/seller-dashboard');
+  } else if (user.value?.verification_status === 'PENDING') {
+    // ไม่ทำอะไร หรือแจ้งเตือน
+    alert('เอกสารของคุณกำลังอยู่ในระหว่างการตรวจสอบโดยแอดมิน');
+  } else {
+    // กรณี REJECTED หรือ ยังไม่เคยสมัคร
+    router.push('/Registerseller');
+  }
+};
 
 // Logic: Wishlist
 const fetchWishlist = async () => {
@@ -406,9 +446,7 @@ const addOrUpdateAddress = async () => {
     const res = await axios({ method, url: endpoint, data: newAddress.value, headers: { Authorization: `Bearer ${token}` } })
     user.value.addresses = res.data.addresses
     
-    // อัปเดตข้อมูลใน LocalStorage ด้วย
     updateLocalStorageUser(user.value);
-    
     resetForm()
   } catch (err) { console.error(err) }
 }
@@ -424,7 +462,6 @@ const deleteAddress = async (i) => {
       const res = await axios.delete(`${baseURL}/api/profile/address/${i}`, { headers: { Authorization: `Bearer ${token}` } })
       user.value.addresses = res.data.addresses
       
-      // อัปเดตข้อมูลใน LocalStorage ด้วย
       updateLocalStorageUser(user.value);
       
     } catch (err) { console.error(err) }
@@ -476,12 +513,9 @@ const saveCroppedImage = () => {
         } 
       })
       
-      // 1. อัปเดต state ปัจจุบัน
       user.value.profile_image_url = res.data.profile_image_url
-      imageTimestamp.value = Date.now() // Force refresh รูปในหน้านี้
+      imageTimestamp.value = Date.now() 
 
-      // 2. อัปเดต LocalStorage และ Navbar
-      // เราต้อง merge ข้อมูลเดิมกับ URL ใหม่
       const updatedUser = { ...user.value, profile_image_url: res.data.profile_image_url };
       updateLocalStorageUser(updatedUser);
 
@@ -498,7 +532,6 @@ const saveCroppedImage = () => {
 // ฟังก์ชัน helper สำหรับอัปเดต LocalStorage และส่ง Event ไปยัง Navbar
 const updateLocalStorageUser = (updatedUser) => {
   localStorage.setItem('user', JSON.stringify(updatedUser));
-  // ส่ง custom event พร้อม data ไปยัง Navbar
   window.dispatchEvent(new CustomEvent('user-updated', { detail: updatedUser }));
 }
 

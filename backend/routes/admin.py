@@ -3,6 +3,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from werkzeug.security import check_password_hash
 from bson import ObjectId
 from functools import wraps
+from datetime import datetime
 
 from models import User, Product, Order, TokenRequest, Notification
 
@@ -277,8 +278,6 @@ def get_token_requests():
 @admin.route('/admin/token-requests/<request_id>/approve', methods=['PUT'])
 @admin_required
 def approve_token_request(request_id):
-    from datetime import datetime
-    
     admin_id = get_jwt_identity()
     admin_user = User.objects(id=ObjectId(admin_id)).first()
     
@@ -326,8 +325,6 @@ def approve_token_request(request_id):
 @admin.route('/admin/token-requests/<request_id>/reject', methods=['PUT'])
 @admin_required
 def reject_token_request(request_id):
-    from datetime import datetime
-    
     admin_id = get_jwt_identity()
     admin_user = User.objects(id=ObjectId(admin_id)).first()
     
@@ -384,3 +381,121 @@ def get_token_stats():
         "rejected": rejected_count,
         "total_approved_tokens": total_approved_tokens
     }), 200
+
+
+# =======================================================
+# ✅ NEW: Seller Verification APIs (eKYC) - FIXED 🔧
+# =======================================================
+
+# -----------------------------
+# 1. Get Pending Verifications (and History)
+# -----------------------------
+@admin.route('/admin/verifications', methods=['GET'])
+@admin_required
+def get_pending_verifications():
+    status = request.args.get('status', 'PENDING')
+    
+    # ✅ Logic ดึงประวัติ (HISTORY)
+    if status == 'HISTORY':
+        users = User.objects(verification_status__in=['APPROVED', 'REJECTED']).order_by('-verification_date')
+    else:
+        users = User.objects(verification_status=status)
+    
+    results = []
+    for user in users:
+        # ดึงที่อยู่ล่าสุด
+        address_str = "-"
+        if user.addresses:
+            addr = user.addresses[-1]
+            address_str = f"{addr.address_line} {addr.district} {addr.province} {addr.postal_code}"
+
+        results.append({
+            "id": str(user.id),
+            "shop_name": user.shop_name,
+            "user_name": user.username,
+            "real_name": user.full_name, 
+            "phone_number": user.phone_number,
+            "address": address_str,
+            "submitted_at": (user.created_at).isoformat(),
+            # ✅ เพิ่มข้อมูลสำหรับหน้า History
+            "processed_at": (user.verification_date or datetime.utcnow()).isoformat() if user.verification_date else None,
+            "rejection_reason": getattr(user, 'rejection_reason', '-'),
+            
+            # Images
+            "id_front_url": user.id_card_front_url,
+            "id_back_url": user.id_card_back_url,
+            "selfie_url": user.selfie_with_card_url,
+            
+            # ✅ ดึงเลขบัตรจาก DB จริงๆ
+            "id_card_number": getattr(user, 'id_card_number', '-'),
+            "status": user.verification_status
+        })
+
+    return jsonify(results), 200
+
+
+# -----------------------------
+# 2. Approve Seller
+# -----------------------------
+@admin.route('/admin/verify/<user_id>/approve', methods=['POST'])
+@admin_required
+def approve_seller(user_id):
+    try:
+        user = User.objects(id=ObjectId(user_id)).first()
+        if not user:
+            return jsonify({"msg": "User not found"}), 404
+
+        # อัปเดตสถานะ
+        user.verification_status = 'APPROVED'
+        user.is_seller = True
+        user.is_id_verified = True
+        user.verification_date = datetime.utcnow()
+        user.save()
+
+        # แจ้งเตือน
+        Notification(
+            user=user,
+            title="🎉 ยินดีด้วย! ร้านค้าของคุณได้รับการอนุมัติ",
+            message="คุณสามารถเริ่มลงขายสินค้าได้แล้ววันนี้",
+            type="system",
+            link="/shop-settings"
+        ).save()
+
+        return jsonify({"msg": f"Approved seller {user.username}"}), 200
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+
+
+# -----------------------------
+# 3. Reject Seller
+# -----------------------------
+@admin.route('/admin/verify/<user_id>/reject', methods=['POST'])
+@admin_required
+def reject_seller(user_id):
+    try:
+        data = request.get_json() or {}
+        reason = data.get('reason', 'ข้อมูลไม่ถูกต้อง')
+
+        user = User.objects(id=ObjectId(user_id)).first()
+        if not user:
+            return jsonify({"msg": "User not found"}), 404
+
+        # อัปเดตสถานะ
+        user.verification_status = 'REJECTED'
+        user.is_seller = False
+        user.rejection_reason = reason
+        user.verification_date = datetime.utcnow() # ✅ เก็บเวลาที่ปฏิเสธเพื่อใช้เรียงลำดับ History
+        user.save()
+
+        # แจ้งเตือน
+        Notification(
+            user=user,
+            title="⚠️ การสมัครร้านค้าไม่ผ่านการอนุมัติ",
+            message=f"เหตุผล: {reason}. กรุณาแก้ไขและส่งเอกสารใหม่",
+            type="system",
+            link="/partner-register"
+        ).save()
+
+        return jsonify({"msg": f"Rejected seller {user.username}"}), 200
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
