@@ -163,7 +163,10 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue';
+import { useRoute } from 'vue-router';
 import axios from 'axios';
+
+const route = useRoute();
 
 const conversations = ref([]);
 const selectedConv = ref(null);
@@ -264,7 +267,16 @@ function scrollToBottom() {
   }
 }
 
-onMounted(fetchConversations);
+onMounted(async () => {
+  await fetchConversations();
+  
+  if (route.query.conversationId) {
+    const conv = conversations.value.find(c => c.id === route.query.conversationId);
+    if (conv) {
+      selectConversation(conv);
+    }
+  }
+});
 </script>
 
 <style scoped>
