@@ -196,8 +196,7 @@ import {
   Store, 
   ShoppingCart, 
   Gavel, 
-  CalendarCheck, 
-  Target, 
+ 
   Building2, 
   BarChart3, 
   Coins, 
@@ -237,8 +236,7 @@ const menuItems = computed(() => [
   { name: "ร้านค้า", icon: Store, route: "/dashboard" },
   { name: "ตระกร้าสินค้า", icon: ShoppingCart, route: "/cart" },
   { name: "ประมูล", icon: Gavel, route: "/auction" },
-  { name: "เช็คอิน", icon: CalendarCheck, route: "/check-in" },
-  { name: "ภารกิจ", icon: Target, route: "/missions" },
+
   // Increased visibility for sellers/admins
   ...(user.value?.role === 'admin' || user.value?.is_seller ? [
      { name: "แอดมินจัดซื้อย่าย", icon: Building2, route: "/admin-purchasing" } 

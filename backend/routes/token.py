@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from bson import ObjectId
 from datetime import datetime
 
-from models import User, TokenRequest, Notification
+from models import User, TokenRequest, Notification, WalletHistory
 
 token_bp = Blueprint('token', __name__)
 
@@ -184,7 +184,20 @@ def verify_slip_and_topup():
         
         # Add tokens to user
         user.token_balance = (user.token_balance or 0) + amount
+        balance_before = user.token_balance or 0
+        user.token_balance = balance_before + amount
         user.save()
+        
+        # 🔹 Record Transaction (Top-up)
+        WalletHistory(
+            user=user,
+            type='topup',
+            amount=amount,
+            balance_before=balance_before,
+            balance_after=user.token_balance,
+            description="Auto Top-up via PromptPay",
+            reference_id=result['transaction_ref']
+        ).save()
         
         # Create notification
         Notification(
@@ -270,3 +283,33 @@ def upload_slip_for_review():
         "amount": amount,
         "slip_url": slip_url
     }), 201
+
+
+# -----------------------------
+# Transaction History (Unified)
+# -----------------------------
+@token_bp.route('/wallet/history', methods=['GET'])
+@jwt_required()
+def get_wallet_history():
+    user_id = get_jwt_identity()
+    user = User.objects(id=ObjectId(user_id)).first()
+    
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    
+    history = WalletHistory.objects(user=user).order_by('-created_at')
+    
+    result = []
+    for h in history:
+        result.append({
+            "id": str(h.id),
+            "type": h.type,
+            "amount": h.amount,
+            "balance_before": h.balance_before,
+            "balance_after": h.balance_after,
+            "description": h.description,
+            "created_at": h.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        })
+    
+    return jsonify({"history": result}), 200
+

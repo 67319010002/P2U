@@ -4,7 +4,7 @@ from bson import ObjectId
 from mongoengine.errors import DoesNotExist
 from datetime import datetime
 
-from models import User, Order, CartItem, Product, Notification
+from models import User, Order, CartItem, Product, Notification, WalletHistory
 
 orders = Blueprint('orders', __name__)
 
@@ -87,41 +87,89 @@ def create_order():
                     cart_item.save()  # ต้อง save ก่อนถึงจะ reference ได้
             
             if cart_item and cart_item.product:
+                # ✅ ป้องกันการซื้อสินค้าของตัวเอง
+                if cart_item.product.seller and cart_item.product.seller.id == user.id:
+                    return jsonify({"msg": f"ไม่สามารถซื้อสินค้าของตัวเองได้ ({cart_item.product.name})"}), 400
+                
                 final_cart_items.append(cart_item)
                 total_price += float(cart_item.product.price) * int(cart_item.quantity)
 
         if not final_cart_items:
             return jsonify({"msg": "ไม่พบข้อมูลสินค้าที่ต้องการสั่งซื้อในระบบเพคะ"}), 400
         
+        # ✅ ตรวจสอบยอด Token ของผู้ซื้อ
+        user.reload()  # Reload เพื่อให้ได้ข้อมูลล่าสุด
+        current_balance = user.token_balance or 0
+        
+        if current_balance < total_price:
+            return jsonify({"msg": f"Token ไม่เพียงพอเพคะ (ต้องการ {total_price} แต่มี {current_balance})"}), 400
+        
+        # ✅ หัก Token ผู้ซื้อทันที
+        balance_before = current_balance
+        user.token_balance = current_balance - int(total_price)
+        user.save()
+
         new_order = Order(
             user=user,
             items=final_cart_items,
             total_price=total_price,
-            status='pending',
+            status='paid',  # ✅ จ่ายแล้วทันที
             created_at=datetime.utcnow()
         )
         new_order.save()
+
+        # 🔹 Record Transaction (Buyer) - AFTER order is created
+        WalletHistory(
+            user=user,
+            type='payment',
+            amount=-int(total_price),
+            balance_before=balance_before,
+            balance_after=user.token_balance,
+            description=f"Purchase Order #{str(new_order.id)[-6:]}",
+            reference_id=str(new_order.id)
+        ).save()
         
-        # แจ้งเตือนผู้ขายว่ามีออเดอร์ใหม่ (สถานะยังเป็น pending)
+        # แจ้งเตือนผู้ขายและโอน Token ให้ผู้ขาย
         seller_notified = set()
         for item in final_cart_items:
             seller = item.product.seller
             if seller:
                 seller_id_str = str(seller.id)
+                
+                # ✅ โอน Token ให้ผู้ขาย
+                item_total = float(item.product.price) * int(item.quantity)
+                seller_balance_before = seller.token_balance or 0
+                
+                seller.token_balance = seller_balance_before + int(item_total)
+                seller.total_sales = (getattr(seller, 'total_sales', 0) or 0) + item_total
+                seller.save()
+                
+                # 🔹 Record Transaction (Seller)
+                WalletHistory(
+                    user=seller,
+                    type='income',
+                    amount=int(item_total),
+                    balance_before=seller_balance_before,
+                    balance_after=seller.token_balance,
+                    description=f"Sales from Order #{str(new_order.id)[-6:]}",
+                    reference_id=str(new_order.id)
+                ).save()
+                
                 if seller_id_str not in seller_notified:
                     Notification(
                         user=seller,
-                        title="ยอดขายใหม่ ✨",
-                        message=f"คุณได้รับออเดอร์ใหม่จากคุณ {user.username} แล้วเพคะ",
+                        title="You got an order! 💰",
+                        message=f"คุณได้รับออเดอร์ใหม่จาก {user.username} และได้รับ {int(item_total)} Token แล้วเพคะ",
                         type="order",
                         link="/seller-dashboard"
                     ).save()
                     seller_notified.add(seller_id_str)
         
         return jsonify({
-            "msg": "สร้างคำสั่งซื้อสำเร็จแล้วเพคะ! ✨",
+            "msg": "สั่งซื้อสำเร็จและชำระเงินเรียบร้อยแล้วเพคะ! ✨",
             "order_id": str(new_order.id),
-            "total_price": total_price
+            "total_price": total_price,
+            "remaining_balance": user.token_balance
         }), 201
     except Exception as e:
         return jsonify({"msg": f"เกิดข้อผิดพลาดที่ระบบ: {str(e)}"}), 500

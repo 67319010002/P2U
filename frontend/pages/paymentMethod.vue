@@ -130,6 +130,7 @@ const username = ref("");
 
 // รายการช่องทางชำระเงิน พร้อม Emoji หรือ Icon (สามารถเปลี่ยนเป็น <img> ได้)
 const paymentMethods = [
+  { id: 'token', name: 'Token Balance', icon: '🪙' },
   { id: 'mastercard', name: 'MasterCard / Visa', icon: '💳' },
   { id: 'truemoney', name: 'TrueMoney Wallet', icon: '📱' },
   { id: 'promptpay', name: 'PromptPay (QR Code)', icon: '💠' },

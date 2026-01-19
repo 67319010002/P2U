@@ -49,6 +49,11 @@ class User(Document):
     created_at = DateTimeField(default=datetime.utcnow)
 
     wishlist = ListField(ReferenceField('Product'))
+    
+    # ===== Follow System =====
+    followers = ListField(ReferenceField('User'))
+    following = ListField(ReferenceField('User'))
+
 
     # ===== ระบบ Coin =====
     coin_balance = IntField(default=0)
@@ -193,7 +198,7 @@ class Auction(Document):
     category = StringField(default='all')
     starting_price = DecimalField(required=True, min_value=0)
     current_price = DecimalField(required=True, min_value=0)
-    min_bid_increment = DecimalField(default=10)
+    min_bid_increment = DecimalField(default=100)  # ✅ Default 100 Token increment
     seller = ReferenceField('User', required=True)
     winner = ReferenceField('User')
     start_time = DateTimeField(default=datetime.utcnow)
@@ -202,6 +207,12 @@ class Auction(Document):
     is_ended = BooleanField(default=False)
     total_bids = IntField(default=0)
     created_at = DateTimeField(default=datetime.utcnow)
+    
+    # ===== Payment System =====
+    payment_deadline = DateTimeField()  # 45 minutes after auction ends
+    payment_status = StringField(default='pending', choices=['pending', 'paid', 'expired'])
+    invoice_conversation_id = StringField()  # Chat conversation for invoice
+    
     meta = {'collection': 'auctions'}
 
 # -------- AuctionBid Model --------
@@ -263,3 +274,17 @@ class TokenRequest(Document):
     is_auto_approved = BooleanField(default=False)
     
     meta = {'collection': 'token_requests', 'ordering': ['-created_at']}
+
+
+# -------- Wallet History (Unified Ledger) --------
+class WalletHistory(Document):
+    user = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
+    type = StringField(required=True, choices=['topup', 'payment', 'refund', 'income'])
+    amount = IntField(required=True)
+    balance_before = IntField(required=True)
+    balance_after = IntField(required=True)
+    description = StringField()
+    reference_id = StringField() # e.g. Order ID, TokenRequest ID
+    created_at = DateTimeField(default=datetime.utcnow)
+    
+    meta = {'collection': 'wallet_history', 'ordering': ['-created_at']}

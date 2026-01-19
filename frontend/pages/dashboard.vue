@@ -134,9 +134,14 @@
                    </div>
                    <div class="text-right">
                       <span class="block text-xs text-gray-400 mb-1">ผู้ขาย</span>
-                      <div class="flex items-center justify-end gap-2">
+                      <div 
+                        class="flex items-center justify-end gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                        @click="$router.push(`/shop/${selectedProduct.seller.id}`)"
+                      >
                          <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-[10px]">🏪</div>
-                         <span class="text-sm font-medium text-white">{{ selectedProduct.seller?.shop_name || selectedProduct.seller?.username }}</span>
+                         <span class="text-sm font-medium text-white hover:underline decoration-pink-500 underline-offset-4">
+                           {{ selectedProduct.seller?.shop_name || selectedProduct.seller?.username }}
+                         </span>
                       </div>
                    </div>
                 </div>

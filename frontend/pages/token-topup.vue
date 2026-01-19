@@ -185,32 +185,37 @@
                 </div>
 
                 <div 
-                  v-for="req in requests" 
-                  :key="req.id"
+                  v-for="item in requests" 
+                  :key="item.id"
                   class="group relative bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl p-4 transition-all duration-300 hover:border-amber-500/30"
                 > 
                   <div class="flex justify-between items-start">
                     <div class="flex items-start gap-4">
-                      <div class="p-3 rounded-xl" :class="getStatusIconBg(req.status)">
-                        <component :is="getStatusIcon(req.status)" class="w-5 h-5" :class="getStatusColor(req.status)" />
+                      <!-- Icon Box -->
+                      <div class="p-3 rounded-xl" :class="item.amount > 0 ? 'bg-green-500/10' : 'bg-red-500/10'">
+                        <ArrowUpRight v-if="item.amount > 0" class="w-5 h-5 text-green-500" />
+                        <ArrowDownLeft v-else class="w-5 h-5 text-red-500" />
                       </div>
+                      
                       <div>
-                        <p class="text-white font-bold text-lg leading-none mb-1">+{{ req.amount.toLocaleString() }}</p>
-                        <p class="text-xs text-gray-500 font-mono">{{ formatDate(req.created_at) }}</p>
+                        <!-- Amount -->
+                        <p class="font-bold text-lg leading-none mb-1" :class="item.amount > 0 ? 'text-green-400' : 'text-red-400'">
+                          {{ item.amount > 0 ? '+' : '' }}{{ item.amount.toLocaleString() }}
+                        </p>
+                        
+                        <!-- Description -->
+                        <p class="text-xs text-gray-400 font-medium mb-1">{{ item.description || item.type }}</p>
+                        
+                        <!-- Date -->
+                        <p class="text-[10px] text-gray-600 font-mono">{{ formatDate(item.created_at) }}</p>
                       </div>
                     </div>
                     
-                    <span class="px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider" :class="getStatusBadgeClass(req.status)">
-                      {{ req.status }}
-                    </span>
-                  </div>
-
-                  <!-- Details Slide Down -->
-                  <div v-if="req.payment_proof_url" class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-                     <span class="text-xs text-gray-500">หลักฐานการโอน</span>
-                     <button @click="showSlipModal(req.payment_proof_url)" class="text-xs text-amber-500 hover:text-amber-300 flex items-center gap-1">
-                       ดูรูปภาพ <ArrowUpRight class="w-3 h-3" />
-                     </button>
+                    <!-- Balance After -->
+                    <div class="text-right">
+                       <span class="text-xs text-gray-500 block">คงเหลือ</span>
+                       <span class="text-sm font-bold text-amber-200">{{ item.balance_after?.toLocaleString() }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -242,7 +247,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { 
   Coins, QrCode, UploadCloud, History, CheckCircle2, XCircle, Clock, 
-  ArrowUpRight, ImagePlus, Loader2, X, AlertCircle, ScanLine, AlertTriangle, ScrollText
+  ArrowUpRight, ImagePlus, Loader2, X, AlertCircle, ScanLine, AlertTriangle, ScrollText, ArrowDownLeft
 } from 'lucide-vue-next';
 
 const tokenBalance = ref(0);
@@ -383,10 +388,10 @@ async function fetchRequests() {
   const token = localStorage.getItem('token');
   if (!token) return;
   try {
-    const res = await axios.get(`${baseUrl}/api/token/my-requests`, {
+    const res = await axios.get(`${baseUrl}/api/wallet/history`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    requests.value = res.data.requests || [];
+    requests.value = res.data.history || [];
   } catch (err) { console.error(err); }
 }
 
