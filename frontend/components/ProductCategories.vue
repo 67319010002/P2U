@@ -1,18 +1,25 @@
 <template>
   <div class="mb-8">
-    <h2 class="text-lg font-semibold text-white mb-4">🏷️ หมวดหมู่สินค้า</h2>
-    <div class="flex flex-wrap gap-2">
-      <button 
-        v-for="cat in categories" 
-        :key="cat.id"
-        @click="selectCategory(cat.id)"
-        class="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200"
-        :class="selectedCategory === cat.id 
-          ? 'bg-gradient-to-r from-pink-500 to-purple-500 border-transparent text-white shadow-lg' 
-          : 'bg-gray-700/50 border border-gray-600 text-gray-300 hover:bg-gray-600 hover:border-gray-500'"
-      >
-        {{ cat.icon }} {{ cat.name }}
-      </button>
+    <div class="flex items-center gap-2 mb-4">
+      <Tags class="w-5 h-5 text-pink-500" />
+      <h2 class="text-lg font-bold text-white tracking-wide">หมวดหมู่สินค้า</h2>
+    </div>
+    
+    <div class="relative">
+      <div class="flex flex-wrap gap-3">
+        <button 
+          v-for="cat in categories" 
+          :key="cat.id"
+          @click="selectCategory(cat.id)"
+          class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 border shrink-0 backdrop-blur-md"
+          :class="selectedCategory === cat.id 
+            ? 'bg-gradient-to-r from-pink-600 to-purple-600 border-transparent text-white shadow-lg shadow-purple-900/40 scale-105' 
+            : 'bg-[#18181b]/80 border-white/5 text-gray-400 hover:text-white hover:bg-white/10 hover:border-white/20'"
+        >
+          <component :is="getCategoryIcon(cat.id)" class="w-4 h-4" :class="selectedCategory === cat.id ? 'text-white' : 'text-gray-500 group-hover:text-current'" />
+          {{ cat.name }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -20,32 +27,71 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { 
+  ShoppingBag, 
+  Smartphone, 
+  Shirt, 
+  Gamepad2, 
+  Sparkles, 
+  Home, 
+  Dumbbell, 
+  Utensils, 
+  BookOpen, 
+  Rocket, 
+  PawPrint, 
+  Car,
+  Tags,
+  LayoutGrid
+} from 'lucide-vue-next';
 
 const emit = defineEmits(['category-change']);
 
 const selectedCategory = ref('all');
 
-// Default categories (จะถูกแทนที่ด้วยข้อมูลจาก API)
+// Default categories (Fallback)
 const categories = ref([
-  { id: 'all', name: 'ทั้งหมด', icon: '🛍️' },
-  { id: 'electronics', name: 'อิเล็กทรอนิกส์', icon: '📱' },
-  { id: 'fashion', name: 'แฟชั่น', icon: '👗' },
-  { id: 'gaming', name: 'เกมมิ่ง', icon: '🎮' },
-  { id: 'beauty', name: 'ความงาม', icon: '💄' },
-  { id: 'home', name: 'บ้าน & สวน', icon: '🏠' },
-  { id: 'sports', name: 'กีฬา', icon: '⚽' },
-  { id: 'food', name: 'อาหาร', icon: '🍔' },
-  { id: 'books', name: 'หนังสือ', icon: '📚' },
-  { id: 'toys', name: 'ของเล่น', icon: '🧸' },
-  { id: 'pets', name: 'สัตว์เลี้ยง', icon: '🐶' },
-  { id: 'automotive', name: 'ยานยนต์', icon: '🚗' },
+  { id: 'all', name: 'ทั้งหมด' },
+  { id: 'electronics', name: 'อิเล็กทรอนิกส์' },
+  { id: 'fashion', name: 'แฟชั่น' },
+  { id: 'gaming', name: 'เกมมิ่ง' },
+  { id: 'beauty', name: 'ความงาม' },
+  { id: 'home', name: 'บ้าน & สวน' },
+  { id: 'sports', name: 'กีฬา' },
+  { id: 'food', name: 'อาหาร' },
+  { id: 'books', name: 'หนังสือ' },
+  { id: 'toys', name: 'ของเล่น' },
+  { id: 'pets', name: 'สัตว์เลี้ยง' },
+  { id: 'automotive', name: 'ยานยนต์' },
 ]);
+
+// Icon Mapping
+const iconMap = {
+  all: ShoppingBag,
+  electronics: Smartphone,
+  fashion: Shirt,
+  gaming: Gamepad2,
+  beauty: Sparkles,
+  home: Home,
+  sports: Dumbbell,
+  food: Utensils,
+  books: BookOpen,
+  toys: Rocket,
+  pets: PawPrint,
+  automotive: Car
+};
+
+function getCategoryIcon(id) {
+  return iconMap[id] || LayoutGrid; // Default icon if not found
+}
 
 const fetchCategories = async () => {
   try {
     const res = await axios.get('http://localhost:5000/api/categories');
     if (res.data && res.data.length > 0) {
-      categories.value = res.data;
+      categories.value = res.data.map(c => ({
+        ...c,
+        name: c.name || c.title 
+      }));
     }
   } catch (err) {
     console.log('Using default categories');
@@ -61,3 +107,13 @@ onMounted(() => {
   fetchCategories();
 });
 </script>
+
+<style scoped>
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>
