@@ -22,6 +22,9 @@ def get_auctions():
     for a in expired:
         end_auction(a)
     
+    # Check expired payments (45-min deadline passed)
+    check_expired_payments()
+    
     # Query auctions
     if category == 'all':
         auctions = Auction.objects(is_active=True, is_ended=False).order_by('-created_at')
@@ -204,80 +207,333 @@ def place_bid(auction_id):
 
 
 # -----------------------------
+# Constants & Helpers for Upload
+# -----------------------------
+import os
+import uuid
+
+UPLOAD_FOLDER = 'uploads/products'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_image(image_file):
+    if image_file and allowed_file(image_file.filename):
+        ext = image_file.filename.rsplit('.', 1)[1].lower()
+        unique_filename = f"{uuid.uuid4().hex}.{ext}"
+        file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+        image_file.save(file_path)
+        return f"/uploads/products/{unique_filename}"
+    return None
+
+
+# -----------------------------
 # Create Auction (Seller)
 # -----------------------------
 @auction.route('/auctions', methods=['POST'])
 @jwt_required()
 def create_auction():
     """Create a new auction"""
-    user_id = get_jwt_identity()
-    user = User.objects(id=ObjectId(user_id)).first()
-    
-    if not user or not user.is_seller:
-        return jsonify({"msg": "เฉพาะผู้ขายเท่านั้นที่สามารถสร้างการประมูลได้"}), 403
-    
-    data = request.get_json()
-    
-    title = data.get('title')
-    description = data.get('description', '')
-    image_url = data.get('image_url')
-    category = data.get('category', 'all')
-    starting_price = float(data.get('starting_price', 0))
-    duration_hours = int(data.get('duration_hours', 24))  # Default 24 hours
-    min_bid_increment = float(data.get('min_bid_increment', 10))
-    
-    if not title or starting_price <= 0:
-        return jsonify({"msg": "ต้องระบุชื่อและราคาเริ่มต้น"}), 400
-    
-    end_time = datetime.utcnow() + timedelta(hours=duration_hours)
-    
-    new_auction = Auction(
-        title=title,
-        description=description,
-        image_url=image_url,
-        category=category,
-        starting_price=starting_price,
-        current_price=starting_price,
-        min_bid_increment=min_bid_increment,
-        seller=user,
-        end_time=end_time
-    )
-    new_auction.save()
-    
-    return jsonify({
-        "msg": "สร้างการประมูลสำเร็จ!",
-        "auction_id": str(new_auction.id),
-        "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S")
-    }), 201
+    try:
+        user_id = get_jwt_identity()
+        user = User.objects(id=ObjectId(user_id)).first()
+        
+        if not user or not user.is_seller:
+            return jsonify({"msg": "เฉพาะผู้ขายเท่านั้นที่สามารถสร้างการประมูลได้"}), 403
+        
+        # Handle form-data (Multipart)
+        data = request.form
+        
+        title = data.get('title')
+        description = data.get('description', '')
+        image_url = data.get('image_url')
+        category = data.get('category', 'all')
+        starting_price = float(data.get('starting_price', 0))
+        duration_minutes = int(data.get('duration_minutes', 0))
+        try:
+            duration_hours = float(data.get('duration_hours', 24))
+        except ValueError:
+            duration_hours = 24
+            
+        min_bid_increment = float(data.get('min_bid_increment', 10))
+        
+        # Handle Image Upload if provided
+        if 'image' in request.files:
+            file = request.files['image']
+            if file.filename != '':
+                uploaded_url = save_image(file)
+                if uploaded_url:
+                    image_url = uploaded_url
+
+        if not title or starting_price <= 0:
+            return jsonify({"msg": "ต้องระบุชื่อและราคาเริ่มต้น"}), 400
+        
+        # Calculate end time
+        if duration_minutes > 0:
+            end_time = datetime.utcnow() + timedelta(minutes=duration_minutes)
+        else:
+            end_time = datetime.utcnow() + timedelta(hours=duration_hours)
+        
+        new_auction = Auction(
+            title=title,
+            description=description,
+            image_url=image_url,
+            category=category,
+            starting_price=starting_price,
+            current_price=starting_price,
+            min_bid_increment=min_bid_increment,
+            seller=user,
+            end_time=end_time
+        )
+        new_auction.save()
+        
+        return jsonify({
+            "msg": "สร้างการประมูลสำเร็จ!",
+            "auction_id": str(new_auction.id),
+            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S")
+        }), 201
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"msg": f"Internal Server Error: {str(e)}"}), 500
 
 
 # -----------------------------
 # Helper: End Auction
 # -----------------------------
 def end_auction(auction):
-    """End an auction and notify winner"""
+    """End an auction, set payment deadline, and send invoice via chat"""
+    from models import Conversation, Message
+    
     auction.is_ended = True
     auction.is_active = False
-    auction.save()
     
     if auction.winner:
+        # Set 45-minute payment deadline
+        auction.payment_deadline = datetime.utcnow() + timedelta(minutes=45)
+        auction.payment_status = 'pending'
+        
+        # Create or get conversation between winner and seller for invoice
+        existing_conv = Conversation.objects(
+            participants__all=[auction.winner, auction.seller]
+        ).first()
+        
+        if existing_conv:
+            conv = existing_conv
+        else:
+            conv = Conversation(
+                participants=[auction.winner, auction.seller]
+            )
+            conv.save()
+        
+        auction.invoice_conversation_id = str(conv.id)
+        
+        # Create invoice message
+        deadline_str = (auction.payment_deadline + timedelta(hours=7)).strftime("%H:%M น.")  # Convert to Thai time
+        invoice_message = f"""🧾 **ใบแจ้งชำระเงิน - การประมูล**
+
+📦 สินค้า: {auction.title}
+💰 ราคาชนะ: {int(auction.current_price):,} Token
+
+⏰ กรุณาชำระภายใน: **{deadline_str}** (45 นาที)
+
+หากไม่ชำระภายในเวลาที่กำหนด การประมูลจะถูกยกเลิกและ Token จะถูกคืนให้ผู้ประมูลคนก่อนหน้า
+
+กดปุ่ม "ชำระเงิน" ในหน้ารายละเอียดการประมูลเพื่อยืนยันการชำระ
+/auction/{str(auction.id)}"""
+        
+        Message(
+            conversation=conv,
+            sender=auction.seller,
+            content=invoice_message
+        ).save()
+        
+        # Update conversation last message
+        conv.last_message = "🧾 ใบแจ้งชำระเงิน - การประมูล"
+        conv.last_message_at = datetime.utcnow()
+        conv.save()
+        
         # Notify winner
         Notification(
             user=auction.winner,
             title="🎉 คุณชนะการประมูล!",
-            message=f"คุณชนะการประมูล '{auction.title}' ในราคา ฿{float(auction.current_price):,.0f}",
+            message=f"คุณชนะ '{auction.title}' ในราคา {int(auction.current_price):,} Token - กรุณาชำระภายใน 45 นาที",
             type="order",
-            link=f"/auctions/{str(auction.id)}"
+            link=f"/chat?conversationId={str(conv.id)}"
         ).save()
         
         # Notify seller
         Notification(
             user=auction.seller,
             title="🔨 การประมูลสิ้นสุด",
-            message=f"'{auction.title}' ขายได้ในราคา ฿{float(auction.current_price):,.0f}",
+            message=f"'{auction.title}' ขายได้ในราคา {int(auction.current_price):,} Token",
             type="order",
-            link=f"/auctions/{str(auction.id)}"
+            link=f"/chat?conversationId={str(conv.id)}"
         ).save()
+    
+    auction.save()
+
+
+# -----------------------------
+# Pay for Won Auction
+# -----------------------------
+@auction.route('/auctions/<auction_id>/pay', methods=['POST'])
+@jwt_required()
+def pay_auction(auction_id):
+    """Winner pays for the auction using tokens (already held)"""
+    from models import Conversation, Message, WalletHistory
+    
+    user_id = get_jwt_identity()
+    user = User.objects(id=ObjectId(user_id)).first()
+    
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    
+    try:
+        a = Auction.objects.get(id=ObjectId(auction_id))
+    except:
+        return jsonify({"msg": "Auction not found"}), 404
+    
+    # Verify this is the winner
+    if not a.winner or str(a.winner.id) != user_id:
+        return jsonify({"msg": "คุณไม่ใช่ผู้ชนะการประมูลนี้"}), 403
+    
+    # Check if already paid
+    if a.payment_status == 'paid':
+        return jsonify({"msg": "ชำระเงินแล้ว"}), 400
+    
+    # Check if expired
+    if a.payment_status == 'expired':
+        return jsonify({"msg": "หมดเวลาชำระเงินแล้ว"}), 400
+    
+    # Check deadline
+    if a.payment_deadline and datetime.utcnow() > a.payment_deadline:
+        a.payment_status = 'expired'
+        a.save()
+        return jsonify({"msg": "หมดเวลาชำระเงินแล้ว (เกิน 45 นาที)"}), 400
+    
+    # Token is already held from bidding, now transfer to seller
+    amount = int(a.current_price)
+    seller = a.seller
+    
+    seller_balance_before = seller.token_balance or 0
+    seller.token_balance = seller_balance_before + amount
+    seller.total_sales = (seller.total_sales or 0) + amount
+    seller.save()
+    
+    # Record transaction for seller
+    WalletHistory(
+        user=seller,
+        type='income',
+        amount=amount,
+        balance_before=seller_balance_before,
+        balance_after=seller.token_balance,
+        description=f"Auction Sale: {a.title[:30]}",
+        reference_id=str(a.id)
+    ).save()
+    
+    # Update auction status
+    a.payment_status = 'paid'
+    a.is_active = False  # ✅ Remove from auction list
+    a.save()
+    
+    # ✅ Create Order for purchase history
+    from models import Order
+    new_order = Order(
+        user=user,
+        items=[],  # Auction items don't have CartItem, so empty
+        total_price=amount,
+        status='paid',
+        created_at=datetime.utcnow()
+    )
+    new_order.save()
+    
+    # Record buyer transaction in WalletHistory (already deducted during bidding)
+    WalletHistory(
+        user=user,
+        type='payment',
+        amount=-amount,
+        balance_before=user.token_balance + amount,  # Approximate (was deducted during bid)
+        balance_after=user.token_balance,
+        description=f"Auction Purchase: {a.title[:30]}",
+        reference_id=str(new_order.id)
+    ).save()
+    
+    # Send confirmation message in chat
+    if a.invoice_conversation_id:
+        try:
+            conv = Conversation.objects.get(id=ObjectId(a.invoice_conversation_id))
+            Message(
+                conversation=conv,
+                sender=user,
+                content=f"✅ ชำระเงินสำเร็จ! {amount:,} Token ถูกโอนให้ผู้ขายแล้ว"
+            ).save()
+            conv.last_message = "✅ ชำระเงินสำเร็จ!"
+            conv.last_message_at = datetime.utcnow()
+            conv.save()
+        except:
+            pass
+    
+    # Notify seller
+    Notification(
+        user=seller,
+        title="💰 ได้รับเงินจากการประมูล",
+        message=f"คุณได้รับ {amount:,} Token จากการขาย '{a.title}'",
+        type="order",
+        link="/seller-dashboard"
+    ).save()
+    
+    return jsonify({
+        "msg": "ชำระเงินสำเร็จ!",
+        "amount": amount,
+        "auction_title": a.title,
+        "order_id": str(new_order.id)
+    }), 200
+
+
+# -----------------------------
+# Check and Handle Expired Auctions
+# -----------------------------
+def check_expired_payments():
+    """Check for auctions past payment deadline and handle them"""
+    now = datetime.utcnow()
+    
+    # Find auctions that are ended, pending payment, and past deadline
+    expired = Auction.objects(
+        is_ended=True,
+        payment_status='pending',
+        payment_deadline__lt=now
+    )
+    
+    for a in expired:
+        a.payment_status = 'expired'
+        
+        # Return token to the winner (optional: could give to next bidder)
+        if a.winner:
+            amount = int(a.current_price)
+            a.winner.token_balance = (a.winner.token_balance or 0) + amount
+            a.winner.save()
+            
+            # Notify winner about expiry
+            Notification(
+                user=a.winner,
+                title="⚠️ การชำระเงินหมดเวลา",
+                message=f"คุณไม่ได้ชำระเงินสำหรับ '{a.title}' ภายใน 45 นาที - Token {amount:,} ถูกคืนให้แล้ว",
+                type="order"
+            ).save()
+            
+            # Notify seller
+            Notification(
+                user=a.seller,
+                title="❌ การประมูลถูกยกเลิก",
+                message=f"ผู้ชนะไม่ชำระเงินสำหรับ '{a.title}' ภายในเวลาที่กำหนด",
+                type="order"
+            ).save()
+        
+        a.save()
 
 
 # -----------------------------

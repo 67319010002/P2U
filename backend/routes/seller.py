@@ -221,3 +221,130 @@ def get_categories():
         {"id": "automotive", "name": "ยานยนต์", "icon": "🚗"},
     ]
     return jsonify(categories), 200
+
+# 🔸 Get Public Seller Profile & Products
+@seller.route('/public/seller/<seller_id>', methods=['GET'])
+def get_public_seller_profile(seller_id):
+    try:
+        user = User.objects(id=ObjectId(seller_id)).first()
+        if not user or not user.is_seller:
+            return jsonify({"msg": "Seller not found."}), 404
+
+        # Fetch products
+        products = Product.objects(seller=user).order_by('-created_at')
+        
+        products_data = [{
+            "id": str(p.id),
+            "name": p.name,
+            "description": p.description,
+            "price": float(p.price),
+            "image_url": p.image_url,
+            "category": p.category or 'all',
+            "created_at": p.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        } for p in products]
+
+        seller_data = {
+            "id": str(user.id),
+            "username": user.username,
+            "shop_name": getattr(user, 'shop_name', user.username), # Fallback if shop_name not set
+            "profile_image_url": user.profile_image_url,
+            "description": getattr(user, 'shop_description', 'ยินดีต้อนรับสู่ร้านค้าของเรา'),
+            "follower_count": len(user.followers),
+            "following_count": len(user.following)
+            # "joined_at": user.id.generation_time.strftime("%Y-") # Optional: extract from ObjectId
+        }
+
+        return jsonify({
+            "seller": seller_data,
+            "products": products_data
+        }), 200
+
+    except Exception as e:
+        return jsonify({"msg": f"Error fetching seller profile: {str(e)}"}), 500
+
+
+# -----------------------------
+# Follow / Unfollow System
+# -----------------------------
+
+# 🔸 Follow a seller
+@seller.route('/seller/<seller_id>/follow', methods=['POST'])
+@jwt_required()
+def follow_seller(seller_id):
+    user_id = get_jwt_identity()
+    if user_id == seller_id:
+        return jsonify({"msg": "You cannot follow yourself."}), 400
+
+    try:
+        user = User.objects.get(id=ObjectId(user_id))
+        seller_user = User.objects.get(id=ObjectId(seller_id))
+
+        if seller_user not in user.following:
+            user.following.append(seller_user)
+            user.save()
+        
+        if user not in seller_user.followers:
+            seller_user.followers.append(user)
+            seller_user.save()
+
+        return jsonify({
+            "msg": "Followed successfully",
+            "follower_count": len(seller_user.followers)
+        }), 200
+
+    except User.DoesNotExist:
+        return jsonify({"msg": "User or Seller not found."}), 404
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+
+# 🔸 Unfollow a seller
+@seller.route('/seller/<seller_id>/unfollow', methods=['DELETE'])
+@jwt_required()
+def unfollow_seller(seller_id):
+    user_id = get_jwt_identity()
+    
+    try:
+        user = User.objects.get(id=ObjectId(user_id))
+        seller_user = User.objects.get(id=ObjectId(seller_id))
+
+        if seller_user in user.following:
+            user.following.remove(seller_user)
+            user.save()
+
+        if user in seller_user.followers:
+            seller_user.followers.remove(user)
+            seller_user.save()
+
+        return jsonify({
+            "msg": "Unfollowed successfully",
+            "follower_count": len(seller_user.followers)
+        }), 200
+
+    except User.DoesNotExist:
+        return jsonify({"msg": "User or Seller not found."}), 404
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+
+# 🔸 Check Follow Status
+@seller.route('/seller/<seller_id>/follow-status', methods=['GET'])
+@jwt_required(optional=True)
+def get_follow_status(seller_id):
+    user_id = get_jwt_identity()
+    is_following = False
+    
+    try:
+        seller_user = User.objects.get(id=ObjectId(seller_id))
+        
+        if user_id:
+            user = User.objects.get(id=ObjectId(user_id))
+            if seller_user in user.following:
+                is_following = True
+        
+        return jsonify({
+            "is_following": is_following,
+            "follower_count": len(seller_user.followers)
+        }), 200
+        
+    except User.DoesNotExist:
+        return jsonify({"msg": "Seller not found."}), 404
+

@@ -205,19 +205,8 @@ const buyNow = async () => {
       const newOrderId = result.order_id;
 
       // --- STEP 2: อัปเดตสถานะเป็น 'paid' ทันที ---
-      if (newOrderId) {
-        try {
-          await fetch(`${baseURL}/orders/${newOrderId}/pay`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            }
-          });
-        } catch (payErr) {
-          console.error("Auto-pay update failed:", payErr);
-        }
-      }
+      // --- STEP 2: อัปเดตสถานะเป็น 'paid' ทันที (Backend ทำให้อัตโนมัติแล้ว) ---
+      // ไม่ต้องเรียก /pay แล้ว เพราะ create_order ตัดเงินและเปลี่ยนสถานะเลย
 
       // ลบรายการที่ซื้อแล้วออกจากตะกร้าหลัก
       const cartKey = getCartKey();
