@@ -402,7 +402,7 @@ async function fetchTokenBalance() {
 onMounted(() => {
   fetchAuctions();
   fetchTokenBalance();
-  axios.post(`${baseUrl}/api/auctions/seed`).catch(() => {});
+  // axios.post(`${baseUrl}/api/auctions/seed`).catch(() => {}); // REMOVED: Causes race condition (deletes DB while fetching)
   
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   isSeller.value = user.is_seller || false;
