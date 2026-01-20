@@ -446,7 +446,7 @@ def pay_auction(auction_id):
         user=user,
         items=[],  # Auction items don't have CartItem, so empty
         total_price=amount,
-        status='paid',
+        status='processing',  # เริ่มด้วยสถานะกำลังจัดส่งเลย เพราะ Token ถูกหักตอนประมูลแล้ว
         created_at=datetime.utcnow()
     )
     new_order.save()

@@ -37,7 +37,7 @@
 
               <div class="relative shrink-0">
                 <img 
-                  :src="conv.other_user?.profile_image_url || defaultAvatar" 
+                  :src="getImageUrl(conv.other_user?.profile_image_url)" 
                   class="w-12 h-12 rounded-full object-cover border-2 transition-colors"
                   :class="selectedConv?.id === conv.id ? 'border-pink-500' : 'border-white/10 group-hover:border-white/30'"
                 />
@@ -71,7 +71,7 @@
 
           <template v-if="selectedConv">
             <div class="p-4 border-b border-white/5 bg-[#121215]/80 backdrop-blur-md flex items-center gap-4 sticky top-0 z-20">
-              <img :src="selectedConv.other_user?.profile_image_url || defaultAvatar" class="w-10 h-10 rounded-full object-cover border border-white/10" />
+              <img :src="getImageUrl(selectedConv.other_user?.profile_image_url)" class="w-10 h-10 rounded-full object-cover border border-white/10" />
               <div>
                 <h3 class="font-bold text-white leading-tight">{{ selectedConv.other_user?.username }}</h3>
                 <p v-if="selectedConv.other_user?.shop_name" class="text-xs text-pink-400 flex items-center gap-1">
@@ -124,13 +124,15 @@
                 </button>
                 
                 <div class="flex-1 relative">
-                  <input 
+                  <textarea
                     v-model="newMessage"
-                    type="text"
+                    @keydown.enter.prevent="sendMessage"
+                    rows="1"
                     placeholder="พิมพ์ข้อความของคุณ..."
-                    class="w-full bg-[#1e1e24] border border-white/10 rounded-2xl py-3 px-5 text-white focus:outline-none focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 transition-all placeholder:text-gray-600"
-                  />
-                  <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-yellow-400 transition-colors">😊</button>
+                    class="w-full bg-[#1e1e24] border border-white/10 rounded-2xl py-3 px-5 pr-12 text-white focus:outline-none focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 transition-all placeholder:text-gray-600 resize-none overflow-y-auto max-h-32"
+                    style="min-height: 48px;"
+                  ></textarea>
+                  <button type="button" class="absolute right-3 top-3 text-gray-500 hover:text-yellow-400 transition-colors">😊</button>
                 </div>
 
                 <button 
@@ -186,6 +188,12 @@ function formatTime(dateStr) {
   } else {
     return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
   }
+}
+
+function getImageUrl(url) {
+  if (!url) return defaultAvatar;
+  if (url.startsWith('http')) return url;
+  return baseUrl + url;
 }
 
 async function fetchConversations() {
@@ -263,7 +271,9 @@ async function sendMessage() {
 
 function scrollToBottom() {
   if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    setTimeout(() => {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    }, 100);
   }
 }
 
