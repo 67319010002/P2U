@@ -63,17 +63,19 @@
                 </div>
               </div>
 
-              <div class="w-full grid grid-cols-2 gap-3">
+              <div class="w-full grid grid-cols-1 gap-5">
+                
                 <button @click="handleSellerAction"
                   :class="sellerButtonClass"
                   class="py-2.5 rounded-xl text-xs font-bold transition-all border shadow-lg flex items-center justify-center gap-1">
                   {{ sellerButtonText }}
                 </button>
                 
-                <button @click="router.push('/ai')"
+                <!-- <button @click="router.push('/ai')"
                   class="py-2.5 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-purple-600 to-pink-600 hover:to-pink-500 text-white shadow-lg shadow-purple-900/20">
                   🤖 ระบบ AI
-                </button>
+                </button> -->
+                
               </div>
               
               <div v-if="user.verification_status === 'REJECTED'" class="mt-3 text-[10px] text-red-400 bg-red-500/10 p-2 rounded-lg border border-red-500/20 w-full">
