@@ -238,9 +238,6 @@ const menuItems = computed(() => [
   { name: "ประมูล", icon: Gavel, route: "/auction" },
 
   // Increased visibility for sellers/admins
-  ...(user.value?.role === 'admin' || user.value?.is_seller ? [
-     { name: "แอดมินจัดซื้อย่าย", icon: Building2, route: "/admin-purchasing" } 
-  ] : []),
   ...(user.value?.is_seller ? [
     { name: "แดชบอร์ดผู้ขาย", icon: BarChart3, route: "/seller-dashboard" }
   ] : []),
