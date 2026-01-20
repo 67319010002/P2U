@@ -12,7 +12,7 @@
             
             <div class="absolute bottom-8 left-8 md:left-12 max-w-xl">
               <span class="px-3 py-1 bg-pink-600/20 text-pink-400 border border-pink-500/20 text-[10px] md:text-xs font-bold rounded-full uppercase tracking-wider mb-3 inline-block backdrop-blur-md">
-                 Recommended
+                  Recommended
               </span>
               <h3 class="text-3xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-lg leading-tight">
                 {{ banner.title }}
@@ -79,15 +79,27 @@
 
           <div class="p-4">
             <h3 class="text-sm font-medium text-gray-200 truncate group-hover:text-pink-300">{{ product.name }}</h3>
+            
             <div class="flex items-center justify-between mt-2">
                <span class="text-base font-bold text-white">฿{{ product.price?.toLocaleString() }}</span>
                <span class="text-[10px] text-gray-500 border border-white/10 px-1.5 py-0.5 rounded">{{ product.category }}</span>
             </div>
-            <div v-if="product.stock !== undefined" class="mt-2 flex items-center gap-1 text-xs text-blue-400">
-              <span>📦</span>
-              <span>สต็อก: {{ product.stock }}</span>
+
+            <div class="mt-3 flex items-center justify-between text-xs border-t border-white/5 pt-2">
+              <div v-if="product.stock > 0" class="flex items-center gap-1.5 text-emerald-400">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span>เหลือ {{ product.stock }} ชิ้น</span>
+              </div>
+              
+              <div v-else class="flex items-center gap-1.5 text-red-500 font-bold">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                <span>สินค้าขายออกไปแล้ว</span>
+              </div>
             </div>
-          </div>
+            </div>
         </div>
       </div>
 
@@ -129,11 +141,20 @@
                    <button @click="closeProduct" class="hidden md:flex w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white items-center justify-center transition-colors">✕</button>
                 </div>
 
-                <div class="my-6 p-5 bg-gradient-to-r from-white/5 to-transparent rounded-2xl border border-white/5 flex items-center justify-between">
+                <div class="my-4 p-5 bg-gradient-to-r from-white/5 to-transparent rounded-2xl border border-white/5 flex items-center justify-between">
                    <div>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                      <span 
+                        v-for="(cat, idx) in selectedProduct.categories" 
+                        :key="idx"
+                        class="px-2 py-1 text-[10px] uppercase tracking-wider font-bold bg-white/5 border border-white/10 rounded text-gray-300"
+                      >
+                        {{ cat }}
+                      </span>
+                    </div>
                      <p class="text-xs text-gray-400 mb-1">ราคาพิเศษ</p>
                      <p class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">
-                        ฿{{ selectedProduct.price?.toLocaleString() }}
+                       ฿{{ selectedProduct.price?.toLocaleString() }}
                      </p>
                    </div>
                    <div class="text-right">
@@ -142,14 +163,28 @@
                         class="flex items-center justify-end gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                         @click="$router.push(`/shop/${selectedProduct.seller.id}`)"
                       >
-                         <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-[10px]">🏪</div>
-                         <span class="text-sm font-medium text-white hover:underline decoration-pink-500 underline-offset-4">
-                           {{ selectedProduct.seller?.shop_name || selectedProduct.seller?.username }}
-                         </span>
-                      </div>
+                          <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-[10px]">🏪</div>
+                          <span class="text-sm font-medium text-white hover:underline decoration-pink-500 underline-offset-4">
+                            {{ selectedProduct.seller?.shop_name || selectedProduct.seller?.username }}
+                          </span>
+                       </div>
                    </div>
                 </div>
 
+                <div class="mb-6 flex items-center gap-4 bg-black/20 p-3 rounded-xl border border-white/5">
+                   <div class="text-sm text-gray-400">สถานะสินค้า:</div>
+                   <div v-if="selectedProduct.stock > 0" class="flex items-center gap-2 text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20">
+                      <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                      </span>
+                      <span class="font-bold text-sm">มีสินค้า {{ selectedProduct.stock }} ชิ้น</span>
+                   </div>
+                   <div v-else class="flex items-center gap-2 text-red-400 bg-red-500/10 px-3 py-1 rounded-lg border border-red-500/20">
+                      <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                      <span class="font-bold text-sm">สินค้าหมดชั่วคราว</span>
+                   </div>
+                </div>
                 <div class="flex-1 mb-6">
                   <h4 class="text-sm font-bold text-gray-300 mb-2 uppercase tracking-wide border-b border-white/5 pb-2">รายละเอียดสินค้า</h4>
                   <p class="text-gray-400 leading-relaxed font-light text-sm md:text-base whitespace-pre-line">
@@ -160,13 +195,17 @@
                 <div class="mt-auto pt-6 border-t border-white/10 flex flex-col sm:flex-row gap-3">
                   <button 
                     @click="addToCart(selectedProduct)" 
-                    class="flex-1 py-3.5 rounded-xl border border-white/10 text-white font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2 group/btn"
+                    :disabled="selectedProduct.stock <= 0"
+                    :class="selectedProduct.stock <= 0 ? 'opacity-50 cursor-not-allowed bg-gray-800 text-gray-500 border-transparent' : 'hover:bg-white/5 text-white border-white/10'"
+                    class="flex-1 py-3.5 rounded-xl border font-bold transition-all flex items-center justify-center gap-2 group/btn"
                   >
                     <span class="group-hover/btn:scale-110 transition-transform">🛒</span> เพิ่มลงตะกร้า
                   </button>
                   <button 
                     @click="buyNow(selectedProduct)" 
-                    class="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold shadow-lg shadow-purple-900/20 hover:shadow-purple-500/40 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                    :disabled="selectedProduct.stock <= 0"
+                    :class="selectedProduct.stock <= 0 ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:from-pink-500 hover:to-purple-500 shadow-purple-900/20 hover:shadow-purple-500/40 hover:-translate-y-1'"
+                    class="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold shadow-lg transition-all flex items-center justify-center gap-2"
                   >
                     <span>⚡</span> ซื้อเลย
                   </button>
@@ -183,7 +222,6 @@
 </template>
 
 <script setup>
-// สคริปต์เดิม 100%
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import axios from "axios";
 import { useRouter, useRoute } from 'vue-router';
@@ -230,7 +268,17 @@ watch(cart, (newVal) => {
 }, { deep: true });
 
 const addToCart = (product) => {
+  if (product.stock <= 0) return; // Prevent adding if out of stock
+  
   const existing = cart.value.find((item) => item.id === product.id);
+  // เช็คว่าของในตะกร้า + ที่จะเพิ่ม เกิน stock ไหม
+  const currentQtyInCart = existing ? existing.quantity : 0;
+  
+  if (currentQtyInCart + 1 > product.stock) {
+      alert('สินค้ามีจำนวนจำกัด ไม่สามารถเพิ่มได้มากกว่านี้');
+      return;
+  }
+
   if (existing) {
     existing.quantity++;
   } else {
@@ -240,6 +288,7 @@ const addToCart = (product) => {
 };
 
 const buyNow = (product) => {
+  if (product.stock <= 0) return;
   addToCart(product);
   router.push('/cart');
 };
@@ -257,9 +306,16 @@ const prevBanner = () => { currentBanner.value = (currentBanner.value - 1 + bann
 
 const filteredProducts = computed(() => {
   let products = [...allProducts.value];
-  if (selectedCategory.value !== 'all') products = products.filter(p => p.category === selectedCategory.value);
+  
+  if (selectedCategory.value !== 'all') {
+    products = products.filter(p => 
+      p.categories && p.categories.includes(selectedCategory.value)
+    );
+  }
+  
   if (sortBy.value === 'price-low') products.sort((a, b) => a.price - b.price);
   else if (sortBy.value === 'price-high') products.sort((a, b) => b.price - a.price);
+  
   return products;
 });
 
@@ -269,17 +325,25 @@ const fetchProducts = async () => {
   try {
     const params = searchQuery.value ? { q: searchQuery.value } : {};
     const res = await axios.get("http://localhost:5000/api/products", { params });
-    allProducts.value = (res.data || []).map((p) => ({
-      id: p.id || p._id,
-      name: p.name,
-      description: p.description,
-      price: parseFloat(p.price),
-      stock: p.stock,
-      category: p.category || 'all',
-      image_url: p.image_url ? `http://localhost:5000${p.image_url}` : defaultImage,
-      seller: p.seller || { username: "Unknown", shop_name: "" },
-    }));
+    
+    allProducts.value = (res.data || []).map((p) => {
+      let cats = p.categories || [];
+      if (cats.length === 0 && p.category) cats = [p.category];
+
+      return {
+        id: p.id || p._id,
+        name: p.name,
+        description: p.description,
+        price: parseFloat(p.price),
+        stock: p.stock, 
+        category: p.category || (cats.length > 0 ? cats[0] : 'all'), 
+        categories: cats, 
+        image_url: p.image_url ? `http://localhost:5000${p.image_url}` : defaultImage,
+        seller: p.seller || { username: "Unknown", shop_name: "" },
+      };
+    });
   } catch (err) {
+    console.error(err);
     allProducts.value = [];
   }
 };
