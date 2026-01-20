@@ -294,7 +294,6 @@ const buyNow = (product) => {
 };
 
 const banners = ref([
-  { image: "https://media.discordapp.net/attachments/1089887523020480544/1461399560713933054/P2U_kaiser_1.png?ex=696a69e6&is=69691866&hm=c8f4838915fb6ffac9c2cce2d582e023355652bd82b750fdbfeaac399e21b3c2&=&format=webp&quality=lossless&width=1679&height=839", title: "🎉 MEGA SALE 21.1", subtitle: "ลดสูงสุด 50% ทุกหมวดหมู่!" },
   { image: "https://affiliate.priceza.com/wp-content/uploads/2020/11/4.png", title: "💎 สินค้า Limited Edition", subtitle: "ของหายากราคาพิเศษ" },
   { image: "https://www.umipro.com/pub/media/wysiwyg/news-2024/NocNoc-8.8-_-__duragres_1440x365.jpg", title: "🔥 Flash Sale", subtitle: "เฉพาะวันนี้เท่านั้น!" },
 ]);

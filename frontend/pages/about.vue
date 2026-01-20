@@ -17,7 +17,7 @@
       <div class="flex flex-col items-center">
         <img
           class="w-40 h-40 rounded-full bg-gray-800 object-cover transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-lg hover:shadow-blue-500/40"
-          src="https://scontent-bkk1-2.xx.fbcdn.net/v/t39.30808-1/548008636_2544388382627251_858633228946711615_n.jpg?stp=cp6_dst-jpg_s200x200_tt6&_nc_cat=100&ccb=1-7&_nc_sid=1d2534&_nc_eui2=AeHEQNo8723T0PJWKj9lLcccvL2XADkEONm8vZcAOQQ42VExKLG4ubjzUmQTGnH0vsF4PRLoAgPuhFJKrsBvpg7M&_nc_ohc=1CL6wTd3W0IQ7kNvwHzihVK&_nc_oc=Adk6Ld_b0tmtY2469HhEx1tNoLvrc6fwIWHp4YRqtYKVf6aeDVkffUHgbuiiBzMWXnY&_nc_zt=24&_nc_ht=scontent-bkk1-2.xx&_nc_gid=cKKQWKEgqCpKiln7umsJUw&oh=00_AfdTRrakeM1eCyidHxNx_VVfC1lkDzBHud0xdHKXywEHEQ&oe=690786C4"
+          src="https://scontent.fbkk4-1.fna.fbcdn.net/v/t1.6435-9/64734768_851243425275097_6206373367881138176_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEQ9BEx37EH3DrnyWLq_GRR8iliSXm6mc_yKWJJebqZz-raxgas4uJNTRV5UVb2rD1rhJ7GF6wR2uy6JAYsqNm9&_nc_ohc=S5ky08vtS04Q7kNvwEr3Cv4&_nc_oc=AdnONOn6sspi7N1NcA89eNNCtsVVPHyYMvQoqqZwlwxp0vTh8q00YvnhPOr2tlbW-tg&_nc_zt=23&_nc_ht=scontent.fbkk4-1.fna&_nc_gid=l4EGMu2wUgECrlLTKr1J0g&oh=00_AfrAj_U39_kT8WBlOROYPx8R6_dQ8kbBGBo7_sP-lB4Ffw&oe=6996FE36"
           alt="profile image"
         />
         <p class="mt-4 text-xl font-semibold">artuchicabo</p>
@@ -27,25 +27,25 @@
       <div class="flex flex-col items-center">
         <img
           class="w-40 h-40 rounded-full bg-gray-800 object-cover transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-lg hover:shadow-blue-500/40"
-          src="https://scontent-bkk1-2.xx.fbcdn.net/v/t39.30808-1/429816394_900921248434020_7135155605498280752_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=104&ccb=1-7&_nc_sid=1d2534&_nc_eui2=AeG5e89Lnl5kwImRYc2fz060_PoOUPfUdWP8-g5Q99R1Y_Mjte-1f8XgXBnzwJHORnf4y9izXVr_OsmuwMfzPRkU&_nc_ohc=3JEEmNj0r10Q7kNvwFwf5oW&_nc_oc=AdkJzFhQHywzYaqCaup2pUB6FZ9akCkmjYyOH5I9gcYXEllQc8aCNB7KjIwhFXSLRdM&_nc_zt=24&_nc_ht=scontent-bkk1-2.xx&_nc_gid=ma9wk5FULvj0cyTmAOiBwQ&oh=00_Afd0OYbSBWx_haoD6AAs9zUKUhntFIavDiswIZDZBzz-Eg&oe=69078EA1"
-          alt="profile image"
-        />
-        <p class="mt-4 text-xl font-semibold">Siranat Sribura </p>
-        <p class="text-gray-400 text-sm">Frontend Developer</p>
-      </div>
-      <div class="flex flex-col items-center">
-        <img
-          class="w-40 h-40 rounded-full bg-gray-800 object-cover transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-lg hover:shadow-blue-500/40"
-          src="https://scontent-bkk1-1.xx.fbcdn.net/v/t39.30808-6/503720930_122128294892836980_415354766661668842_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=a5f93a&_nc_eui2=AeHlW0Z2pbtNygZ3pilt-ax6gpci123hUriClyLXbeFSuOCZ9c-6hdhdbQy9qxw9B6rU0FPxXjfe_eibkXFGcSf8&_nc_ohc=Meaor4itlE0Q7kNvwEtVcOg&_nc_oc=Adn90yyj_G5wik3fhm5_I_IOqfCHChXnqKaYoZHoDHAJnnCFspKhwnjyAaeXBMUY8BI&_nc_zt=23&_nc_ht=scontent-bkk1-1.xx&_nc_gid=yOxwMf_WUYZg-zi6vHCETg&oh=00_AfdtMGIWFKpNkTcOjQwGvdMPkwLEyVIRb_buQbIbsAl-ew&oe=69077A35"
+          src="https://scontent.fbkk4-1.fna.fbcdn.net/v/t51.82787-15/548681108_17864222100464183_5578393320598879261_n.webp?stp=dst-jpg_tt6&_nc_cat=107&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeG07kQE-5M9ZbcX1eu23c1W1CO_5nfxDUjUI7_md_ENSPpqKaPwLmbalxwyWPfXmqc-kJW_krncN23rJrObhzUl&_nc_ohc=Dh4Ycu4W1eYQ7kNvwGID7qH&_nc_oc=AdkLTEQxHqCiOXnCLywGPSPP7hlvyQBdKuLilc3tnn273wnpRZoIfanN8En6I8uBbKk&_nc_zt=23&_nc_ht=scontent.fbkk4-1.fna&_nc_gid=EpxHk7d2-ll2mmLMnjnxJg&oh=00_Afof0j2pZPLTlPhXecgMfiAaOCuBng026EnmpOFjX2NiiQ&oe=6975739F"
           alt="profile image"
         />
         <p class="mt-4 text-xl font-semibold">frame kaiser</p>
         <p class="text-gray-400 text-sm">Frontend Developer</p>
       </div>
+      <div class="flex flex-col items-center">
+        <img
+          class="w-40 h-40 rounded-full bg-gray-800 object-cover transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-lg hover:shadow-blue-500/40"
+          src="https://scontent.fbkk4-2.fna.fbcdn.net/v/t39.30808-1/429816394_900921248434020_7135155605498280752_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=104&ccb=1-7&_nc_sid=1d2534&_nc_eui2=AeGiRk9GM1AXZB3xGtAvpKNL_PoOUPfUdWP8-g5Q99R1Y7FBmJfHG7NehGD9qZeQw7pK79KHii2-utZfD4HmS60l&_nc_ohc=-PPULKnotacQ7kNvwGllulI&_nc_oc=AdmO6CWxldzen0j0VpKvZeoXgtmYXcwaupq4mA1Tih5k7vJnHDyygo2201uOxqE795w&_nc_zt=24&_nc_ht=scontent.fbkk4-2.fna&_nc_gid=iUwdOtq-YSX_Dq92Dqvqyg&oh=00_AfqoFsPSaKHMI9ViYZGRk3dvmYUEY6X5AjIsDGWqSZrgRg&oe=69756BA1"
+          alt="profile image"
+        />
+        <p class="mt-4 text-xl font-semibold"> Siranat Sribura</p>
+        <p class="text-gray-400 text-sm">Frontend Developer</p>
+      </div>
     </div>
 
     <!-- แถวล่าง: 7 คน -->
-    <div class="flex flex-row flex-wrap justify-center gap-10">
+    <!-- <div class="flex flex-row flex-wrap justify-center gap-10">
       <div class="flex flex-col items-center">
         <img
           class="w-40 h-40 rounded-full bg-gray-800 object-cover transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-lg hover:shadow-blue-500/40"
@@ -105,7 +105,7 @@
         <p class="mt-4 text-xl font-semibold">F'film Patcharapon</p>
         <p class="text-gray-400 text-sm">UI/UX Designer</p>
       </div>
-    </div>
+    </div> -->
 
 
   </div>
