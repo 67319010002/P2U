@@ -1,7 +1,7 @@
 <template>
   <aside
     v-if="user"
-    class="fixed left-4 top-24 z-50 flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] h-[calc(100vh-8rem)]"
+    class="fixed left-4 top-24 z-50 flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] h-[calc(100vh-12rem)]"
     :class="expand ? 'w-[280px]' : 'w-[88px]'"
     @mouseenter="expand = true"
     @mouseleave="expand = false"
@@ -150,7 +150,7 @@
       </nav>
 
       <!-- Bottom Actions -->
-      <div class="p-4 mt-auto border-t border-white/5 bg-[#0f0f13]/80 backdrop-blur-md space-y-3 z-20">
+      <div class="p-8 mt-auto border-t border-white/5 bg-[#0f0f13]/80 backdrop-blur-md space-y-7 z-20">
          
          <!-- Add Product Button (Seller) -->
          <button
