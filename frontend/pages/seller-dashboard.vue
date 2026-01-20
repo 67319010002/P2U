@@ -64,6 +64,7 @@
                 <p class="text-white font-medium truncate">{{ product.name }}</p>
                 <div class="flex items-center gap-2">
                   <p class="text-green-400 text-sm">฿{{ product.price?.toLocaleString() }}</p>
+                  <span v-if="product.stock !== undefined" class="text-xs text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">📦 {{ product.stock }}</span>
                   <span v-if="product.category" class="text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded-full">{{ getCategoryIcon(product.category) }} {{ product.category }}</span>
                 </div>
               </div>

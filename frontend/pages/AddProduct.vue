@@ -3,7 +3,7 @@
     
     <!-- Background Effects -->
     <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div class="absolute top-[20%] right-[20%] w-[500px] h-[500px] bg-pink-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow"></div>
+        <div class=" absolute top-[20%] right-[20%] w-[500px] h-[500px] bg-pink-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow"></div>
         <div class="absolute bottom-[20%] left-[10%] w-[400px] h-[400px] bg-purple-600/20 rounded-full blur-[100px] mix-blend-screen"></div>
         <div class="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.03]"></div>
     </div>
@@ -74,21 +74,38 @@
                   />
                 </div>
               </div>
+
+              <!-- Stock Input -->
+              <div class="space-y-2 col-span-2 md:col-span-1">
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1.5">
+                  <Package class="w-3 h-3 text-blue-500" /> จำนวนสต็อก
+                </label>
+                <div class="relative group">
+                  <input 
+                    v-model="stock" 
+                    type="number" 
+                    required 
+                    min="1" 
+                    class="w-full pl-4 pr-4 py-3.5 rounded-2xl bg-[#09090b]/50 border border-white/5 focus:border-blue-500/50 focus:bg-[#09090b] text-white placeholder-gray-600 transition-all outline-none focus:ring-4 focus:ring-blue-500/10 font-mono text-lg hover:border-white/10" 
+                    placeholder="1" 
+                  />
+                </div>
+              </div>
             </div>
 
-            <!-- Categories -->
+            <!-- Categories (Multiple Selection) -->
             <div class="space-y-3">
               <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1.5">
-                <LayoutGrid class="w-3 h-3 text-blue-500" /> หมวดหมู่
+                <LayoutGrid class="w-3 h-3 text-blue-500" /> หมวดหมู่ <span class="text-[9px] text-gray-500 normal-case">(เลือกได้มากกว่า 1)</span>
               </label>
               <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 pr-2">
                 <button
                   v-for="cat in categories"
                   :key="cat.id"
                   type="button"
-                  @click="selectedCategory = cat.id"
+                  @click="toggleCategory(cat.id)"
                   class="group relative aspect-square rounded-2xl border transition-all duration-300 flex flex-col items-center justify-center gap-3 overflow-hidden"
-                  :class="selectedCategory === cat.id 
+                  :class="selectedCategories.includes(cat.id) 
                     ? 'border-pink-500/50 bg-gradient-to-br from-pink-500/20 to-purple-500/20 text-white shadow-[0_0_20px_rgba(236,72,153,0.15)] ring-1 ring-pink-500/30' 
                     : 'border-white/5 bg-[#09090b]/40 text-gray-500 hover:bg-white/5 hover:border-white/20 hover:text-gray-200'"
                 >
@@ -96,12 +113,14 @@
                   <component 
                     :is="getCategoryIcon(cat.id)" 
                     class="w-6 h-6 transition-all duration-300 transform group-hover:scale-110" 
-                    :class="selectedCategory === cat.id ? 'text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.5)]' : 'group-hover:text-white'"
+                    :class="selectedCategories.includes(cat.id) ? 'text-pink-400 drop-shadow-[0_0_8px_rgba(244,114,182,0.5)]' : 'group-hover:text-white'"
                   />
                   <span class="text-[10px] font-medium tracking-wide">{{ cat.name }}</span>
                   
-                  <!-- Active Indicator -->
-                  <div v-if="selectedCategory === cat.id" class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-pink-500 shadow-[0_0_5px_rgba(236,72,153,0.8)]"></div>
+                  <!-- Active Indicator with Checkmark -->
+                  <div v-if="selectedCategories.includes(cat.id)" class="absolute top-2 right-2 w-5 h-5 rounded-full bg-pink-500 shadow-[0_0_5px_rgba(236,72,153,0.8)] flex items-center justify-center">
+                    <Check class="w-3 h-3 text-white" />
+                  </div>
                 </button>
               </div>
             </div>
@@ -189,7 +208,7 @@ import { useRouter } from "vue-router";
 import { 
   X, Tag, Coins, LayoutGrid, FileText, ImagePlus, Camera, Sparkles, Loader2, PenLine,
   ShoppingBag, Smartphone, Shirt, Gamepad2, Home, Dumbbell, Utensils, BookOpen, Rocket, PawPrint, Car,
-  Laptop
+  Laptop, Package, Check
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -197,10 +216,11 @@ const baseURL = "http://localhost:5000";
 
 const name = ref("");
 const price = ref("");
+const stock = ref(1);
 const description = ref("");
 const imageFile = ref(null);
 const imagePreview = ref(null);
-const selectedCategory = ref("electronics");
+const selectedCategories = ref(["electronics"]); // Multiple categories
 const isSubmitting = ref(false);
 
 const categories = ref([
@@ -237,6 +257,17 @@ function getCategoryIcon(id) {
   return iconMap[id] || LayoutGrid; // Default icon
 }
 
+function toggleCategory(categoryId) {
+  const index = selectedCategories.value.indexOf(categoryId);
+  if (index > -1) {
+    // Remove category if already selected
+    selectedCategories.value.splice(index, 1);
+  } else {
+    // Add category if not selected
+    selectedCategories.value.push(categoryId);
+  }
+}
+
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
   if (file) {
@@ -271,13 +302,20 @@ const submitProduct = async () => {
     return;
   }
 
+  if (selectedCategories.value.length === 0) {
+    alert("กรุณาเลือกหมวดหมู่อย่างน้อย 1 หมวดหมู่");
+    return;
+  }
+
   isSubmitting.value = true;
 
   const formData = new FormData();
   formData.append("name", name.value);
   formData.append("price", price.value);
+  formData.append("stock", stock.value);
   formData.append("description", description.value);
-  formData.append("category", selectedCategory.value);
+  formData.append("category", selectedCategories.value[0]); // First category for backward compatibility
+  formData.append("categories", JSON.stringify(selectedCategories.value)); // Multiple categories
   if (imageFile.value) {
     formData.append("image", imageFile.value);
   }

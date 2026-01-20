@@ -91,6 +91,11 @@ def create_order():
                 if cart_item.product.seller and cart_item.product.seller.id == user.id:
                     return jsonify({"msg": f"ไม่สามารถซื้อสินค้าของตัวเองได้ ({cart_item.product.name})"}), 400
                 
+                # ✅ ตรวจสอบสต็อก
+                product_stock = cart_item.product.stock or 0
+                if product_stock < cart_item.quantity:
+                    return jsonify({"msg": f"สินค้า '{cart_item.product.name}' มีสต็อกไม่เพียงพอ (เหลือ {product_stock} ชิ้น)"}), 400
+                
                 final_cart_items.append(cart_item)
                 total_price += float(cart_item.product.price) * int(cart_item.quantity)
 
@@ -128,6 +133,13 @@ def create_order():
             description=f"Purchase Order #{str(new_order.id)[-6:]}",
             reference_id=str(new_order.id)
         ).save()
+        
+        # ✅ ตัดสต็อกสินค้าหลังจากสร้าง order สำเร็จ
+        for item in final_cart_items:
+            if item.product:
+                current_stock = item.product.stock or 0
+                new_stock = max(0, current_stock - int(item.quantity))
+                item.product.update(stock=new_stock)
         
         # แจ้งเตือนผู้ขายและโอน Token ให้ผู้ขาย
         seller_notified = set()
