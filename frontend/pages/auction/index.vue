@@ -190,9 +190,30 @@
                         </div>
                         <p class="text-xs text-gray-500 mt-2 text-center">ขั้นต่ำ: {{ minBid.toLocaleString() }} Token</p>
                     </div>
-                    
+
+                    <!-- Payment Button for Winner -->
+                    <div v-if="selectedAuction.is_ended && selectedAuction.winner && selectedAuction.winner.id === currentUserId && selectedAuction.payment_status === 'pending'" class="bg-green-500/10 p-5 rounded-2xl border border-green-500/20">
+                      <div class="text-center mb-4">
+                        <p class="text-green-300 font-bold mb-2">🎉 คุณชนะการประมูล!</p>
+                        <p class="text-gray-300 text-sm">Token ถูกหักไปแล้ว กรุณายืนยันการจัดส่ง</p>
+                        <p class="text-2xl font-bold text-white my-3">🪙 {{ selectedAuction.current_price.toLocaleString() }} Token</p>
+                      </div>
+                      <button 
+                        @click="payForAuction"
+                        :disabled="isPayLoading"
+                        class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        {{ isPayLoading ? 'กำลังดำเนินการ...' : '🚚 กำลังจัดส่งของให้' }}
+                      </button>
+                    </div>
+
+                    <!-- Already Paid -->
+                    <div v-if="selectedAuction.is_ended && selectedAuction.payment_status === 'paid'" class="bg-blue-500/10 p-4 rounded-2xl border border-blue-500/20 text-center">
+                      <p class="text-blue-300 font-bold">✅ กำลังจัดส่ง</p>
+                    </div>
+
                     <!-- Owner notice -->
-                    <div v-else class="bg-yellow-500/10 p-4 rounded-2xl border border-yellow-500/20 text-center">
+                    <div v-else-if="isAuctionOwner" class="bg-yellow-500/10 p-4 rounded-2xl border border-yellow-500/20 text-center">
                       <p class="text-yellow-300 font-bold">🔨 นี่คือสินค้าของคุณ</p>
                       <p class="text-yellow-200/60 text-sm">ไม่สามารถประมูลสินค้าของตัวเองได้</p>
                     </div>
@@ -261,6 +282,7 @@ const selectedCategory = ref('all');
 const bidAmount = ref(0);
 const bidHistory = ref([]);
 const isLoading = ref(false);
+const isPayLoading = ref(false);
 const isSeller = ref(false);
 const tokenBalance = ref(0);
 const currentUserId = ref('');
@@ -376,9 +398,42 @@ async function placeBid() {
     fetchAuctions();
     fetchTokenBalance(); // อัปเดตยอด Token หลังจากบิด
   } catch (err) {
-    alert(err.response?.data?.msg || 'ประมูลไม่สำเร็จ');
+    console.error('Bid error:', err);
+    const errorMsg = err.response?.data?.msg || 'ประมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+    alert('❌ ' + errorMsg);
   } finally {
     isLoading.value = false;
+  }
+}
+
+async function payForAuction() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('กรุณาเข้าสู่ระบบก่อน');
+    return;
+  }
+
+  if (!confirm(`ยืนยันการชำระเงิน ${selectedAuction.value.current_price.toLocaleString()} Token หรือไม่?`)) {
+    return;
+  }
+
+  isPayLoading.value = true;
+  try {
+    const res = await axios.post(
+      `${baseUrl}/api/auctions/${selectedAuction.value.id}/pay`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    alert('✅ ' + res.data.msg);
+    selectedAuction.value.payment_status = 'paid';
+    fetchAuctions();
+    fetchTokenBalance();
+    closeAuction();
+  } catch (err) {
+    alert(err.response?.data?.msg || 'ไม่สามารถชำระเงินได้');
+  } finally {
+    isPayLoading.value = false;
   }
 }
 
