@@ -107,6 +107,7 @@ class Product(Document):
     video_url = StringField()
     view_360_images = ListField(StringField())
     category = StringField(default='all')
+    categories = ListField(StringField())  # Support for multiple categories
     stock = IntField(default=0)
     seller = ReferenceField('User', required=True, reverse_delete_rule=CASCADE)
     created_at = DateTimeField(default=datetime.utcnow)
