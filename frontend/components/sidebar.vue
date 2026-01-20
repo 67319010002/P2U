@@ -1,5 +1,6 @@
 <template>
   <aside
+    v-if="user"
     class="fixed left-4 top-24 z-50 flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] h-[calc(100vh-8rem)]"
     :class="expand ? 'w-[280px]' : 'w-[88px]'"
     @mouseenter="expand = true"
