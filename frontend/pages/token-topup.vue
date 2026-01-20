@@ -81,7 +81,7 @@
                     <p class="font-mono text-amber-400/80 tracking-wider text-sm">PromptPay: xxx-xxx-5414</p>
                   </div>
                   <div class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold">
-                    <AlertCircle class="w-4 h-4" /> อัตราแลกเปลี่ยน: 1 บาท = 1 Token
+                    <AlertCircle class="w-4 h-4" /> อัตราแลกเปลี่ยน: 1 บาท = 2 Token
                   </div>
                 </div>
               </div>
