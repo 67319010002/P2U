@@ -44,8 +44,10 @@ def get_seller_products():
             "name": product.name,
             "description": product.description,
             "price": float(product.price),
+            "stock": product.stock,
             "image_url": product.image_url,
             "category": product.category or 'all',
+            "categories": product.categories or [product.category or 'all'],
             "created_at": product.created_at.strftime("%Y-%m-%d %H:%M:%S")
         } for product in products
     ]), 200
@@ -62,8 +64,19 @@ def add_product():
     data = request.form
     name = data.get('name')
     price = data.get('price')
+    stock = data.get('stock', 1)  # Get stock quantity, default to 1
     description = data.get('description')
-    category = data.get('category', 'all')  # รับหมวดหมู่จาก form
+    category = data.get('category', 'all')  # Single category for backward compatibility
+    categories_json = data.get('categories', '[]')  # Multiple categories as JSON string
+    
+    # Parse categories JSON
+    try:
+        import json
+        categories = json.loads(categories_json)
+        if not categories:
+            categories = [category]  # Fallback to single category
+    except:
+        categories = [category]
     if not name or not price:
         return jsonify({"msg": "Product name and price are required."}), 400
 
@@ -79,8 +92,10 @@ def add_product():
             name=name,
             description=description,
             price=float(price),
+            stock=int(stock),
             image_url=image_url,
-            category=category,  # บันทึกหมวดหมู่
+            category=category,  # Save first category for backward compatibility
+            categories=categories,  # Save all categories
             seller=user
         )
         product.save()
@@ -91,8 +106,10 @@ def add_product():
                 "name": product.name,
                 "description": product.description,
                 "price": float(product.price),
+                "stock": product.stock,
                 "image_url": product.image_url,
                 "category": product.category or 'all',
+                "categories": product.categories,
                 "created_at": product.created_at.strftime("%Y-%m-%d %H:%M:%S")
             }
         }), 201
@@ -117,8 +134,10 @@ def get_product(product_id):
         "name": product.name,
         "description": product.description,
         "price": float(product.price),
+        "stock": product.stock,
         "image_url": product.image_url,
         "category": product.category or 'all',
+        "categories": product.categories or [product.category or 'all'],
         "created_at": product.created_at.strftime("%Y-%m-%d %H:%M:%S")
     })
 
@@ -238,8 +257,10 @@ def get_public_seller_profile(seller_id):
             "name": p.name,
             "description": p.description,
             "price": float(p.price),
+            "stock": p.stock,
             "image_url": p.image_url,
             "category": p.category or 'all',
+            "categories": p.categories or [p.category or 'all'],
             "created_at": p.created_at.strftime("%Y-%m-%d %H:%M:%S")
         } for p in products]
 

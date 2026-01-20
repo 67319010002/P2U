@@ -83,6 +83,10 @@
                <span class="text-base font-bold text-white">฿{{ product.price?.toLocaleString() }}</span>
                <span class="text-[10px] text-gray-500 border border-white/10 px-1.5 py-0.5 rounded">{{ product.category }}</span>
             </div>
+            <div v-if="product.stock !== undefined" class="mt-2 flex items-center gap-1 text-xs text-blue-400">
+              <span>📦</span>
+              <span>สต็อก: {{ product.stock }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -270,6 +274,7 @@ const fetchProducts = async () => {
       name: p.name,
       description: p.description,
       price: parseFloat(p.price),
+      stock: p.stock,
       category: p.category || 'all',
       image_url: p.image_url ? `http://localhost:5000${p.image_url}` : defaultImage,
       seller: p.seller || { username: "Unknown", shop_name: "" },
