@@ -127,7 +127,19 @@
         </div>
 
       </div>
+      </div>
     </main>
+
+    <BaseModal 
+      :is-open="modal.isOpen" 
+      @close="closeModal" 
+      @confirm="handleModalConfirm"
+    >
+      <template #title>
+        {{ modal.title }}
+      </template>
+      <p>{{ modal.message }}</p>
+    </BaseModal>
   </div>
 </template>
 
@@ -135,9 +147,17 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import BaseModal from '~/components/BaseModal.vue';
 
 const router = useRouter();
 const notifications = ref([]);
+const modal = ref({
+  isOpen: false,
+  title: '',
+  message: '',
+  action: null,
+  payload: null
+});
 
 const unreadCount = computed(() => notifications.value.filter(n => !n.is_read).length);
 
@@ -226,30 +246,88 @@ async function markAllAsRead() {
   }
 }
 
-async function deleteNotif(notif) {
-  const token = localStorage.getItem('token');
-  try {
-    await axios.delete(`http://localhost:5000/api/notifications/${notif.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    notifications.value = notifications.value.filter(n => n.id !== notif.id);
-  } catch (err) {
-    console.error('Failed to delete notification:', err);
-  }
+function openModal(title, message, action, payload = null) {
+  modal.value = {
+    isOpen: true,
+    title,
+    message,
+    action,
+    payload
+  };
 }
 
-async function clearAll() {
-  if (!confirm('ยืนยันการล้างการแจ้งเตือนทั้งหมด?')) return;
-  
-  const token = localStorage.getItem('token');
-  try {
-    await axios.delete('http://localhost:5000/api/notifications/clear', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    notifications.value = [];
-  } catch (err) {
-    console.error('Failed to clear notifications:', err);
+function closeModal() {
+  modal.value.isOpen = false;
+  setTimeout(() => {
+    modal.value.action = null;
+    modal.value.payload = null;
+  }, 300);
+}
+
+async function handleModalConfirm() {
+  if (modal.value.action) {
+    await modal.value.action(modal.value.payload);
   }
+  closeModal();
+}
+
+function deleteNotif(notif) {
+  // แทนที่จะลบเลย ให้เปิด Modal ถามก่อน (หรือจะลบเลยก็ได้ แต่ user บอกให้ปรับ Notification)
+  // ปกติลบอันเดียวอาจจะไม่ต้องถามเยอะ แต่เพื่อความสวยงามและตาม request 
+  // "ปรับตัวแจ้งเตือนทั้งหมด ให้เข้าเว็บธีม" -> I assume confirmations.
+  
+  // Wait, deleting a single notification usually doesn't need confirmation in modern UX?
+  // But let's be safe and use it if it feels "destructive".
+  // Actually, let's just do it directly for single item to be snappy? 
+  // The user said "ปรับตัวแจ้งเตือนทั้งหมด" -> Adjust *all* notifications.
+  // I'll stick to clearAll for modal, but maybe deleteOne too?
+  // The original code didn't confirm for deleteOne?
+  // Let's check original...
+  // Line 91: `@click.stop="deleteNotif(notif)"` -> No confirm in original code for single delete.
+  // Line 242: `clearAll` -> `if (!confirm(...))` -> This one had confirm.
+  
+  // So I will apply modal to `clearAll`.
+  // I will LEAVE `deleteNotif` without confirm unless user asked specifically, 
+  // but "Adjust all notifications to match theme" implies "Make it look good".
+  // I'll keep single delete instant (or add undo toast? No, that's too much).
+  // I'll leave single delete instant.
+  
+  confirmDelete(notif); // Or... let's just call API directly.
+}
+
+async function confirmDelete(notif) {
+   // Let's perform the delete directly for single item, 
+   // BUT if you want to be fancy, maybe a subtle animation.
+   // I'll keep the original behavior: just delete.
+   // The request was about "alerts/confirmations" matching the theme.
+   
+   const token = localStorage.getItem('token');
+    try {
+      await axios.delete(`http://localhost:5000/api/notifications/${notif.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      notifications.value = notifications.value.filter(n => n.id !== notif.id);
+    } catch (err) {
+      console.error('Failed to delete notification:', err);
+    }
+}
+
+function clearAll() {
+  openModal(
+    'ยืนยันการล้างข้อมูล',
+    'คุณต้องการลบการแจ้งเตือนทั้งหมดใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้',
+    async () => {
+      const token = localStorage.getItem('token');
+      try {
+        await axios.delete('http://localhost:5000/api/notifications/clear', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        notifications.value = [];
+      } catch (err) {
+        console.error('Failed to clear notifications:', err);
+      }
+    }
+  );
 }
 
 onMounted(fetchNotifications);
