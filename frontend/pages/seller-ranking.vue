@@ -1,243 +1,343 @@
 <template>
-  <div class="min-h-screen ml-20 p-6">
-    <Navbar />
-    <sidebar />
+  <div class="min-h-screen bg-[#0a0a0f] text-gray-100 relative overflow-hidden">
+    <!-- Particle Background -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute top-20 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px]"></div>
+      <div class="absolute bottom-20 right-1/4 w-80 h-80 bg-pink-600/10 rounded-full blur-[100px]"></div>
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-600/5 rounded-full blur-[150px]"></div>
+    </div>
 
-    <div class="max-w-6xl mx-auto">
+    <Navbar />
+    <sidebar class="fixed left-0 top-0 h-full z-40" />
+
+    <main class="ml-20 p-6 md:p-8 max-w-6xl mx-auto relative z-10">
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-white flex items-center gap-3">
-          🏆 อันดับผู้ขาย
+      <div class="mb-8 text-center">
+        <h1 class="text-4xl md:text-5xl font-black mb-2">
+          <span class="text-6xl mr-3">🏆</span>
+          <span class="bg-gradient-to-r from-amber-400 via-pink-500 to-purple-500 bg-clip-text text-transparent">
+            Seller Ranking
+          </span>
         </h1>
-        <p class="text-dark-400 mt-1">จัดอันดับตามคะแนน AI Score</p>
+        <p class="text-gray-400 mt-2">จัดอันดับตามคะแนน AI Score</p>
       </div>
 
       <!-- Level Filter Pills -->
-      <div class="flex gap-2 mb-6 flex-wrap">
+      <div class="flex justify-center gap-3 mb-10 flex-wrap">
         <button 
           v-for="level in levels" 
           :key="level.id"
           @click="selectedLevel = level.id"
-          class="px-4 py-2 rounded-full text-sm font-medium transition-all"
+          class="px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 border"
           :class="selectedLevel === level.id 
-            ? 'bg-primary-500 text-white' 
-            : 'glass text-dark-300 hover:bg-dark-700'"
+            ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white border-amber-400/50 shadow-lg shadow-amber-500/20' 
+            : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white'"
         >
           {{ level.icon }} {{ level.name }}
         </button>
       </div>
 
-      <!-- Top 3 Podium -->
-      <div v-if="!selectedLevel && topSellers.length >= 3" class="mb-10">
-        <div class="flex justify-center items-end gap-4">
-          <!-- 2nd Place -->
-          <div class="text-center animate-in" style="animation-delay: 0.1s">
-            <div class="w-24 h-24 rounded-full mx-auto mb-3 ring-4 ring-gray-400 overflow-hidden bg-dark-700">
-              <img :src="topSellers[1]?.profile_image || '/default-avatar.png'" class="w-full h-full object-cover" />
+      <!-- Top 3 Podium - Premium Design -->
+      <div v-if="!selectedLevel && topSellers.length >= 3" class="mb-12">
+        <div class="flex justify-center items-end gap-4 md:gap-8">
+          
+          <!-- 2nd Place (Left) -->
+          <div class="text-center animate-slideUp" style="animation-delay: 0.1s">
+            <div class="relative mb-4">
+              <!-- Glow Ring -->
+              <div class="absolute -inset-2 bg-gradient-to-br from-gray-300 to-gray-500 rounded-full blur-md opacity-50"></div>
+              <div class="relative w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-gray-300 overflow-hidden bg-[#1a1a20] shadow-xl">
+                <img :src="topSellers[1]?.profile_image || '/default-avatar.png'" class="w-full h-full object-cover" />
+              </div>
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 text-3xl">🥈</div>
             </div>
-            <div class="bg-gray-400 text-black px-4 py-2 rounded-t-lg">
-              <span class="text-2xl">🥈</span>
-            </div>
-            <div class="glass rounded-b-lg p-4 w-40">
-              <p class="text-white font-semibold truncate">{{ topSellers[1]?.shop_name }}</p>
-              <p class="text-primary-400 font-bold">{{ topSellers[1]?.ai_score }} pts</p>
-              <span class="text-xs px-2 py-1 rounded-full" :style="{ backgroundColor: topSellers[1]?.badge?.color }">
-                {{ topSellers[1]?.badge?.icon }} {{ topSellers[1]?.ai_level }}
+            <!-- Info Card -->
+            <div class="bg-gradient-to-b from-gray-400 to-gray-500 rounded-t-2xl pt-6 px-4 pb-3 w-36 md:w-44 relative">
+              <div class="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent rounded-t-2xl"></div>
+              <p class="text-gray-900 font-bold text-sm md:text-base truncate relative z-10">{{ topSellers[1]?.shop_name }}</p>
+              <p class="text-xs text-gray-700 mb-1 relative z-10">AI Score</p>
+              <p class="text-2xl md:text-3xl font-black text-gray-900 relative z-10">{{ topSellers[1]?.ai_score?.toFixed(1) || '0' }}</p>
+              <span class="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-bold bg-gray-700 text-gray-200 relative z-10">
+                {{ topSellers[1]?.badge?.icon }} {{ topSellers[1]?.badge?.name || 'Seller' }}
               </span>
             </div>
           </div>
 
-          <!-- 1st Place -->
-          <div class="text-center animate-in">
-            <div class="w-32 h-32 rounded-full mx-auto mb-3 ring-4 ring-yellow-400 overflow-hidden bg-dark-700">
-              <img :src="topSellers[0]?.profile_image || '/default-avatar.png'" class="w-full h-full object-cover" />
+          <!-- 1st Place (Center - Larger) -->
+          <div class="text-center animate-slideUp -mt-8">
+            <div class="relative mb-4">
+              <!-- Premium Glow Ring -->
+              <div class="absolute -inset-3 bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 rounded-full blur-lg opacity-70 animate-pulse"></div>
+              <div class="absolute -inset-1 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full"></div>
+              <div class="relative w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-yellow-400 overflow-hidden bg-[#1a1a20] shadow-2xl">
+                <img :src="topSellers[0]?.profile_image || '/default-avatar.png'" class="w-full h-full object-cover" />
+              </div>
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 text-4xl animate-bounce">🥇</div>
             </div>
-            <div class="bg-yellow-400 text-black px-6 py-3 rounded-t-lg">
-              <span class="text-3xl">🥇</span>
-            </div>
-            <div class="glass rounded-b-lg p-4 w-48">
-              <p class="text-white font-bold text-lg truncate">{{ topSellers[0]?.shop_name }}</p>
-              <p class="text-primary-400 font-bold text-xl">{{ topSellers[0]?.ai_score }} pts</p>
-              <span class="text-sm px-3 py-1 rounded-full" :style="{ backgroundColor: topSellers[0]?.badge?.color }">
-                {{ topSellers[0]?.badge?.icon }} {{ topSellers[0]?.ai_level }}
+            <!-- Info Card - Gold -->
+            <div class="bg-gradient-to-b from-amber-400 via-yellow-500 to-orange-500 rounded-t-2xl pt-8 px-5 pb-4 w-44 md:w-52 relative shadow-xl shadow-amber-500/30">
+              <div class="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent rounded-t-2xl"></div>
+              <div class="absolute top-2 right-2 text-lg">✨</div>
+              <p class="text-gray-900 font-bold text-base md:text-lg truncate relative z-10">{{ topSellers[0]?.shop_name }}</p>
+              <p class="text-xs text-gray-700 mb-1 relative z-10">AI Score</p>
+              <p class="text-3xl md:text-4xl font-black text-gray-900 relative z-10">{{ topSellers[0]?.ai_score?.toFixed(1) || '0' }}</p>
+              <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-700 text-amber-100 relative z-10 shadow-md">
+                {{ topSellers[0]?.badge?.icon }} {{ topSellers[0]?.badge?.name || 'Top Tier' }}
               </span>
             </div>
           </div>
 
-          <!-- 3rd Place -->
-          <div class="text-center animate-in" style="animation-delay: 0.2s">
-            <div class="w-24 h-24 rounded-full mx-auto mb-3 ring-4 ring-orange-600 overflow-hidden bg-dark-700">
-              <img :src="topSellers[2]?.profile_image || '/default-avatar.png'" class="w-full h-full object-cover" />
+          <!-- 3rd Place (Right) -->
+          <div class="text-center animate-slideUp" style="animation-delay: 0.2s">
+            <div class="relative mb-4">
+              <!-- Glow Ring -->
+              <div class="absolute -inset-2 bg-gradient-to-br from-orange-600 to-orange-800 rounded-full blur-md opacity-50"></div>
+              <div class="relative w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-orange-600 overflow-hidden bg-[#1a1a20] shadow-xl">
+                <img :src="topSellers[2]?.profile_image || '/default-avatar.png'" class="w-full h-full object-cover" />
+              </div>
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 text-3xl">🥉</div>
             </div>
-            <div class="bg-orange-600 text-white px-4 py-2 rounded-t-lg">
-              <span class="text-2xl">🥉</span>
-            </div>
-            <div class="glass rounded-b-lg p-4 w-40">
-              <p class="text-white font-semibold truncate">{{ topSellers[2]?.shop_name }}</p>
-              <p class="text-primary-400 font-bold">{{ topSellers[2]?.ai_score }} pts</p>
-              <span class="text-xs px-2 py-1 rounded-full" :style="{ backgroundColor: topSellers[2]?.badge?.color }">
-                {{ topSellers[2]?.badge?.icon }} {{ topSellers[2]?.ai_level }}
+            <!-- Info Card -->
+            <div class="bg-gradient-to-b from-orange-600 to-orange-700 rounded-t-2xl pt-6 px-4 pb-3 w-36 md:w-44 relative">
+              <div class="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent rounded-t-2xl"></div>
+              <p class="text-white font-bold text-sm md:text-base truncate relative z-10">{{ topSellers[2]?.shop_name }}</p>
+              <p class="text-xs text-orange-200 mb-1 relative z-10">AI Score</p>
+              <p class="text-2xl md:text-3xl font-black text-white relative z-10">{{ topSellers[2]?.ai_score?.toFixed(1) || '0' }}</p>
+              <span class="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-bold bg-orange-900 text-orange-200 relative z-10">
+                {{ topSellers[2]?.badge?.icon }} {{ topSellers[2]?.badge?.name || 'Seller' }}
               </span>
             </div>
           </div>
+
         </div>
       </div>
 
-      <!-- Leaderboard Table -->
-      <div class="card overflow-hidden">
-        <div class="p-4 border-b border-dark-700 flex justify-between items-center">
-          <h2 class="text-lg font-semibold text-white">📊 ตารางอันดับ</h2>
-          <span class="text-dark-400 text-sm">ทั้งหมด {{ pagination.total }} ร้าน</span>
+      <!-- Leaderboard Table - Premium Glass Design -->
+      <div class="bg-[#12121a]/80 backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+        <!-- Table Header -->
+        <div class="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            📊 ตารางอันดับ
+          </h2>
+          <span class="text-gray-400 text-sm bg-white/5 px-3 py-1 rounded-full">ทั้งหมด {{ pagination.total }} ร้าน</span>
         </div>
 
-        <div v-if="loading" class="p-10 text-center">
-          <div class="animate-spin w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full mx-auto"></div>
-          <p class="text-dark-400 mt-4">กำลังโหลด...</p>
+        <!-- Loading State -->
+        <div v-if="loading" class="p-16 text-center">
+          <div class="w-16 h-16 mx-auto mb-4 relative">
+            <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
+            <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
+          </div>
+          <p class="text-gray-400">กำลังโหลดข้อมูล...</p>
         </div>
 
-        <div v-else-if="leaderboard.length" class="divide-y divide-dark-700">
+        <!-- Leaderboard Rows -->
+        <div v-else-if="leaderboard.length" class="divide-y divide-white/5">
           <div 
             v-for="seller in leaderboard" 
             :key="seller.id"
-            class="flex items-center justify-between p-4 hover:bg-dark-800/50 transition-colors cursor-pointer"
+            class="flex items-center justify-between px-6 py-5 hover:bg-white/5 transition-all duration-300 cursor-pointer group"
+            :class="[
+              seller.rank === 1 ? 'bg-gradient-to-r from-amber-500/10 to-transparent' : '',
+              seller.rank === 2 ? 'bg-gradient-to-r from-gray-400/10 to-transparent' : '',
+              seller.rank === 3 ? 'bg-gradient-to-r from-orange-600/10 to-transparent' : ''
+            ]"
             @click="openSellerDetail(seller)"
           >
-            <div class="flex items-center gap-4">
-              <!-- Rank -->
+            <div class="flex items-center gap-5">
+              <!-- Rank Badge -->
               <div 
-                class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg"
-                :class="getRankClass(seller.rank)"
+                class="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg"
+                :class="getRankBgClass(seller.rank)"
               >
-                {{ seller.rank <= 3 ? ['🥇', '🥈', '🥉'][seller.rank - 1] : seller.rank }}
+                <span v-if="seller.rank <= 3" class="text-2xl">{{ ['🥇', '🥈', '🥉'][seller.rank - 1] }}</span>
+                <span v-else class="text-gray-400">{{ seller.rank }}</span>
               </div>
 
-              <!-- Avatar -->
-              <div class="w-12 h-12 rounded-full overflow-hidden bg-dark-700 ring-2"
-                   :style="{ borderColor: seller.badge?.color }">
-                <img :src="seller.profile_image || '/default-avatar.png'" class="w-full h-full object-cover" />
-              </div>
-
-              <!-- Info -->
-              <div>
-                <div class="flex items-center gap-2">
-                  <p class="text-white font-semibold">{{ seller.shop_name }}</p>
-                  <span v-if="seller.is_verified" class="text-blue-400 text-sm">💎</span>
-                  <span v-if="seller.is_phone_verified" class="text-green-400 text-sm">📱</span>
+              <!-- Avatar with Tier Ring -->
+              <div class="relative">
+                <div 
+                  class="absolute -inset-1 rounded-full opacity-70"
+                  :style="{ background: `linear-gradient(135deg, ${seller.badge?.color || '#666'}, ${seller.badge?.color || '#666'}88)` }"
+                ></div>
+                <div class="relative w-14 h-14 rounded-full overflow-hidden bg-[#1a1a20] border-2 border-white/10">
+                  <img :src="seller.profile_image || '/default-avatar.png'" class="w-full h-full object-cover" />
                 </div>
-                <div class="flex items-center gap-2 text-sm">
-                  <span class="px-2 py-0.5 rounded text-xs font-medium" :style="{ backgroundColor: seller.badge?.color + '33', color: seller.badge?.color }">
+              </div>
+
+              <!-- Seller Info -->
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <p class="text-white font-bold text-lg group-hover:text-pink-300 transition-colors">{{ seller.shop_name }}</p>
+                  <span v-if="seller.is_verified" class="text-blue-400" title="ID Verified">💎</span>
+                  <span v-if="seller.is_phone_verified" class="text-green-400" title="Phone Verified">📱</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <!-- Tier Badge -->
+                  <span 
+                    class="px-3 py-1 rounded-full text-xs font-bold shadow-md"
+                    :style="{ 
+                      backgroundColor: (seller.badge?.color || '#666') + '22', 
+                      color: seller.badge?.color || '#999',
+                      border: `1px solid ${seller.badge?.color || '#666'}44`
+                    }"
+                  >
                     {{ seller.badge?.icon }} {{ seller.badge?.name }}
                   </span>
-                  <span class="text-yellow-400">⭐ {{ seller.rating_avg?.toFixed(1) || '0.0' }}</span>
+                  <!-- Rating -->
+                  <span class="text-yellow-400 text-sm flex items-center gap-1">
+                    <span>⭐</span>
+                    <span class="text-white font-medium">{{ seller.rating_avg?.toFixed(1) || '0.0' }}</span>
+                  </span>
                 </div>
               </div>
             </div>
 
-            <!-- Score -->
+            <!-- AI Score -->
             <div class="text-right">
-              <p class="text-2xl font-bold text-primary-400">{{ seller.ai_score }}</p>
-              <p class="text-dark-400 text-xs">points</p>
+              <p 
+                class="text-3xl md:text-4xl font-black bg-clip-text text-transparent"
+                :class="seller.rank === 1 ? 'bg-gradient-to-r from-amber-400 to-orange-500' : 
+                        seller.rank === 2 ? 'bg-gradient-to-r from-gray-300 to-gray-400' :
+                        seller.rank === 3 ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
+                        'bg-gradient-to-r from-pink-400 to-purple-500'"
+              >
+                {{ seller.ai_score?.toFixed(1) || '0' }}
+              </p>
+              <p class="text-gray-500 text-xs uppercase tracking-wide">points</p>
             </div>
           </div>
         </div>
 
-        <div v-else class="p-10 text-center">
-          <p class="text-dark-400">ไม่พบข้อมูลผู้ขาย</p>
+        <!-- Empty State -->
+        <div v-else class="p-16 text-center">
+          <div class="text-6xl mb-4">🔍</div>
+          <p class="text-gray-400">ไม่พบข้อมูลผู้ขาย</p>
         </div>
 
         <!-- Pagination -->
-        <div v-if="pagination.total_pages > 1" class="p-4 border-t border-dark-700 flex justify-center gap-2">
+        <div v-if="pagination.total_pages > 1" class="p-5 border-t border-white/10 flex justify-center items-center gap-4 bg-white/5">
           <button 
             @click="changePage(pagination.page - 1)"
             :disabled="pagination.page <= 1"
-            class="px-3 py-1 rounded glass text-dark-300 disabled:opacity-50"
+            class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
-            ←
+            ← ก่อนหน้า
           </button>
-          <span class="px-4 py-1 text-white">{{ pagination.page }} / {{ pagination.total_pages }}</span>
+          <span class="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-white font-medium">
+            {{ pagination.page }} / {{ pagination.total_pages }}
+          </span>
           <button 
             @click="changePage(pagination.page + 1)"
             :disabled="pagination.page >= pagination.total_pages"
-            class="px-3 py-1 rounded glass text-dark-300 disabled:opacity-50"
+            class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
-            →
+            ถัดไป →
           </button>
         </div>
       </div>
 
-      <!-- Seller Detail Modal -->
+      <!-- Seller Detail Modal - Premium -->
       <Teleport to="body">
-        <Transition name="fade">
-          <div v-if="selectedSeller" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click="selectedSeller = null">
-            <div class="glass rounded-2xl w-full max-w-md p-6 animate-in" @click.stop>
-              <!-- Header -->
-              <div class="flex justify-between items-start mb-6">
-                <div class="flex items-center gap-4">
-                  <div class="w-16 h-16 rounded-full overflow-hidden bg-dark-700 ring-2" :style="{ borderColor: selectedSeller.badge?.color }">
-                    <img :src="selectedSeller.profile_image || '/default-avatar.png'" class="w-full h-full object-cover" />
+        <Transition name="modal">
+          <div v-if="selectedSeller" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4" @click="selectedSeller = null">
+            <div class="bg-[#15151f] rounded-3xl w-full max-w-lg border border-white/10 shadow-2xl overflow-hidden animate-modalIn" @click.stop>
+              
+              <!-- Modal Header with Gradient -->
+              <div class="relative p-6 pb-16 bg-gradient-to-br from-purple-600/30 via-pink-600/20 to-transparent">
+                <button @click="selectedSeller = null" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                  ✕
+                </button>
+                
+                <!-- Avatar & Basic Info -->
+                <div class="flex items-center gap-5">
+                  <div class="relative">
+                    <div class="absolute -inset-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full blur-lg opacity-60"></div>
+                    <div class="relative w-20 h-20 rounded-full border-4 border-white/20 overflow-hidden bg-[#1a1a20]">
+                      <img :src="selectedSeller.profile_image || '/default-avatar.png'" class="w-full h-full object-cover" />
+                    </div>
                   </div>
                   <div>
-                    <h3 class="text-xl font-bold text-white">{{ selectedSeller.shop_name }}</h3>
-                    <span class="px-3 py-1 rounded-full text-sm" :style="{ backgroundColor: selectedSeller.badge?.color }">
+                    <h3 class="text-2xl font-bold text-white mb-1">{{ selectedSeller.shop_name }}</h3>
+                    <span 
+                      class="inline-block px-4 py-1.5 rounded-full text-sm font-bold shadow-lg"
+                      :style="{ backgroundColor: selectedSeller.badge?.color || '#666' }"
+                    >
                       {{ selectedSeller.badge?.icon }} {{ selectedSeller.badge?.name }}
                     </span>
                   </div>
                 </div>
-                <button @click="selectedSeller = null" class="text-dark-400 hover:text-white text-xl">✕</button>
               </div>
 
-              <!-- Stats -->
-              <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="glass-light rounded-xl p-4 text-center">
-                  <p class="text-3xl font-bold text-primary-400">{{ selectedSeller.ai_score }}</p>
-                  <p class="text-dark-400 text-sm">AI Score</p>
-                </div>
-                <div class="glass-light rounded-xl p-4 text-center">
-                  <p class="text-3xl font-bold text-yellow-400">{{ selectedSeller.rating_avg?.toFixed(1) || '0.0' }}</p>
-                  <p class="text-dark-400 text-sm">Rating</p>
+              <!-- Stats Grid -->
+              <div class="px-6 -mt-8 mb-6">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-2xl p-5 border border-purple-500/20 text-center">
+                    <p class="text-4xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                      {{ selectedSeller.ai_score?.toFixed(1) || '0' }}
+                    </p>
+                    <p class="text-gray-400 text-sm mt-1">AI Score</p>
+                  </div>
+                  <div class="bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-2xl p-5 border border-amber-500/20 text-center">
+                    <p class="text-4xl font-black text-amber-400">
+                      {{ selectedSeller.rating_avg?.toFixed(1) || '0.0' }}
+                    </p>
+                    <p class="text-gray-400 text-sm mt-1">Rating ⭐</p>
+                  </div>
                 </div>
               </div>
 
               <!-- Verification Status -->
-              <div class="mb-6">
-                <p class="text-white font-semibold mb-3">✅ การยืนยันตัวตน</p>
+              <div class="px-6 mb-6">
+                <p class="text-white font-semibold mb-3 flex items-center gap-2">✅ การยืนยันตัวตน</p>
                 <div class="flex flex-wrap gap-2">
-                  <span class="px-3 py-1 rounded-full text-sm" 
-                        :class="selectedSeller.verification?.email ? 'bg-green-500/20 text-green-400' : 'bg-dark-700 text-dark-400'">
+                  <span 
+                    class="px-4 py-2 rounded-xl text-sm font-medium border"
+                    :class="selectedSeller.verification?.email ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-white/5 border-white/10 text-gray-500'"
+                  >
                     📧 Email {{ selectedSeller.verification?.email ? '✓' : '✗' }}
                   </span>
-                  <span class="px-3 py-1 rounded-full text-sm" 
-                        :class="selectedSeller.verification?.phone ? 'bg-green-500/20 text-green-400' : 'bg-dark-700 text-dark-400'">
+                  <span 
+                    class="px-4 py-2 rounded-xl text-sm font-medium border"
+                    :class="selectedSeller.verification?.phone ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-white/5 border-white/10 text-gray-500'"
+                  >
                     📱 Phone {{ selectedSeller.verification?.phone ? '✓' : '✗' }}
                   </span>
-                  <span class="px-3 py-1 rounded-full text-sm" 
-                        :class="selectedSeller.verification?.id_card ? 'bg-green-500/20 text-green-400' : 'bg-dark-700 text-dark-400'">
+                  <span 
+                    class="px-4 py-2 rounded-xl text-sm font-medium border"
+                    :class="selectedSeller.verification?.id_card ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-white/5 border-white/10 text-gray-500'"
+                  >
                     💎 ID Card {{ selectedSeller.verification?.id_card ? '✓' : '✗' }}
                   </span>
                 </div>
               </div>
 
               <!-- Score Breakdown -->
-              <div v-if="selectedSeller.score_breakdown">
-                <p class="text-white font-semibold mb-3">📊 รายละเอียดคะแนน</p>
-                <div class="space-y-3">
+              <div v-if="selectedSeller.score_breakdown" class="px-6 pb-6">
+                <p class="text-white font-semibold mb-4 flex items-center gap-2">📊 รายละเอียดคะแนน</p>
+                <div class="space-y-4">
                   <div v-for="(value, key) in selectedSeller.score_breakdown" :key="key">
-                    <div class="flex justify-between text-sm mb-1">
-                      <span class="text-dark-300 capitalize">{{ getScoreLabel(key) }}</span>
-                      <span class="text-white">{{ value.toFixed(0) }}%</span>
+                    <div class="flex justify-between text-sm mb-2">
+                      <span class="text-gray-400">{{ getScoreLabel(key) }}</span>
+                      <span class="text-white font-bold">{{ value?.toFixed(0) || 0 }}%</span>
                     </div>
-                    <div class="h-2 bg-dark-700 rounded-full overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full transition-all" 
-                           :style="{ width: value + '%' }"></div>
+                    <div class="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                      <div 
+                        class="h-full rounded-full transition-all duration-700 ease-out"
+                        :class="getScoreBarColor(key)"
+                        :style="{ width: (value || 0) + '%' }"
+                      ></div>
                     </div>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </Transition>
       </Teleport>
-    </div>
+
+    </main>
   </div>
 </template>
 
@@ -272,15 +372,28 @@ const scoreLabels = {
   verification: '✅ การยืนยันตัวตน'
 };
 
+const scoreBarColors = {
+  sales: 'bg-gradient-to-r from-emerald-500 to-emerald-400',
+  rating: 'bg-gradient-to-r from-amber-500 to-yellow-400',
+  delivery: 'bg-gradient-to-r from-blue-500 to-cyan-400',
+  response: 'bg-gradient-to-r from-purple-500 to-pink-400',
+  cancel: 'bg-gradient-to-r from-green-500 to-emerald-400',
+  verification: 'bg-gradient-to-r from-pink-500 to-rose-400'
+};
+
 function getScoreLabel(key) {
   return scoreLabels[key] || key;
 }
 
-function getRankClass(rank) {
-  if (rank === 1) return 'bg-yellow-500 text-black';
-  if (rank === 2) return 'bg-gray-400 text-black';
-  if (rank === 3) return 'bg-orange-600 text-white';
-  return 'bg-dark-700 text-dark-300';
+function getScoreBarColor(key) {
+  return scoreBarColors[key] || 'bg-gradient-to-r from-gray-500 to-gray-400';
+}
+
+function getRankBgClass(rank) {
+  if (rank === 1) return 'bg-gradient-to-br from-amber-500 to-orange-600';
+  if (rank === 2) return 'bg-gradient-to-br from-gray-300 to-gray-400';
+  if (rank === 3) return 'bg-gradient-to-br from-orange-600 to-orange-700';
+  return 'bg-white/5 border border-white/10';
 }
 
 async function fetchLeaderboard(page = 1) {
@@ -325,14 +438,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.animate-in {
-  animation: slideUp 0.3s ease-out;
-}
-
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -340,10 +449,39 @@ onMounted(() => {
   }
 }
 
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
+.animate-slideUp {
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-.fade-enter-from, .fade-leave-to {
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modalIn {
+  animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-enter-active {
+  transition: all 0.3s ease;
+}
+
+.modal-leave-active {
+  transition: all 0.2s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
   opacity: 0;
+}
+
+.modal-enter-from .animate-modalIn {
+  transform: scale(0.9) translateY(20px);
 }
 </style>

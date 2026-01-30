@@ -136,6 +136,21 @@ def get_all_products():
         # เช็ค field stock (เผื่อข้อมูลเก่าไม่มี field นี้)
         current_stock = getattr(p, 'stock', 0)
 
+        # ✅ Handle กรณี seller ถูกลบไปแล้ว
+        try:
+            seller_info = {
+                "id": str(p.seller.id),
+                "username": p.seller.username,
+                "shop_name": p.seller.shop_name
+            }
+        except DoesNotExist:
+            # Seller ไม่มีอยู่แล้ว - ใช้ค่า default
+            seller_info = {
+                "id": None,
+                "username": "ร้านค้าไม่ระบุ",
+                "shop_name": "ร้านค้าไม่ระบุ"
+            }
+
         product_list.append({
             "id": str(p.id),
             "name": p.name,
@@ -145,11 +160,7 @@ def get_all_products():
             "image_url": p.image_url,
             "category": p.category or 'all',
             "categories": cats,
-            "seller": {
-                "id": str(p.seller.id),
-                "username": p.seller.username,
-                "shop_name": p.seller.shop_name
-            },
+            "seller": seller_info,
             "created_at": p.created_at.strftime("%Y-%m-%d %H:%M:%S")
         })
 
@@ -167,6 +178,20 @@ def get_product(product_id):
         if not cats and p.category:
             cats = [p.category]
 
+        # ✅ Handle กรณี seller ถูกลบไปแล้ว
+        try:
+            seller_info = {
+                "id": str(p.seller.id),
+                "username": p.seller.username,
+                "shop_name": p.seller.shop_name
+            }
+        except DoesNotExist:
+            seller_info = {
+                "id": None,
+                "username": "ร้านค้าไม่ระบุ",
+                "shop_name": "ร้านค้าไม่ระบุ"
+            }
+
         return jsonify({
             "id": str(p.id),
             "name": p.name,
@@ -176,11 +201,7 @@ def get_product(product_id):
             "image_url": p.image_url,
             "category": p.category,
             "categories": cats,
-            "seller": {
-                "id": str(p.seller.id),
-                "username": p.seller.username,
-                "shop_name": p.seller.shop_name
-            },
+            "seller": seller_info,
             "created_at": p.created_at.strftime("%Y-%m-%d %H:%M:%S")
         }), 200
     except (DoesNotExist, ValidationError):
@@ -360,3 +381,34 @@ def seed_products():
         "msg": f"Created {len(created)} products",
         "products": created
     }), 201
+
+
+# -----------------------------
+# Cleanup Orphaned Products (ลบสินค้าที่ seller หายไป)
+# -----------------------------
+@product.route('/products/cleanup-orphaned', methods=['POST'])
+def cleanup_orphaned_products():
+    """ลบสินค้าที่มี seller reference ไม่ถูกต้อง (seller ถูกลบไปแล้ว)"""
+    products = Product.objects.all()
+    deleted_count = 0
+    deleted_products = []
+    
+    for p in products:
+        try:
+            # ลองเข้าถึง seller เพื่อตรวจว่ามีอยู่หรือไม่
+            _ = p.seller.id  # จะ raise DoesNotExist ถ้าหายไป
+        except DoesNotExist:
+            deleted_products.append(p.name)
+            p.delete()
+            deleted_count += 1
+        except Exception:
+            # กรณี seller เป็น None
+            deleted_products.append(p.name)
+            p.delete()
+            deleted_count += 1
+    
+    return jsonify({
+        "msg": f"ลบสินค้าที่ไม่มี seller แล้ว {deleted_count} รายการ",
+        "deleted_count": deleted_count,
+        "deleted_products": deleted_products
+    }), 200

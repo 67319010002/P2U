@@ -70,9 +70,9 @@
                         
                         <div class="p-6 h-full flex flex-col justify-between relative z-10">
                             <div class="flex justify-between items-start">
-                                <span class="text-3xl">👑</span>
+                                <img src="/p2u-logo.png" alt="Crown" class="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
                                 <div class="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center bg-black/20">
-                                    <div class="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
+                                    <div class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
                                 </div>
                             </div>
                             <div>
@@ -108,11 +108,11 @@
 
             <div class="mb-8">
                 <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-600 to-purple-600 flex items-center justify-center shadow-lg">
-                        <span class="text-lg">👑</span>
+                    <div class="w-12 h-12 flex items-center justify-center">
+                        <img src="/p2u-logo.png" alt="P2UKAISER" class="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]" />
                     </div>
                     <h1 class="text-2xl font-black text-white tracking-tight">
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">P2U</span>KAISER
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-300">P2U</span>KAISER
                     </h1>
                 </div>
                 <p class="text-gray-500 text-xs">Sign in to manage your collection.</p>

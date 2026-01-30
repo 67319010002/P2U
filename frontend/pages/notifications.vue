@@ -120,10 +120,10 @@
           <div class="absolute inset-0 bg-gradient-to-t from-purple-500/5 to-transparent pointer-events-none"></div>
           
           <div class="w-20 h-20 rounded-full bg-gradient-to-br from-gray-800 to-black mx-auto mb-5 flex items-center justify-center text-4xl shadow-xl border border-white/5">
-            💤
+            🔔
           </div>
-          <h3 class="text-xl font-bold text-white mb-2">ไม่มีการแจ้งเตือน</h3>
-          <p class="text-gray-500 text-sm">พักผ่อนให้สบาย เจ้าหญิงยังไม่มีเรื่องด่วนอะไรเพคะ</p>
+          <h3 class="text-xl font-bold text-white mb-2">ยังไม่มีการแจ้งเตือน</h3>
+          <p class="text-gray-500 text-sm">เมื่อมีกิจกรรมใหม่ คุณจะเห็นการแจ้งเตือนที่นี่</p>
         </div>
 
       </div>

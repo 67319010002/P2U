@@ -197,7 +197,7 @@ import {
   Store, 
   ShoppingCart, 
   Gavel, 
- 
+  Trophy,
   Building2, 
   BarChart3, 
   Coins, 
@@ -237,6 +237,7 @@ const menuItems = computed(() => [
   { name: "ร้านค้า", icon: Store, route: "/dashboard" },
   { name: "ตระกร้าสินค้า", icon: ShoppingCart, route: "/cart" },
   { name: "ประมูล", icon: Gavel, route: "/auction" },
+  { name: "อันดับผู้ขาย", icon: Trophy, route: "/seller-ranking" },
 
   // Increased visibility for sellers/admins
   ...(user.value?.is_seller ? [

@@ -11,11 +11,12 @@
       
       <!-- Brand Logo -->
       <NuxtLink to="/dashboard" class="flex items-center gap-3 group shrink-0">
-        <div class="relative w-11 h-11">
-          <div class="absolute inset-0 bg-gradient-to-tr from-pink-600 to-purple-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-500"></div>
-          <div class="relative w-full h-full bg-[#09090b] border border-white/10 rounded-xl flex items-center justify-center transform group-hover:-rotate-6 transition-transform duration-300 ease-out">
-            <span class="text-2xl drop-shadow-lg filter group-hover:scale-110 transition-transform">👑</span>
-          </div>
+        <div class="relative w-12 h-12">
+          <img 
+            src="/p2u-logo.png" 
+            alt="P2UKAISER Logo" 
+            class="relative w-full h-full object-contain drop-shadow-[0_0_15px_rgba(251,191,36,0.6)] filter group-hover:scale-110 transition-transform duration-300"
+          />
         </div>
         <div class="flex flex-col">
           <span class="font-display font-bold text-xl tracking-wide bg-gradient-to-r from-white via-pink-200 to-purple-200 bg-clip-text text-transparent group-hover:text-white transition-colors">
