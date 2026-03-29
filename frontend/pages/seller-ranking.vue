@@ -7,7 +7,6 @@
       <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-600/5 rounded-full blur-[150px]"></div>
     </div>
 
-    <Navbar />
     <sidebar class="fixed left-0 top-0 h-full z-40" />
 
     <main class="ml-20 p-6 md:p-8 max-w-6xl mx-auto relative z-10">
